@@ -1,65 +1,131 @@
-import Image from "next/image";
+import Link from "next/link";
 
-export default function Home() {
+const ROLES = [
+  {
+    href: "/dashboard/tutor",
+    icon: "🎓",
+    title: "Tutor",
+    desc: "Gestiona tus alumnos asignados, registra sesiones y da seguimiento al riesgo académico.",
+    color: "#6366f1",
+    bg: "rgba(99, 102, 241, 0.12)",
+  },
+  {
+    href: "/dashboard/admin",
+    icon: "⚙️",
+    title: "Administrador",
+    desc: "Visión completa del sistema: padrón de alumnos, carga de tutores y estadísticas globales.",
+    color: "#f59e0b",
+    bg: "rgba(245, 158, 11, 0.12)",
+  },
+  {
+    href: "/dashboard/docente",
+    icon: "📚",
+    title: "Docente",
+    desc: "Consulta el avance de tu grupo, registra calificaciones e identifica alumnos en riesgo.",
+    color: "#ec4899",
+    bg: "rgba(236, 72, 153, 0.12)",
+  },
+  {
+    href: "/dashboard/alumno",
+    icon: "🎒",
+    title: "Alumno",
+    desc: "Revisa tu promedio, historial de tutorías, expediente y documentos académicos.",
+    color: "#22c55e",
+    bg: "rgba(34, 197, 94, 0.12)",
+  },
+];
+
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="role-landing">
+      {/* Hero */}
+      <div style={{ textAlign: "center" }}>
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 72,
+            height: 72,
+            borderRadius: 20,
+            background: "#6366f1",
+            fontSize: 32,
+            marginBottom: 20,
+            boxShadow: "0 8px 32px rgba(99,102,241,0.4)",
+          }}
+        >
+          🎓
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <h1
+          style={{
+            fontSize: 36,
+            fontWeight: 800,
+            color: "var(--text-primary)",
+            letterSpacing: "-0.03em",
+            lineHeight: 1.15,
+          }}
+        >
+          Sistema de Tutorías
+        </h1>
+        <p
+          style={{
+            marginTop: 12,
+            fontSize: 16,
+            color: "var(--text-secondary)",
+            maxWidth: 480,
+            margin: "12px auto 0",
+            lineHeight: 1.6,
+          }}
+        >
+          Plataforma integral para el seguimiento académico y gestión de
+          tutorías. Selecciona tu rol para continuar.
+        </p>
+        <div
+          style={{
+            display: "inline-block",
+            marginTop: 16,
+            padding: "4px 14px",
+            borderRadius: 99,
+            background: "rgba(99,102,241,0.12)",
+            color: "#818cf8",
+            fontSize: 12,
+            fontWeight: 600,
+            letterSpacing: "0.06em",
+          }}
+        >
+          MODO DEMO · DATOS FICTICIOS
         </div>
-      </main>
+      </div>
+
+      {/* RoleCards */}
+      <div className="role-cards">
+        {ROLES.map((role) => (
+          <Link key={role.href} href={role.href} className="role-card">
+            <div
+              className="role-card-icon"
+              style={{ background: role.bg, fontSize: 26 }}
+            >
+              {role.icon}
+            </div>
+            <div className="role-card-title">{role.title}</div>
+            <div className="role-card-desc">{role.desc}</div>
+            <div className="role-card-arrow" style={{ color: role.color }}>
+              → Acceder
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* Footer */}
+      <div
+        style={{
+          fontSize: 12,
+          color: "var(--text-muted)",
+          textAlign: "center",
+        }}
+      >
+        Instituto Tecnológico · Sistema de Seguimiento Académico · MVP v0.1
+      </div>
     </div>
   );
 }
