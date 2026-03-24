@@ -7,12 +7,12 @@ const ROLES = [
     icon:  GraduationCap,
     title: "Tutor",
     desc:  "Gestiona tus alumnos, registra sesiones y da seguimiento al riesgo académico.",
-    iconBg:   "bg-indigo-500/15",
-    iconColor:"text-indigo-400",
-    border:   "hover:border-indigo-500/40",
-    glow:     "hover:shadow-indigo-500/10",
-    accent:   "bg-indigo-500",
-    arrowColor: "text-indigo-400",
+    iconBg:   "bg-emerald-600/15",
+    iconColor:"text-emerald-400",
+    border:   "hover:border-emerald-500/40",
+    glow:     "hover:shadow-emerald-500/10",
+    accent:   "bg-emerald-600",
+    arrowColor: "text-emerald-400",
   },
   {
     href:  "/dashboard/admin",
@@ -54,12 +54,12 @@ const ROLES = [
 
 export default function HomePage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-14 bg-[#0f1117] px-6 py-16">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-14 bg-[#0f151c] px-6 py-16">
 
       {/* ── Hero ───────────────────────────────────────────────── */}
       <div className="flex flex-col items-center gap-5 text-center">
         {/* Logo mark */}
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-xl shadow-indigo-500/30">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-emerald-500 to-emerald-700 shadow-xl shadow-emerald-500/30">
           <GraduationCap className="h-8 w-8 text-white" />
         </div>
 
@@ -74,23 +74,23 @@ export default function HomePage() {
         </div>
 
         {/* Demo badge */}
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/8 px-4 py-1.5">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-400" />
-          <span className="text-[11px] font-semibold uppercase tracking-widest text-indigo-400">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-600/8 px-4 py-1.5">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-emerald-400">
             Modo Demo · Datos ficticios
           </span>
         </div>
       </div>
 
       {/* ── Role cards ─────────────────────────────────────────── */}
-      <div className="grid w-full max-w-3xl grid-cols-2 gap-4">
+      <div className="grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
         {ROLES.map((role) => {
           const Icon = role.icon;
           return (
             <Link
               key={role.href}
               href={role.href}
-              className={`group relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-white/[0.06] bg-[#161b27] p-6 transition-all duration-200 ${role.border} hover:shadow-xl ${role.glow}`}
+              className={`group relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-white/6 bg-[#151c24] p-6 transition-all duration-200 ${role.border} hover:shadow-xl ${role.glow}`}
             >
               {/* top accent stripe */}
               <div className={`absolute inset-x-0 top-0 h-0.5 ${role.accent}`} />
