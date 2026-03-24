@@ -1,131 +1,125 @@
 import Link from "next/link";
+import { GraduationCap, Settings, BookOpen, Backpack, ArrowRight } from "lucide-react";
 
 const ROLES = [
   {
-    href: "/dashboard/tutor",
-    icon: "🎓",
+    href:  "/dashboard/tutor",
+    icon:  GraduationCap,
     title: "Tutor",
-    desc: "Gestiona tus alumnos asignados, registra sesiones y da seguimiento al riesgo académico.",
-    color: "#6366f1",
-    bg: "rgba(99, 102, 241, 0.12)",
+    desc:  "Gestiona tus alumnos, registra sesiones y da seguimiento al riesgo académico.",
+    iconBg:   "bg-indigo-500/15",
+    iconColor:"text-indigo-400",
+    border:   "hover:border-indigo-500/40",
+    glow:     "hover:shadow-indigo-500/10",
+    accent:   "bg-indigo-500",
+    arrowColor: "text-indigo-400",
   },
   {
-    href: "/dashboard/admin",
-    icon: "⚙️",
+    href:  "/dashboard/admin",
+    icon:  Settings,
     title: "Administrador",
-    desc: "Visión completa del sistema: padrón de alumnos, carga de tutores y estadísticas globales.",
-    color: "#f59e0b",
-    bg: "rgba(245, 158, 11, 0.12)",
+    desc:  "Visión completa del sistema: padrón, carga de tutores y estadísticas globales.",
+    iconBg:   "bg-amber-500/15",
+    iconColor:"text-amber-400",
+    border:   "hover:border-amber-500/40",
+    glow:     "hover:shadow-amber-500/10",
+    accent:   "bg-amber-500",
+    arrowColor: "text-amber-400",
   },
   {
-    href: "/dashboard/docente",
-    icon: "📚",
+    href:  "/dashboard/docente",
+    icon:  BookOpen,
     title: "Docente",
-    desc: "Consulta el avance de tu grupo, registra calificaciones e identifica alumnos en riesgo.",
-    color: "#ec4899",
-    bg: "rgba(236, 72, 153, 0.12)",
+    desc:  "Consulta el avance de tu grupo, registra calificaciones e identifica alumnos en riesgo.",
+    iconBg:   "bg-pink-500/15",
+    iconColor:"text-pink-400",
+    border:   "hover:border-pink-500/40",
+    glow:     "hover:shadow-pink-500/10",
+    accent:   "bg-pink-500",
+    arrowColor: "text-pink-400",
   },
   {
-    href: "/dashboard/alumno",
-    icon: "🎒",
+    href:  "/dashboard/alumno",
+    icon:  Backpack,
     title: "Alumno",
-    desc: "Revisa tu promedio, historial de tutorías, expediente y documentos académicos.",
-    color: "#22c55e",
-    bg: "rgba(34, 197, 94, 0.12)",
+    desc:  "Revisa tu promedio, historial de tutorías, expediente y documentos académicos.",
+    iconBg:   "bg-emerald-500/15",
+    iconColor:"text-emerald-400",
+    border:   "hover:border-emerald-500/40",
+    glow:     "hover:shadow-emerald-500/10",
+    accent:   "bg-emerald-500",
+    arrowColor: "text-emerald-400",
   },
 ];
 
 export default function HomePage() {
   return (
-    <div className="role-landing">
-      {/* Hero */}
-      <div style={{ textAlign: "center" }}>
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 72,
-            height: 72,
-            borderRadius: 20,
-            background: "#6366f1",
-            fontSize: 32,
-            marginBottom: 20,
-            boxShadow: "0 8px 32px rgba(99,102,241,0.4)",
-          }}
-        >
-          🎓
+    <div className="flex min-h-screen flex-col items-center justify-center gap-14 bg-[#0f1117] px-6 py-16">
+
+      {/* ── Hero ───────────────────────────────────────────────── */}
+      <div className="flex flex-col items-center gap-5 text-center">
+        {/* Logo mark */}
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-xl shadow-indigo-500/30">
+          <GraduationCap className="h-8 w-8 text-white" />
         </div>
-        <h1
-          style={{
-            fontSize: 36,
-            fontWeight: 800,
-            color: "var(--text-primary)",
-            letterSpacing: "-0.03em",
-            lineHeight: 1.15,
-          }}
-        >
-          Sistema de Tutorías
-        </h1>
-        <p
-          style={{
-            marginTop: 12,
-            fontSize: 16,
-            color: "var(--text-secondary)",
-            maxWidth: 480,
-            margin: "12px auto 0",
-            lineHeight: 1.6,
-          }}
-        >
-          Plataforma integral para el seguimiento académico y gestión de
-          tutorías. Selecciona tu rol para continuar.
-        </p>
-        <div
-          style={{
-            display: "inline-block",
-            marginTop: 16,
-            padding: "4px 14px",
-            borderRadius: 99,
-            background: "rgba(99,102,241,0.12)",
-            color: "#818cf8",
-            fontSize: 12,
-            fontWeight: 600,
-            letterSpacing: "0.06em",
-          }}
-        >
-          MODO DEMO · DATOS FICTICIOS
+
+        <div className="flex flex-col gap-2">
+          <h1 className="text-4xl font-extrabold tracking-tight text-white">
+            Sistema de Tutorías
+          </h1>
+          <p className="mx-auto max-w-md text-base text-white/50 leading-relaxed">
+            Plataforma integral para el seguimiento académico y gestión de tutorías.
+            Selecciona tu rol para continuar.
+          </p>
+        </div>
+
+        {/* Demo badge */}
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/8 px-4 py-1.5">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-400" />
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-indigo-400">
+            Modo Demo · Datos ficticios
+          </span>
         </div>
       </div>
 
-      {/* RoleCards */}
-      <div className="role-cards">
-        {ROLES.map((role) => (
-          <Link key={role.href} href={role.href} className="role-card">
-            <div
-              className="role-card-icon"
-              style={{ background: role.bg, fontSize: 26 }}
+      {/* ── Role cards ─────────────────────────────────────────── */}
+      <div className="grid w-full max-w-3xl grid-cols-2 gap-4">
+        {ROLES.map((role) => {
+          const Icon = role.icon;
+          return (
+            <Link
+              key={role.href}
+              href={role.href}
+              className={`group relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-white/[0.06] bg-[#161b27] p-6 transition-all duration-200 ${role.border} hover:shadow-xl ${role.glow}`}
             >
-              {role.icon}
-            </div>
-            <div className="role-card-title">{role.title}</div>
-            <div className="role-card-desc">{role.desc}</div>
-            <div className="role-card-arrow" style={{ color: role.color }}>
-              → Acceder
-            </div>
-          </Link>
-        ))}
+              {/* top accent stripe */}
+              <div className={`absolute inset-x-0 top-0 h-0.5 ${role.accent}`} />
+
+              {/* icon */}
+              <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${role.iconBg}`}>
+                <Icon className={`h-5 w-5 ${role.iconColor}`} />
+              </div>
+
+              {/* text */}
+              <div className="flex flex-col gap-1.5">
+                <p className="text-base font-bold text-white">{role.title}</p>
+                <p className="text-sm leading-relaxed text-white/45">{role.desc}</p>
+              </div>
+
+              {/* arrow */}
+              <div className={`flex items-center gap-1.5 text-xs font-semibold ${role.arrowColor} transition-all group-hover:gap-2.5`}>
+                Acceder al panel
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              </div>
+            </Link>
+          );
+        })}
       </div>
 
-      {/* Footer */}
-      <div
-        style={{
-          fontSize: 12,
-          color: "var(--text-muted)",
-          textAlign: "center",
-        }}
-      >
+      {/* ── Footer ─────────────────────────────────────────────── */}
+      <p className="text-xs text-white/20">
         Instituto Tecnológico · Sistema de Seguimiento Académico · MVP v0.1
-      </div>
+      </p>
     </div>
   );
 }

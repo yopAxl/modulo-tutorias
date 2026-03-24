@@ -1,240 +1,195 @@
 import Sidebar from "@/app/_components/Sidebar";
+import { StatCard } from "@/app/_components/StatCard";
 import { ALUMNOS, TUTORES, SESIONES, gpaClass, type RiesgoNivel } from "@/app/_lib/mock-data";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Users, GraduationCap, ClipboardList, TrendingUp, ChevronRight, Plus, Download } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { icon: "📊", label: "Dashboard", href: "/dashboard/admin" },
-  { icon: "👥", label: "Usuarios", href: "/dashboard/admin/usuarios" },
-  { icon: "🎓", label: "Tutores", href: "/dashboard/admin/tutores" },
-  { icon: "📋", label: "Sesiones", href: "/dashboard/admin/sesiones" },
-  { icon: "📈", label: "Reportes", href: "/dashboard/admin/reportes" },
+  { icon: "📊", label: "Dashboard",     href: "/dashboard/admin" },
+  { icon: "👥", label: "Usuarios",      href: "/dashboard/admin/usuarios" },
+  { icon: "🎓", label: "Tutores",       href: "/dashboard/admin/tutores" },
+  { icon: "📋", label: "Sesiones",      href: "/dashboard/admin/sesiones" },
+  { icon: "📈", label: "Reportes",      href: "/dashboard/admin/reportes" },
   { icon: "⚙️", label: "Configuración", href: "/dashboard/admin/config" },
 ];
 
-function riskBadge(riesgo: RiesgoNivel) {
-  const dot = riesgo === "Alto" ? "🔴" : riesgo === "Medio" ? "🟡" : "🟢";
+function RiskBadge({ riesgo }: { riesgo: RiesgoNivel }) {
+  const map = {
+    Alto:  "bg-red-500/10 text-red-400 border-red-500/20",
+    Medio: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    Bajo:  "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  } as const;
   return (
-    <span className={`risk-badge ${riesgo.toLowerCase()}`}>
-      {dot} {riesgo}
+    <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", map[riesgo])}>
+      {riesgo}
     </span>
   );
 }
 
-export default function AdminDashboard() {
-  const totalAlumnos = ALUMNOS.length;
-  const totalTutores = TUTORES.length;
-  const totalSesiones = SESIONES.length;
-  const alumnosAlto = ALUMNOS.filter((a) => a.riesgo === "Alto").length;
-  const alumnosMedio = ALUMNOS.filter((a) => a.riesgo === "Medio").length;
-  const alumnosBajo = ALUMNOS.filter((a) => a.riesgo === "Bajo").length;
+function SectionCard({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={cn("rounded-xl border border-white/[0.06] bg-[#161b27]", className)}>{children}</div>
+  );
+}
 
-  const promedioGeneral = (
-    ALUMNOS.reduce((sum, a) => sum + a.promedio, 0) / totalAlumnos
-  ).toFixed(1);
+export default function AdminDashboard() {
+  const total   = ALUMNOS.length;
+  const alto    = ALUMNOS.filter((a) => a.riesgo === "Alto").length;
+  const medio   = ALUMNOS.filter((a) => a.riesgo === "Medio").length;
+  const bajo    = ALUMNOS.filter((a) => a.riesgo === "Bajo").length;
+  const promedio = (ALUMNOS.reduce((s, a) => s + a.promedio, 0) / total).toFixed(1);
 
   return (
-    <div className="dashboard-shell">
+    <div className="flex h-screen overflow-hidden bg-[#0f1117]">
       <Sidebar role="Administrador" userName="Admin General" navItems={NAV_ITEMS} />
 
-      <main className="main-content">
+      <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-8">
         {/* Header */}
-        <div className="page-header">
+        <div className="flex items-start justify-between">
           <div>
-            <h1 className="page-title">Panel de Administración</h1>
-            <p className="page-subtitle">
-              Visión general del sistema de tutorías. Marzo 2026.
-            </p>
+            <h1 className="text-xl font-bold text-white">Panel de Administración</h1>
+            <p className="mt-0.5 text-sm text-white/50">Visión general del sistema · Marzo 2026</p>
           </div>
-          <div style={{ display: "flex", gap: "10px" }}>
-            <a href="#" className="btn btn-ghost">⬇ Exportar reporte</a>
-            <a href="#" className="btn btn-primary">＋ Nuevo usuario</a>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="gap-2 border-white/10 bg-white/[0.04] text-white/60 hover:bg-white/[0.08] hover:text-white">
+              <Download className="h-3.5 w-3.5" /> Exportar
+            </Button>
+            <Button size="sm" className="gap-2 bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-500">
+              <Plus className="h-4 w-4" /> Nuevo usuario
+            </Button>
           </div>
         </div>
 
         {/* KPIs */}
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-card-header">
-              <span className="stat-card-label">Total alumnos</span>
-              <div className="stat-card-icon" style={{ background: "rgba(99,102,241,0.15)", color: "#818cf8" }}>👥</div>
-            </div>
-            <div className="stat-card-value">{totalAlumnos}</div>
-            <div className="stat-card-trend trend-up">↑ Inscritos este cuatrimestre</div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-card-header">
-              <span className="stat-card-label">Tutores activos</span>
-              <div className="stat-card-icon" style={{ background: "rgba(99,102,241,0.15)", color: "#818cf8" }}>🎓</div>
-            </div>
-            <div className="stat-card-value">{totalTutores}</div>
-            <div className="stat-card-trend" style={{ color: "#94a3b8" }}>Asignados al período actual</div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-card-header">
-              <span className="stat-card-label">Sesiones registradas</span>
-              <div className="stat-card-icon" style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e" }}>📋</div>
-            </div>
-            <div className="stat-card-value">{totalSesiones}</div>
-            <div className="stat-card-trend trend-up">↑ Este mes</div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-card-header">
-              <span className="stat-card-label">Promedio general</span>
-              <div className="stat-card-icon" style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b" }}>📈</div>
-            </div>
-            <div className="stat-card-value">{promedioGeneral}</div>
-            <div className="stat-card-trend trend-up">↑ +0.3 vs cuatrimestre anterior</div>
-          </div>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatCard label="Total alumnos"        value={total}          sub="↑ Inscritos este cuatrimestre" subColor="text-emerald-400" icon={Users}         accent="indigo" />
+          <StatCard label="Tutores activos"       value={TUTORES.length} sub="Asignados este período"                                   icon={GraduationCap} accent="indigo" />
+          <StatCard label="Sesiones registradas"  value={SESIONES.length} sub="↑ Este mes"                 subColor="text-emerald-400" icon={ClipboardList} accent="green"  />
+          <StatCard label="Promedio general"      value={promedio}       sub="↑ +0.3 vs cuatrimestre anterior" subColor="text-emerald-400" icon={TrendingUp} accent="amber"  />
         </div>
 
-        {/* Grid 2 cols */}
-        <div className="grid-2">
+        {/* Grid: distribución + carga */}
+        <div className="grid grid-cols-2 gap-4">
           {/* Distribución de riesgo */}
-          <div className="card">
-            <div className="card-header">
-              <span className="card-title">📊 Distribución por nivel de riesgo</span>
+          <SectionCard>
+            <div className="border-b border-white/[0.06] px-5 py-4">
+              <p className="text-sm font-semibold text-white">Distribución por riesgo académico</p>
+              <p className="text-xs text-white/40">{total} alumnos en el sistema</p>
             </div>
-            <div className="card-body" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <div>
-                <div className="progress-bar-wrap">
-                  <span className="progress-bar-label" style={{ color: "var(--danger)" }}>🔴 Alto</span>
-                  <div className="progress-bar-track">
-                    <div
-                      className="progress-bar-fill"
-                      style={{
-                        width: `${(alumnosAlto / totalAlumnos) * 100}%`,
-                        background: "var(--danger)",
-                      }}
-                    />
+            <div className="px-5 py-4 space-y-3">
+              {[
+                { label: "Alto",  count: alto,  barColor: "bg-red-500",     textColor: "text-red-400" },
+                { label: "Medio", count: medio, barColor: "bg-amber-500",   textColor: "text-amber-400" },
+                { label: "Bajo",  count: bajo,  barColor: "bg-emerald-500", textColor: "text-emerald-400" },
+              ].map(({ label, count, barColor, textColor }) => (
+                <div key={label} className="flex items-center gap-3">
+                  <span className={cn("w-10 text-xs font-semibold", textColor)}>{label}</span>
+                  <div className="flex-1 rounded-full bg-white/[0.06] overflow-hidden h-1.5">
+                    <div className={cn("h-full rounded-full transition-all", barColor)} style={{ width: `${(count / total) * 100}%` }} />
                   </div>
-                  <span className="progress-bar-count">{alumnosAlto}</span>
+                  <span className="w-5 text-right text-sm font-bold text-white">{count}</span>
                 </div>
-                <div className="progress-bar-wrap">
-                  <span className="progress-bar-label" style={{ color: "var(--warning)" }}>🟡 Medio</span>
-                  <div className="progress-bar-track">
-                    <div
-                      className="progress-bar-fill"
-                      style={{
-                        width: `${(alumnosMedio / totalAlumnos) * 100}%`,
-                        background: "var(--warning)",
-                      }}
-                    />
+              ))}
+              <div className="mt-4 grid grid-cols-3 gap-3 pt-2">
+                {[
+                  { label: "Riesgo Alto",  count: alto,  cls: "border-red-500/20 bg-red-500/[0.08] text-red-400" },
+                  { label: "Riesgo Medio", count: medio, cls: "border-amber-500/20 bg-amber-500/[0.08] text-amber-400" },
+                  { label: "Sin riesgo",   count: bajo,  cls: "border-emerald-500/20 bg-emerald-500/[0.08] text-emerald-400" },
+                ].map(({ label, count, cls }) => (
+                  <div key={label} className={cn("rounded-lg border p-3 text-center", cls)}>
+                    <p className="text-2xl font-extrabold leading-none">{count}</p>
+                    <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-wider opacity-70">{label}</p>
                   </div>
-                  <span className="progress-bar-count">{alumnosMedio}</span>
-                </div>
-                <div className="progress-bar-wrap">
-                  <span className="progress-bar-label" style={{ color: "var(--success)" }}>🟢 Bajo</span>
-                  <div className="progress-bar-track">
-                    <div
-                      className="progress-bar-fill"
-                      style={{
-                        width: `${(alumnosBajo / totalAlumnos) * 100}%`,
-                        background: "var(--success)",
-                      }}
-                    />
-                  </div>
-                  <span className="progress-bar-count">{alumnosBajo}</span>
-                </div>
-              </div>
-
-              {/* Summary numbers */}
-              <div style={{ display: "flex", gap: "12px", marginTop: "8px" }}>
-                <div style={{ flex: 1, textAlign: "center", padding: "14px", borderRadius: "var(--radius-sm)", background: "var(--danger-dim)" }}>
-                  <div style={{ fontSize: "24px", fontWeight: 800, color: "var(--danger)" }}>{alumnosAlto}</div>
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>Riesgo Alto</div>
-                </div>
-                <div style={{ flex: 1, textAlign: "center", padding: "14px", borderRadius: "var(--radius-sm)", background: "var(--warning-dim)" }}>
-                  <div style={{ fontSize: "24px", fontWeight: 800, color: "var(--warning)" }}>{alumnosMedio}</div>
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>Riesgo Medio</div>
-                </div>
-                <div style={{ flex: 1, textAlign: "center", padding: "14px", borderRadius: "var(--radius-sm)", background: "var(--success-dim)" }}>
-                  <div style={{ fontSize: "24px", fontWeight: 800, color: "var(--success)" }}>{alumnosBajo}</div>
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>Sin riesgo</div>
-                </div>
+                ))}
               </div>
             </div>
-          </div>
+          </SectionCard>
 
-          {/* Carga de tutores */}
-          <div className="card">
-            <div className="card-header">
-              <span className="card-title">🎓 Carga por tutor</span>
+          {/* Carga por tutor */}
+          <SectionCard>
+            <div className="border-b border-white/[0.06] px-5 py-4">
+              <p className="text-sm font-semibold text-white">Carga de trabajo por tutor</p>
+              <p className="text-xs text-white/40">{TUTORES.length} tutores activos este cuatrimestre</p>
             </div>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Tutor</th>
-                  <th>Alumnos</th>
-                  <th>Sesiones</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/[0.06] hover:bg-transparent">
+                  {["Tutor", "Alumnos", "Sesiones"].map((h) => (
+                    <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {TUTORES.map((t) => (
-                  <tr key={t.id}>
-                    <td>
-                      <div className="name">{t.nombre.split(" ").slice(0, 3).join(" ")}</div>
-                      <div className="sub">{t.departamento}</div>
-                    </td>
-                    <td>
-                      <span className="gpa-pill gpa-mid" style={{ minWidth: "36px" }}>
+                  <TableRow key={t.id} className="border-white/[0.04] hover:bg-white/[0.03]">
+                    <TableCell>
+                      <p className="text-sm font-medium text-white/90">{t.nombre.split(" ").slice(0, 3).join(" ")}</p>
+                      <p className="text-xs text-white/35">{t.departamento}</p>
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-flex min-w-[2rem] items-center justify-center rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2 py-0.5 text-xs font-bold text-indigo-400">
                         {t.alumnosAsignados}
                       </span>
-                    </td>
-                    <td style={{ color: "var(--text-primary)", fontWeight: 600 }}>{t.sesionesEsteCorte}</td>
-                  </tr>
+                    </TableCell>
+                    <TableCell className="font-semibold text-white/80">{t.sesionesEsteCorte}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </SectionCard>
         </div>
 
-        {/* Alumnos table full */}
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">👥 Padrón de alumnos</span>
-            <a href="#" className="card-action">Gestionar →</a>
+        {/* Padrón de alumnos */}
+        <SectionCard>
+          <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
+            <div>
+              <p className="text-sm font-semibold text-white">Padrón de alumnos</p>
+              <p className="text-xs text-white/40">{total} alumnos registrados</p>
+            </div>
+            <button className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300">
+              Gestionar <ChevronRight className="h-3 w-3" />
+            </button>
           </div>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Alumno</th>
-                <th>Matrícula</th>
-                <th>Carrera</th>
-                <th>Cuatr.</th>
-                <th>Promedio</th>
-                <th>Riesgo</th>
-                <th>Tutor asignado</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow className="border-white/[0.06] hover:bg-transparent">
+                {["Alumno", "Matrícula", "Carrera", "Cuatr.", "Promedio", "Riesgo", "Tutor"].map((h) => (
+                  <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {ALUMNOS.map((a) => {
                 const tutor = TUTORES.find((t) => t.id === a.tutorId);
+                const gpc   = gpaClass(a.promedio);
                 return (
-                  <tr key={a.id}>
-                    <td>
-                      <div className="name">{a.nombre}</div>
-                      <div className="sub">{a.correo}</div>
-                    </td>
-                    <td style={{ color: "var(--text-primary)", fontFamily: "monospace" }}>{a.matricula}</td>
-                    <td>{a.carrera}</td>
-                    <td style={{ color: "var(--text-primary)" }}>{a.cuatrimestre}°</td>
-                    <td>
-                      <span className={`gpa-pill ${gpaClass(a.promedio)}`}>{a.promedio.toFixed(1)}</span>
-                    </td>
-                    <td>{riskBadge(a.riesgo)}</td>
-                    <td>
-                      <div className="sub">
-                        {tutor?.nombre.split(" ").slice(0, 3).join(" ") ?? "—"}
-                      </div>
-                    </td>
-                  </tr>
+                  <TableRow key={a.id} className="border-white/[0.04] hover:bg-white/[0.03]">
+                    <TableCell>
+                      <p className="text-sm font-medium text-white/90">{a.nombre}</p>
+                      <p className="text-xs text-white/35">{a.correo}</p>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-white/50">{a.matricula}</TableCell>
+                    <TableCell className="text-sm text-white/60">{a.carrera}</TableCell>
+                    <TableCell className="text-sm text-white/60">{a.cuatrimestre}°</TableCell>
+                    <TableCell>
+                      <span className={cn("inline-flex min-w-[2.5rem] items-center justify-center rounded-full px-2 py-0.5 text-xs font-bold",{
+                        "bg-emerald-500/12 text-emerald-400": gpc === "gpa-high",
+                        "bg-amber-500/12 text-amber-400":     gpc === "gpa-mid",
+                        "bg-red-500/12 text-red-400":         gpc === "gpa-low",
+                      })}>
+                        {a.promedio.toFixed(1)}
+                      </span>
+                    </TableCell>
+                    <TableCell><RiskBadge riesgo={a.riesgo} /></TableCell>
+                    <TableCell className="text-xs text-white/40">{tutor?.nombre.split(" ").slice(0, 3).join(" ") ?? "—"}</TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </SectionCard>
       </main>
     </div>
   );
