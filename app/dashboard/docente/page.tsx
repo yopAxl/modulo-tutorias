@@ -12,7 +12,6 @@ const NAV_ITEMS = [
   { icon: "📊", label: "Dashboard", href: "/dashboard/docente" },
   { icon: "👥", label: "Mi grupo", href: "/dashboard/docente/grupo" },
   { icon: "📝", label: "Calificaciones", href: "/dashboard/docente/calificaciones" },
-  { icon: "📋", label: "Asistencias", href: "/dashboard/docente/asistencias" },
   { icon: "📁", label: "Reportes", href: "/dashboard/docente/reportes" },
 ];
 

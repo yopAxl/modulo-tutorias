@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GraduationCap, Settings, BookOpen, Backpack, ArrowRight } from "lucide-react";
+import { GraduationCap, Settings, BookOpen, Backpack, ArrowRight, LogIn } from "lucide-react";
 
 const ROLES = [
   {
@@ -80,6 +80,16 @@ export default function HomePage() {
             Modo Demo · Datos ficticios
           </span>
         </div>
+
+        {/* Login button */}
+        <Link
+          href="/login"
+          className="group inline-flex items-center gap-2.5 rounded-xl border border-emerald-500/25 bg-emerald-600/10 px-6 py-3 text-sm font-semibold text-emerald-400 transition-all duration-200 hover:border-emerald-500/50 hover:bg-emerald-600/20 hover:shadow-lg hover:shadow-emerald-500/10"
+        >
+          <LogIn className="h-4 w-4" />
+          Iniciar sesión
+          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+        </Link>
       </div>
 
       {/* ── Role cards ─────────────────────────────────────────── */}

@@ -43,3 +43,13 @@ body {
 .gpa-high { background: rgba(34,197,94,0.12); color: #22c55e; }
 .gpa-mid  { background: rgba(245,158,11,0.12); color: #f59e0b; }
 .gpa-low  { background: rgba(239,68,68,0.12);  color: #ef4444; }
+
+/* Fix native select/option dropdown in dark mode */
+select option {
+  background-color: #1a2230;
+  color: #e2e8f0;
+}
+select option:checked {
+  background-color: #10b981;
+  color: #fff;
+}

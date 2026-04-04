@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Users, GraduationCap, ClipboardList, TrendingUp, ChevronRight, Plus, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 const NAV_ITEMS = [
   { icon: "📊", label: "Dashboard", href: "/dashboard/admin" },
@@ -12,6 +13,8 @@ const NAV_ITEMS = [
   { icon: "🎓", label: "Tutores", href: "/dashboard/admin/tutores" },
   { icon: "📋", label: "Sesiones", href: "/dashboard/admin/sesiones" },
   { icon: "📈", label: "Reportes", href: "/dashboard/admin/reportes" },
+  { icon: "📁", label: "Respaldos", href: "/dashboard/admin/respaldos" },
+  { icon: "📚", label: "Auditoría", href: "/dashboard/admin/audit" },
   { icon: "⚙️", label: "Configuración", href: "/dashboard/admin/config" },
 ];
 
