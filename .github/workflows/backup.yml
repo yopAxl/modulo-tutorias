@@ -1,0 +1,26 @@
+name: Respaldo Automático de Base de Datos
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Se ejecuta automáticamente todos los días a la medianoche
+  workflow_dispatch: # Permite ejecutarlo manualmente con un botón en GitHub
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instalar cliente de PostgreSQL
+        run: sudo apt-get install -y postgresql-client
+
+      - name: Generar respaldo con pg_dump
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          pg_dump $DATABASE_URL > backup_$(date +\%F).sql
+
+      - name: Guardar respaldo en GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: respaldo-bd
+          path: backup_*.sql
+          retention-days: 7
