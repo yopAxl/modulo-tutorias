@@ -3,6 +3,7 @@
 import Sidebar from "@/app/_components/Sidebar";
 import { StatCard } from "@/app/_components/StatCard";
 import { ALUMNOS, TUTORES, SESIONES, gpaClass, type RiesgoNivel } from "@/app/_lib/mock-data";
+import { CreateUserModal } from "./_components/CreateUserModal";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Users, GraduationCap, ClipboardList, TrendingUp, ChevronRight, Plus, Download } from "lucide-react";
@@ -61,9 +62,7 @@ export default function AdminDashboard() {
             <Button variant="outline" size="sm" className="gap-2 border-white/10 bg-white/4 text-white/60 hover:bg-white/8 hover:text-white">
               <Download className="h-3.5 w-3.5" /> Exportar
             </Button>
-            <Button size="sm" className="gap-2 bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-600">
-              <Plus className="h-4 w-4" /> Nuevo usuario
-            </Button>
+            <CreateUserModal />
           </div>
         </div>
 
