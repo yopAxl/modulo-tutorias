@@ -4,7 +4,7 @@ import { AuthGuard } from "@/app/_components/AuthGuard";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <AuthGuard allowedRoles={["rol_administrador"]}>
+    <AuthGuard allowedRoles={["administrador"]}>
       {children}
     </AuthGuard>
   );

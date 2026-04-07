@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { GraduationCap, Lock, Eye, EyeOff, ArrowLeft, CheckCircle2, AlertCircle, ShieldCheck } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 export default function RestablecerContrasenaPage() {
   const router = useRouter();
@@ -38,24 +39,26 @@ export default function RestablecerContrasenaPage() {
     return Object.keys(e).length === 0;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     if (!validate()) return;
 
     setLoading(true);
 
-    // ── Mock: Aquí iría supabase.auth.updateUser({ password }) ──
-    // En producción con Supabase:
-    // const { error } = await supabase.auth.updateUser({ password });
-    // if (error) { setError(error.message); setLoading(false); return; }
+    const supabase = createClient();
+    const { error: updateError } = await supabase.auth.updateUser({ password });
 
-    setTimeout(() => {
-      setSuccess(true);
+    if (updateError) {
+      setError(updateError.message);
       setLoading(false);
-      // Redirect to login after 3s
-      setTimeout(() => router.push("/login"), 3000);
-    }, 1000);
+      return;
+    }
+
+    setSuccess(true);
+    setLoading(false);
+    // Redirect to login after 3s
+    setTimeout(() => router.push("/login"), 3000);
   }
 
   return (

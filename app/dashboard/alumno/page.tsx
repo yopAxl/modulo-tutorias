@@ -1,3 +1,5 @@
+"use client";
+
 import Sidebar from "@/app/_components/Sidebar";
 import { StatCard } from "@/app/_components/StatCard";
 import { ALUMNOS, SESIONES, formatFecha, gpaClass } from "@/app/_lib/mock-data";
@@ -7,7 +9,14 @@ import { BarChart3, CalendarDays, AlertTriangle, FolderOpen, Download, Clock, Ca
 import { cn } from "@/lib/utils";
 
 const ALUMNO_ID = "a1";
-const alumno = ALUMNOS.find((a) => a.id === ALUMNO_ID)!;
+const FallbackAlumno = {
+  id: "a1", matricula: "—", nombre: "Alumno (Sin datos)",
+  genero: "M", carrera: "—", grupo: "—", cuatrimestre: 1,
+  promedio: 0, riesgo: "Bajo" as const,
+  correo: "—", telefono: "—",
+  tutorId: "t1", docenteId: "d1", activo: true,
+};
+const alumno = ALUMNOS.find((a) => a.id === ALUMNO_ID) || FallbackAlumno;
 const mySesiones = SESIONES.filter((s) => s.alumnoId === ALUMNO_ID);
 
 const NAV_ITEMS = [

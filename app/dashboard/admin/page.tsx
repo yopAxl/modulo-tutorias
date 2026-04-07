@@ -1,3 +1,5 @@
+"use client";
+
 import Sidebar from "@/app/_components/Sidebar";
 import { StatCard } from "@/app/_components/StatCard";
 import { ALUMNOS, TUTORES, SESIONES, gpaClass, type RiesgoNivel } from "@/app/_lib/mock-data";
@@ -25,7 +27,7 @@ function RiskBadge({ riesgo }: { riesgo: RiesgoNivel }) {
     Bajo: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   } as const;
   return (
-    <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", map[riesgo])}>
+    <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", map[riesgo] || "bg-gray-500/10 text-gray-400")}>
       {riesgo}
     </span>
   );
@@ -42,7 +44,7 @@ export default function AdminDashboard() {
   const alto = ALUMNOS.filter((a) => a.riesgo === "Alto").length;
   const medio = ALUMNOS.filter((a) => a.riesgo === "Medio").length;
   const bajo = ALUMNOS.filter((a) => a.riesgo === "Bajo").length;
-  const promedio = (ALUMNOS.reduce((s, a) => s + a.promedio, 0) / total).toFixed(1);
+  const promedio = total > 0 ? (ALUMNOS.reduce((s, a) => s + a.promedio, 0) / total).toFixed(1) : "—";
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#0f151c]">
@@ -90,7 +92,7 @@ export default function AdminDashboard() {
                 <div key={label} className="flex items-center gap-3">
                   <span className={cn("w-10 text-xs font-semibold", textColor)}>{label}</span>
                   <div className="flex-1 rounded-full bg-white/6 overflow-hidden h-1.5">
-                    <div className={cn("h-full rounded-full transition-all", barColor)} style={{ width: `${(count / total) * 100}%` }} />
+                    <div className={cn("h-full rounded-full transition-all", barColor)} style={{ width: total > 0 ? `${(count / total) * 100}%` : "0%" }} />
                   </div>
                   <span className="w-5 text-right text-sm font-bold text-white">{count}</span>
                 </div>
@@ -125,7 +127,7 @@ export default function AdminDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {TUTORES.map((t) => (
+                {TUTORES.length > 0 ? TUTORES.map((t) => (
                   <TableRow key={t.id} className="border-white/4 hover:bg-white/3">
                     <TableCell>
                       <p className="text-sm font-medium text-white/90">{t.nombre.split(" ").slice(0, 3).join(" ")}</p>
@@ -138,7 +140,11 @@ export default function AdminDashboard() {
                     </TableCell>
                     <TableCell className="font-semibold text-white/80">{t.sesionesEsteCorte}</TableCell>
                   </TableRow>
-                ))}
+                )) : (
+                  <TableRow className="border-white/4 hover:bg-white/3">
+                    <TableCell colSpan={3} className="text-center py-6 text-sm text-white/40">No hay tutores registrados.</TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </SectionCard>
@@ -164,7 +170,7 @@ export default function AdminDashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {ALUMNOS.map((a) => {
+              {ALUMNOS.length > 0 ? ALUMNOS.map((a) => {
                 const tutor = TUTORES.find((t) => t.id === a.tutorId);
                 const gpc = gpaClass(a.promedio);
                 return (
@@ -189,7 +195,11 @@ export default function AdminDashboard() {
                     <TableCell className="text-xs text-white/40">{tutor?.nombre.split(" ").slice(0, 3).join(" ") ?? "—"}</TableCell>
                   </TableRow>
                 );
-              })}
+              }) : (
+                 <TableRow className="border-white/4 hover:bg-white/3">
+                    <TableCell colSpan={7} className="text-center py-6 text-sm text-white/40">No hay alumnos registrados.</TableCell>
+                  </TableRow>
+              )}
             </TableBody>
           </Table>
         </SectionCard>

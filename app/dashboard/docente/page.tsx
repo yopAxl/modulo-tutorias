@@ -1,3 +1,5 @@
+"use client";
+
 import Sidebar from "@/app/_components/Sidebar";
 import { StatCard } from "@/app/_components/StatCard";
 import { getAlumnosByDocente, gpaClass, type RiesgoNivel } from "@/app/_lib/mock-data";
@@ -21,7 +23,7 @@ function RiskBadge({ riesgo }: { riesgo: RiesgoNivel }) {
     Medio: "bg-amber-500/10 text-amber-400 border-amber-500/20",
     Bajo: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   } as const;
-  return <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", map[riesgo])}>{riesgo}</span>;
+  return <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", map[riesgo] || "bg-gray-500/10 text-gray-400")}>{riesgo}</span>;
 }
 
 function SectionCard({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -39,9 +41,9 @@ const CALIFICACIONES = [
 export default function DocenteDashboard() {
   const alumnos = getAlumnosByDocente(DOCENTE_ID);
   const total = alumnos.length;
-  const promedio = (alumnos.reduce((s, a) => s + a.promedio, 0) / total).toFixed(1);
+  const promedio = total > 0 ? (alumnos.reduce((s, a) => s + a.promedio, 0) / total).toFixed(1) : "—";
   const enRiesgo = alumnos.filter((a) => a.riesgo !== "Bajo").length;
-  const aprobacion = ((alumnos.filter((a) => a.promedio >= 7).length / total) * 100).toFixed(0);
+  const aprobacion = total > 0 ? ((alumnos.filter((a) => a.promedio >= 7).length / total) * 100).toFixed(0) : "0";
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#0f151c]">

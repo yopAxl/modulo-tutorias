@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { GraduationCap, Mail, Lock, Eye, EyeOff, AlertCircle, ArrowRight, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { login, isValidEmail, isValidPassword, DEMO_USERS, getRolLabel } from "@/app/_lib/auth";
+import { createClient } from "@/lib/supabase/client";
+import { getUserRole, getDashboardPath } from "@/app/_lib/auth-utils";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,36 +14,57 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showCredentials, setShowCredentials] = useState(false);
 
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   function validate() {
     const e: typeof errors = {};
     if (!email) e.email = "El correo es requerido";
-    else if (!isValidEmail(email)) e.email = "Formato de correo inválido";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Formato de correo inválido";
     if (!password) e.password = "La contraseña es requerida";
-    else if (!isValidPassword(password)) e.password = "Mínimo 6 caracteres";
+    else if (password.length < 6) e.password = "Mínimo 6 caracteres";
     setErrors(e);
     return Object.keys(e).length === 0;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     if (!validate()) return;
 
     setLoading(true);
-    // Simulated delay
-    setTimeout(() => {
-      const result = login(email, password);
-      if (result.success && result.user) {
-        router.push(result.user.dashboardPath);
-      } else {
-        setError(result.error ?? "Error desconocido");
-        setLoading(false);
-      }
-    }, 600);
+
+    const supabase = createClient();
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (authError) {
+      setError(authError.message === "Invalid login credentials"
+        ? "Correo o contraseña incorrectos"
+        : authError.message
+      );
+      setLoading(false);
+      return;
+    }
+
+    // Obtener usuario interno y la sesión para poder decodificar token
+    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
+    const role = getUserRole(user, session);
+
+    if (!role) {
+      // Usuario autenticado pero sin rol asignado
+      await supabase.auth.signOut();
+      setError("Tu cuenta no tiene un rol asignado. Contacta al administrador del sistema.");
+      setLoading(false);
+      return;
+    }
+
+    // Redirigir al dashboard correspondiente al rol
+    router.push(getDashboardPath(role));
+    router.refresh();
   }
 
   return (
@@ -147,42 +169,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-          {/* Divider */}
-          <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-white/6" />
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-white/20">Demo</span>
-            <div className="h-px flex-1 bg-white/6" />
-          </div>
-
-          {/* Demo credentials toggle */}
-          <button
-            onClick={() => setShowCredentials(!showCredentials)}
-            className="w-full rounded-lg border border-white/6 bg-white/3 px-4 py-2.5 text-xs font-medium text-white/50 transition-colors hover:bg-white/6 hover:text-white/70"
-          >
-            {showCredentials ? "Ocultar credenciales demo" : "Ver credenciales demo"}
-          </button>
-
-          {showCredentials && (
-            <div className="mt-3 flex flex-col gap-2">
-              {DEMO_USERS.map((u) => (
-                <button
-                  key={u.id}
-                  type="button"
-                  onClick={() => { setEmail(u.email); setPassword(u.password); setErrors({}); setError(""); }}
-                  className="flex items-center justify-between rounded-lg border border-white/5 bg-white/2 px-3 py-2.5 text-left transition-colors hover:border-emerald-500/20 hover:bg-emerald-600/5"
-                >
-                  <div>
-                    <p className="text-xs font-semibold text-white/80">{u.nombre}</p>
-                    <p className="text-[11px] text-white/35">{u.email}</p>
-                  </div>
-                  <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-white/40">
-                    {getRolLabel(u.role)}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Back to home */}

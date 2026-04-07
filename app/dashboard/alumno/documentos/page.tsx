@@ -10,8 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Upload, Download, FileText, X, Plus } from "lucide-react";
 
+const FallbackAlumno = {
+  id: "a1", matricula: "—", nombre: "Alumno (Sin datos)",
+  genero: "M", carrera: "—", grupo: "—", cuatrimestre: 1,
+  promedio: 0, riesgo: "Bajo" as const,
+  correo: "—", telefono: "—",
+  tutorId: "t1", docenteId: "d1", activo: true,
+};
 const ALUMNO_ID = "a1";
-const alumno = ALUMNOS.find((a) => a.id === ALUMNO_ID)!;
+const alumno = ALUMNOS.find((a) => a.id === ALUMNO_ID) || FallbackAlumno;
 const documentos = getDocumentosByAlumno(ALUMNO_ID, true); // solo visibles
 
 const NAV_ITEMS = [

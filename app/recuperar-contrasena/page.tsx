@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { GraduationCap, Mail, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle } from "lucide-react";
-import { isValidEmail, DEMO_USERS } from "@/app/_lib/auth";
+import { createClient } from "@/lib/supabase/client";
 
 export default function RecuperarContrasenaPage() {
   const [email, setEmail] = useState("");
@@ -11,7 +11,11 @@ export default function RecuperarContrasenaPage() {
   const [enviado, setEnviado] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  function isValidEmail(e: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
@@ -19,17 +23,21 @@ export default function RecuperarContrasenaPage() {
     if (!isValidEmail(email)) { setError("Formato de correo inválido"); return; }
 
     setLoading(true);
-    // Simulación de envío
-    setTimeout(() => {
-      const exists = DEMO_USERS.some((u) => u.email === email);
-      if (!exists) {
-        setError("No se encontró una cuenta con ese correo");
-        setLoading(false);
-        return;
-      }
-      setEnviado(true);
+
+    const supabase = createClient();
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/restablecer-contrasena`,
+    });
+
+    if (resetError) {
+      setError(resetError.message);
       setLoading(false);
-    }, 1000);
+      return;
+    }
+
+    // Supabase siempre responde éxito por seguridad (no revela si existe el correo)
+    setEnviado(true);
+    setLoading(false);
   }
 
   return (
@@ -114,7 +122,7 @@ export default function RecuperarContrasenaPage() {
               <div>
                 <p className="text-lg font-bold text-white">¡Correo enviado!</p>
                 <p className="mt-1 text-sm text-white/50">
-                  Hemos enviado las instrucciones de recuperación a:
+                  Si existe una cuenta con ese correo, recibirás las instrucciones en:
                 </p>
                 <p className="mt-1 text-sm font-semibold text-emerald-400">{email}</p>
               </div>

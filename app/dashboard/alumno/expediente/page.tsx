@@ -1,3 +1,5 @@
+"use client";
+
 import Sidebar from "@/app/_components/Sidebar";
 import { PageHeader } from "@/app/_components/PageHeader";
 import { SectionCard } from "@/app/_components/SectionCard";
@@ -11,8 +13,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { CheckCircle2, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const FallbackAlumno = {
+  id: "a1", matricula: "—", nombre: "Alumno (Sin datos)",
+  genero: "M", carrera: "—", grupo: "—", cuatrimestre: 1,
+  promedio: 0, riesgo: "Bajo" as const,
+  correo: "—", telefono: "—",
+  tutorId: "t1", docenteId: "d1", activo: true,
+};
 const ALUMNO_ID = "a1";
-const alumno = ALUMNOS.find((a) => a.id === ALUMNO_ID)!;
+const alumno = ALUMNOS.find((a) => a.id === ALUMNO_ID) || FallbackAlumno;
 const calificaciones = getCalificacionesByAlumno(ALUMNO_ID);
 const planesAccion = getPlanesAccionByAlumno(ALUMNO_ID);
 

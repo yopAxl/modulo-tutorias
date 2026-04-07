@@ -9,8 +9,15 @@ import { ALUMNOS, SESIONES, MOTIVOS_TUTORIA, formatFecha } from "@/app/_lib/mock
 import { CalendarDays, Clock, CalendarRange, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const FallbackAlumno = {
+  id: "a1", matricula: "—", nombre: "Alumno (Sin datos)",
+  genero: "M", carrera: "—", grupo: "—", cuatrimestre: 1,
+  promedio: 0, riesgo: "Bajo" as const,
+  correo: "—", telefono: "—",
+  tutorId: "t1", docenteId: "d1", activo: true,
+};
 const ALUMNO_ID = "a1";
-const alumno = ALUMNOS.find((a) => a.id === ALUMNO_ID)!;
+const alumno = ALUMNOS.find((a) => a.id === ALUMNO_ID) || FallbackAlumno;
 const mySesiones = SESIONES.filter((s) => s.alumnoId === ALUMNO_ID);
 
 const NAV_ITEMS = [

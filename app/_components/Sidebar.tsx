@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Users, CalendarDays, FolderOpen,
   BarChart3, Settings, GraduationCap, ClipboardList,
-  FileText, BookOpen, ArrowLeftRight, CheckSquare,
-  Menu, X,
+  FileText, BookOpen, CheckSquare,
+  Menu, X, LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 export interface NavItem {
   icon: string;
@@ -53,14 +54,65 @@ function SidebarContent({
   onNavClick,
 }: SidebarProps & { onNavClick?: () => void }) {
   const pathname = usePathname();
+  const router = useRouter();
 
-  const initials = userName
+  const [realName, setRealName] = useState(userName);
+  const [loadingName, setLoadingName] = useState(true); // Nuevo estado de carga
+
+  // Efecto dinámico para extraer el nombre de la BD basado en el rol
+  useEffect(() => {
+    async function fetchName() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLoadingName(false);
+        return;
+      }
+
+      let tabla = "";
+      if (role === "Administrador") tabla = "administradores";
+      if (role === "Tutor") tabla = "tutores";
+      if (role === "Docente") tabla = "docentes";
+      if (role === "Alumno") tabla = "alumnos";
+
+      if (tabla) {
+        // Consultar el esquema tutorias
+        console.log(`Buscando nombre en tabla: ${tabla} para user: ${user.id}`);
+        const { data, error } = await supabase
+          .schema('tutorias')
+          .from(tabla)
+          .select('nombre_completo')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error al obtener nombre de la BD:", error.message);
+        }
+
+        console.log("Datos obtenidos:", data);
+
+        if (data && data.nombre_completo) {
+          setRealName(data.nombre_completo);
+        }
+      }
+      setLoadingName(false); // Carga completada
+    }
+    fetchName();
+  }, [role]);
+
+  const initials = realName
     .split(" ")
-    .filter((w) => /^[A-ZÁÉÍÓÚÑ]/.test(w))
+    .filter((w) => /^[A-ZÁÉÍÓÚÑa-záéíóúñ]/.test(w)) // Asegurar que funcione con minúsculas también
     .slice(0, 2)
     .map((n) => n[0])
     .join("")
     .toUpperCase();
+
+  async function handleLogout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -103,16 +155,15 @@ function SidebarContent({
           );
         })}
 
-        {/* Separator + cambiar rol */}
+        {/* Separator + cerrar sesión */}
         <div className="my-2 h-px bg-white/6" />
-        <Link
-          href="/"
-          onClick={onNavClick}
-          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-white/50 transition-colors hover:bg-white/6 hover:text-white/90"
+        <button
+          onClick={() => { onNavClick?.(); handleLogout(); }}
+          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-red-400/70 transition-colors hover:bg-red-500/10 hover:text-red-400"
         >
-          <ArrowLeftRight className="h-4 w-4 shrink-0 text-white/40" />
-          Cambiar rol
-        </Link>
+          <LogOut className="h-4 w-4 shrink-0 text-red-400/50" />
+          Cerrar sesión
+        </button>
       </nav>
 
       {/* Footer / user info */}
@@ -121,10 +172,14 @@ function SidebarContent({
           "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br text-[12px] font-bold text-white shadow-sm",
           AVATAR_GRADIENT[role]
         )}>
-          {initials}
+          {loadingName ? <span className="h-4 w-4 shrink-0 animate-pulse rounded-full bg-white/20" /> : initials}
         </div>
-        <div className="min-w-0">
-          <p className="truncate text-[13px] font-semibold text-white/90">{userName}</p>
+        <div className="min-w-0 flex-1">
+          {loadingName ? (
+            <div className="h-4 w-24 animate-pulse rounded-md bg-white/10 mb-1" />
+          ) : (
+            <p className="truncate text-[13px] font-semibold text-white/90">{realName}</p>
+          )}
           <p className="text-[11px] text-white/35">{role}</p>
         </div>
       </div>

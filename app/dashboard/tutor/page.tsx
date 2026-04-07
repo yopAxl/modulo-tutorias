@@ -1,3 +1,5 @@
+"use client";
+
 import Sidebar from "@/app/_components/Sidebar";
 import { StatCard } from "@/app/_components/StatCard";
 import {
