@@ -30,8 +30,8 @@ jobs:
           # 1. Crear nombre de archivo con fecha y hora exacta
           FILE_NAME="backup_$(date +'%Y-%m-%d_%H-%M-%S').sql"
           
-          # 2. Generar backup
-          pg_dump $DATABASE_URL > $FILE_NAME
+          # 2. Generar backup forzando explicitamente el binario de la versión 17
+          /usr/lib/postgresql/17/bin/pg_dump "$DATABASE_URL" > "$FILE_NAME"
           
           # 3. Subir directamente al bucket privado de Supabase por API REST
           curl -X POST "${SUPABASE_URL}/storage/v1/object/backups/${FILE_NAME}" \
