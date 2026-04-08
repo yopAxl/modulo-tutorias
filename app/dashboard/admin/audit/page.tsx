@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "@/app/_components/Sidebar";
 import { PageHeader } from "@/app/_components/PageHeader";
 import { SectionCard } from "@/app/_components/SectionCard";
 import { StatusBadge } from "@/app/_components/StatusBadge";
-import { AUDIT_LOG, formatFechaHora } from "@/app/_lib/mock-data";
+import { formatFechaHora } from "@/app/_lib/mock-data";
+import { getAuditLogs } from "./actions";
+import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,14 +32,32 @@ const EVENT_VARIANT: Record<string, "success" | "warning" | "danger" | "info" | 
 export default function AuditPage() {
   const [search, setSearch] = useState("");
   const [filterEvento, setFilterEvento] = useState<string>("todos");
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = AUDIT_LOG.filter((e) => {
+  useEffect(() => {
+    async function loadLogs() {
+      const res = await getAuditLogs();
+      if (res.data) {
+        setLogs(res.data);
+      } else if (res.error) {
+        toast.error(res.error);
+      }
+      setLoading(false);
+    }
+    loadLogs();
+  }, []);
+
+  const filtered = logs.filter((e) => {
+    const searchStr = search.toLowerCase();
     const matchSearch =
-      e.userName.toLowerCase().includes(search.toLowerCase()) ||
-      e.tablaAfectada.toLowerCase().includes(search.toLowerCase());
+      (e.usuario_nombre?.toLowerCase() || "").includes(searchStr) ||
+      (e.usuario_rol?.toLowerCase() || "").includes(searchStr) ||
+      (e.tabla_afectada?.toLowerCase() || "").includes(searchStr) ||
+      (e.evento?.toLowerCase() || "").includes(searchStr);
     const matchEvento = filterEvento === "todos" || e.evento === filterEvento;
     return matchSearch && matchEvento;
-  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  });
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#0f151c]">
@@ -69,8 +89,8 @@ export default function AuditPage() {
               placeholder="Buscar por usuario o tabla..."
             />
           </div>
-          <div className="flex gap-1.5">
-            {["todos", "login", "write", "access_denied"].map((ev) => (
+          <div className="flex gap-1.5 flex-wrap">
+            {["todos", "CREATE_USER", "TRIGGER_BACKUP", "LOGIN", "ACCESS_DENIED"].map((ev) => (
               <button
                 key={ev}
                 onClick={() => setFilterEvento(ev)}
@@ -98,22 +118,33 @@ export default function AuditPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((e) => (
+              {loading ? (
+                <TableRow className="border-white/4">
+                  <TableCell colSpan={7} className="text-center py-8 text-sm text-white/40 italic">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/10 border-t-emerald-500" />
+                      Cargando historial de auditoría...
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : filtered.map((e) => (
                 <TableRow key={e.id} className="border-white/4 hover:bg-white/3">
-                  <TableCell className="whitespace-nowrap text-xs text-white/50">{formatFechaHora(e.createdAt)}</TableCell>
-                  <TableCell className="text-sm font-medium text-white/80">{e.userName}</TableCell>
+                  <TableCell className="whitespace-nowrap text-xs text-white/50">{formatFechaHora(e.created_at)}</TableCell>
+                  <TableCell className="text-sm font-medium text-white/80">
+                    {e.usuario_nombre}
+                  </TableCell>
                   <TableCell>
-                    <span className="inline-flex items-center rounded-md border border-white/8 bg-white/4 px-2 py-0.5 text-[10px] font-semibold text-white/50">
-                      {e.rolActivo.replace("rol_", "")}
+                    <span className="inline-flex items-center rounded-md border border-white/8 bg-white/4 px-2 py-0.5 text-[10px] font-semibold text-white/50 capitalize">
+                      {e.usuario_rol}
                     </span>
                   </TableCell>
                   <TableCell>
-                    <StatusBadge status={e.evento} variant={EVENT_VARIANT[e.evento] ?? "neutral"} />
+                    <StatusBadge status={e.evento} variant={e.evento.includes('DENIED') ? 'danger' : (e.evento.includes('CREATE') ? 'success' : 'info')} />
                   </TableCell>
-                  <TableCell className="font-mono text-xs text-white/40">{e.tablaAfectada || "—"}</TableCell>
-                  <TableCell className="font-mono text-xs text-white/30">{e.ipAddress}</TableCell>
-                  <TableCell className="text-xs text-white/30">
-                    {Object.keys(e.metadata).length > 0
+                  <TableCell className="font-mono text-xs text-white/40">{e.tabla_afectada || "—"}</TableCell>
+                  <TableCell className="font-mono text-xs text-white/30">{e.ip_address || "—"}</TableCell>
+                  <TableCell className="max-w-[200px] truncate text-[10px] text-white/30 hover:whitespace-normal hover:overflow-visible hover:bg-[#1a222c] cursor-help">
+                    {Object.keys(e.metadata || {}).length > 0
                       ? JSON.stringify(e.metadata)
                       : "—"}
                   </TableCell>
@@ -121,6 +152,9 @@ export default function AuditPage() {
               ))}
             </TableBody>
           </Table>
+          {filtered.length === 0 && !loading && (
+            <p className="py-10 text-center text-sm text-white/30">No se encontraron registros de eventos.</p>
+          )}
         </SectionCard>
       </main>
     </div>

@@ -167,13 +167,6 @@ export default function RespaldosPage() {
                    <TableRow className="border-white/4">
                        <TableCell colSpan={5} className="text-center py-6 text-sm text-white/40">Conectando seguro con Supabase Storage...</TableCell>
                    </TableRow>
-                ) : backups.length === 0 ? (
-                   <TableRow className="border-white/4 hover:bg-white/3">
-                       <TableCell colSpan={5} className="text-center py-8 text-sm text-white/40">
-                          <p className="font-semibold text-white/60 mb-1 text-base">Aún no hay respaldos generados</p>
-                          La tarea automática creará tu primer respaldo a la medianoche.
-                       </TableCell>
-                   </TableRow>
                 ) : backups.map((file) => (
                   <TableRow key={file.id} className="border-white/4 hover:bg-white/3">
                     <TableCell className="text-sm font-medium text-white/80">{formatFechaHora(file.created_at)}</TableCell>
@@ -204,6 +197,12 @@ export default function RespaldosPage() {
                 ))}
               </TableBody>
             </Table>
+            {backups.length === 0 && !loading && (
+              <div className="py-10 text-center text-sm text-white/40 px-5">
+                <p className="font-semibold text-white/60 mb-1 text-base">Aún no hay respaldos generados</p>
+                La tarea automática creará tu primer respaldo a la medianoche.
+              </div>
+            )}
           </SectionCard>
         </div>
       </main>

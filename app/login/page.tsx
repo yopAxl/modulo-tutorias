@@ -62,6 +62,16 @@ export default function LoginPage() {
       return;
     }
 
+    // REGISTRAR EN AUDITORÍA
+    if (user) {
+      await supabase.rpc('registrar_audit', {
+        p_evento: 'LOGIN',
+        p_tabla: 'auth.users',
+        p_registro_id: user.id,
+        p_metadata: { role, email: user.email, timestamp: new Date().toISOString() }
+      });
+    }
+
     // Redirigir al dashboard correspondiente al rol
     router.push(getDashboardPath(role));
     router.refresh();

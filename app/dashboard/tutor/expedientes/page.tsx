@@ -127,26 +127,27 @@ export default function ExpedientesTutorPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {calificaciones.length > 0 ? calificaciones.map((c) => (
+                {calificaciones.map((c) => (
                   <TableRow key={c.id} className="border-white/4 hover:bg-white/3">
-                    <TableCell className="text-sm font-medium text-white/80">{c.asignatura}</TableCell>
+                    <TableCell className="text-sm font-medium text-white/90">{c.asignatura}</TableCell>
                     <TableCell className="text-sm text-white/50">{c.periodo}</TableCell>
                     <TableCell><GpaCell value={c.calificacion} /></TableCell>
                     <TableCell><StatusBadge status={c.tipoEvaluacion} variant="neutral" /></TableCell>
                     <TableCell className="text-xs text-white/40">{c.observaciones || "—"}</TableCell>
                   </TableRow>
-                )) : (
-                  <TableRow><TableCell colSpan={5} className="text-center text-sm text-white/30 py-10">Sin calificaciones registradas.</TableCell></TableRow>
-                )}
+                ))}
               </TableBody>
             </Table>
+            {calificaciones.length === 0 && (
+              <p className="py-10 text-center text-sm text-white/30">Sin calificaciones registradas.</p>
+            )}
           </SectionCard>
         )}
 
         {tab === "sesiones" && (
           <SectionCard>
             <div className="divide-y divide-white/4">
-              {sesiones.length > 0 ? sesiones.map((s) => (
+              {sesiones.map((s) => (
                 <div key={s.id} className="flex items-start gap-4 px-5 py-4">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-600/10">
                     <CalendarDays className="h-4 w-4 text-emerald-400" />
@@ -161,7 +162,8 @@ export default function ExpedientesTutorPage() {
                     </div>
                   </div>
                 </div>
-              )) : (
+              ))}
+              {sesiones.length === 0 && (
                 <p className="py-10 text-center text-sm text-white/30">Sin sesiones registradas.</p>
               )}
             </div>
@@ -170,28 +172,27 @@ export default function ExpedientesTutorPage() {
 
         {tab === "canalizaciones" && (
           <SectionCard>
-            {canalizaciones.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-white/6 hover:bg-transparent">
-                    {["Servicio", "Fecha", "Motivo", "Estatus", "Seguimiento"].map((h) => (
-                      <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {canalizaciones.map((c) => (
-                    <TableRow key={c.id} className="border-white/4 hover:bg-white/3">
-                      <TableCell className="text-sm text-white/80">{TIPOS_CANALIZACION.find(t => t.codigo === c.tipoServicio)?.descripcion ?? c.tipoServicio}</TableCell>
-                      <TableCell className="text-sm text-white/50">{formatFecha(c.fechaCanalizacion)}</TableCell>
-                      <TableCell className="text-xs text-white/40 max-w-[200px]"><p className="truncate">{c.motivo}</p></TableCell>
-                      <TableCell><StatusBadge status={c.estatus} /></TableCell>
-                      <TableCell className="text-xs text-white/40">{c.seguimiento || "—"}</TableCell>
-                    </TableRow>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/6 hover:bg-transparent">
+                  {["Servicio", "Fecha", "Motivo", "Estatus", "Seguimiento"].map((h) => (
+                    <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
                   ))}
-                </TableBody>
-              </Table>
-            ) : (
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {canalizaciones.map((c) => (
+                  <TableRow key={c.id} className="border-white/4 hover:bg-white/3">
+                    <TableCell className="text-sm text-white/80">{TIPOS_CANALIZACION.find(t => t.codigo === c.tipoServicio)?.descripcion ?? c.tipoServicio}</TableCell>
+                    <TableCell className="text-sm text-white/50">{formatFecha(c.fechaCanalizacion)}</TableCell>
+                    <TableCell className="text-xs text-white/40 max-w-[200px]"><p className="truncate">{c.motivo}</p></TableCell>
+                    <TableCell><StatusBadge status={c.estatus} /></TableCell>
+                    <TableCell className="text-xs text-white/40">{c.seguimiento || "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {canalizaciones.length === 0 && (
               <p className="py-10 text-center text-sm text-white/30">Sin canalizaciones registradas.</p>
             )}
           </SectionCard>
@@ -199,28 +200,27 @@ export default function ExpedientesTutorPage() {
 
         {tab === "incidencias" && (
           <SectionCard>
-            {incidencias.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-white/6 hover:bg-transparent">
-                    {["Fecha", "Tipo", "Descripción", "Estatus", "Resolución"].map((h) => (
-                      <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {incidencias.map((i) => (
-                    <TableRow key={i.id} className="border-white/4 hover:bg-white/3">
-                      <TableCell className="text-sm text-white/50">{formatFecha(i.fecha)}</TableCell>
-                      <TableCell><StatusBadge status={i.tipoIncidencia} variant="neutral" /></TableCell>
-                      <TableCell className="text-xs text-white/40 max-w-[200px]"><p className="truncate">{i.descripcion}</p></TableCell>
-                      <TableCell><StatusBadge status={i.estatus} /></TableCell>
-                      <TableCell className="text-xs text-white/40">{i.resolucion || "—"}</TableCell>
-                    </TableRow>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/6 hover:bg-transparent">
+                  {["Fecha", "Tipo", "Descripción", "Estatus", "Resolución"].map((h) => (
+                    <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
                   ))}
-                </TableBody>
-              </Table>
-            ) : (
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {incidencias.map((i) => (
+                  <TableRow key={i.id} className="border-white/4 hover:bg-white/3">
+                    <TableCell className="text-sm text-white/50">{formatFecha(i.fecha)}</TableCell>
+                    <TableCell><StatusBadge status={i.tipoIncidencia} variant="neutral" /></TableCell>
+                    <TableCell className="text-xs text-white/40 max-w-[200px]"><p className="truncate">{i.descripcion}</p></TableCell>
+                    <TableCell><StatusBadge status={i.estatus} /></TableCell>
+                    <TableCell className="text-xs text-white/40">{i.resolucion || "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {incidencias.length === 0 && (
               <p className="py-10 text-center text-sm text-white/30">Sin incidencias registradas.</p>
             )}
           </SectionCard>
@@ -228,28 +228,27 @@ export default function ExpedientesTutorPage() {
 
         {tab === "documentos" && (
           <SectionCard>
-            {documentos.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-white/6 hover:bg-transparent">
-                    {["Archivo", "Tipo", "Privacidad", "Tamaño", "Fecha"].map((h) => (
-                      <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {documentos.map((d) => (
-                    <TableRow key={d.id} className="border-white/4 hover:bg-white/3">
-                      <TableCell className="text-sm font-medium text-white/80">{d.nombreArchivo}</TableCell>
-                      <TableCell><StatusBadge status={d.tipoDocumento} variant="neutral" /></TableCell>
-                      <TableCell><StatusBadge status={d.nivelPrivacidad} variant={d.nivelPrivacidad === "visible" ? "success" : "warning"} /></TableCell>
-                      <TableCell className="text-xs text-white/50 font-mono">{formatTamano(d.tamanoBytes)}</TableCell>
-                      <TableCell className="text-sm text-white/50">{formatFecha(d.fecha)}</TableCell>
-                    </TableRow>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/6 hover:bg-transparent">
+                  {["Archivo", "Tipo", "Privacidad", "Tamaño", "Fecha"].map((h) => (
+                    <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
                   ))}
-                </TableBody>
-              </Table>
-            ) : (
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {documentos.map((d) => (
+                  <TableRow key={d.id} className="border-white/4 hover:bg-white/3">
+                    <TableCell className="text-sm font-medium text-white/90">{d.nombreArchivo}</TableCell>
+                    <TableCell><StatusBadge status={d.tipoDocumento} variant="neutral" /></TableCell>
+                    <TableCell><StatusBadge status={d.nivelPrivacidad} variant={d.nivelPrivacidad === "visible" ? "success" : "warning"} /></TableCell>
+                    <TableCell className="text-xs text-white/50 font-mono">{formatTamano(d.tamanoBytes)}</TableCell>
+                    <TableCell className="text-sm text-white/50">{formatFecha(d.fecha)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {documentos.length === 0 && (
               <p className="py-10 text-center text-sm text-white/30">Sin documentos registrados.</p>
             )}
           </SectionCard>
@@ -257,7 +256,7 @@ export default function ExpedientesTutorPage() {
 
         {tab === "plan" && (
           <div className="flex flex-col gap-4">
-            {planesAccion.length > 0 ? planesAccion.map((p) => (
+            {planesAccion.map((p) => (
               <SectionCard key={p.id}>
                 <div className="border-b border-white/6 px-5 py-4">
                   <div className="flex items-center justify-between">
@@ -288,7 +287,8 @@ export default function ExpedientesTutorPage() {
                   </div>
                 </div>
               </SectionCard>
-            )) : (
+            ))}
+            {planesAccion.length === 0 && (
               <p className="py-10 text-center text-sm text-white/30">No hay planes de acción para este alumno.</p>
             )}
           </div>

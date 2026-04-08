@@ -273,6 +273,9 @@ export default function SesionesTutorPage() {
               })}
             </TableBody>
           </Table>
+          {filtered.length === 0 && (
+            <p className="py-10 text-center text-sm text-white/30">No se encontraron sesiones con el filtro seleccionado.</p>
+          )}
         </SectionCard>
       </main>
     </div>

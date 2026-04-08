@@ -1,14 +1,16 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Sidebar from "@/app/_components/Sidebar";
 import { StatCard } from "@/app/_components/StatCard";
-import { ALUMNOS, TUTORES, SESIONES, gpaClass, type RiesgoNivel } from "@/app/_lib/mock-data";
 import { CreateUserModal } from "./_components/CreateUserModal";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, GraduationCap, ClipboardList, TrendingUp, ChevronRight, Plus, Download } from "lucide-react";
+import { Users, GraduationCap, ClipboardList, TrendingUp, ChevronRight, Download, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { getAdminDashboardStats } from "./actions";
+import { toast } from "sonner";
 
 const NAV_ITEMS = [
   { icon: "📊", label: "Dashboard", href: "/dashboard/admin" },
@@ -21,12 +23,12 @@ const NAV_ITEMS = [
   { icon: "⚙️", label: "Configuración", href: "/dashboard/admin/config" },
 ];
 
-function RiskBadge({ riesgo }: { riesgo: RiesgoNivel }) {
-  const map = {
+function RiskBadge({ riesgo }: { riesgo: string }) {
+  const map: Record<string, string> = {
     Alto: "bg-red-500/10 text-red-400 border-red-500/20",
     Medio: "bg-amber-500/10 text-amber-400 border-amber-500/20",
     Bajo: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  } as const;
+  };
   return (
     <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", map[riesgo] || "bg-gray-500/10 text-gray-400")}>
       {riesgo}
@@ -41,11 +43,41 @@ function SectionCard({ children, className }: { children: React.ReactNode; class
 }
 
 export default function AdminDashboard() {
-  const total = ALUMNOS.length;
-  const alto = ALUMNOS.filter((a) => a.riesgo === "Alto").length;
-  const medio = ALUMNOS.filter((a) => a.riesgo === "Medio").length;
-  const bajo = ALUMNOS.filter((a) => a.riesgo === "Bajo").length;
-  const promedio = total > 0 ? (ALUMNOS.reduce((s, a) => s + a.promedio, 0) / total).toFixed(1) : "—";
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchStats = async () => {
+    setLoading(true);
+    const res = await getAdminDashboardStats();
+    if (res.data) {
+      setStats(res.data);
+    } else {
+      toast.error(res.error || "Error al cargar estadísticas");
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#0f151c]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-emerald-500" />
+          <p className="text-sm text-white/40 animate-pulse">Sincronizando panel de control...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const { kpis, riesgo, tutorWorkload, recentAlumnos } = stats || {
+    kpis: { totalAlumnos: 0, totalTutores: 0, totalSesiones: 0, promedioGeneral: "0.0" },
+    riesgo: { alto: 0, medio: 0, bajo: 0 },
+    tutorWorkload: [],
+    recentAlumnos: []
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#0f151c]">
@@ -53,25 +85,25 @@ export default function AdminDashboard() {
 
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 pt-18 md:p-8 md:pt-8">
         {/* Header */}
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-xl font-bold text-white">Panel de Administración</h1>
-            <p className="mt-0.5 text-sm text-white/50">Visión general del sistema · Marzo 2026</p>
+            <p className="mt-0.5 text-sm text-white/50">Datos en tiempo real · {new Date().toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })}</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="gap-2 border-white/10 bg-white/4 text-white/60 hover:bg-white/8 hover:text-white">
               <Download className="h-3.5 w-3.5" /> Exportar
             </Button>
-            <CreateUserModal />
+            <CreateUserModal onSuccess={fetchStats} />
           </div>
         </div>
 
         {/* KPIs */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard label="Total alumnos" value={total} sub="↑ Inscritos este cuatrimestre" subColor="text-emerald-400" icon={Users} accent="green" />
-          <StatCard label="Tutores activos" value={TUTORES.length} sub="Asignados este período" icon={GraduationCap} accent="green" />
-          <StatCard label="Sesiones registradas" value={SESIONES.length} sub="↑ Este mes" subColor="text-emerald-400" icon={ClipboardList} accent="green" />
-          <StatCard label="Promedio general" value={promedio} sub="↑ +0.3 vs cuatrimestre anterior" subColor="text-emerald-400" icon={TrendingUp} accent="amber" />
+          <StatCard label="Total alumnos" value={kpis.totalAlumnos} sub="Inscritos activos" icon={Users} accent="green" />
+          <StatCard label="Tutores activos" value={kpis.totalTutores} sub="Perfiles registrados" icon={GraduationCap} accent="green" />
+          <StatCard label="Sesiones" value={kpis.totalSesiones} sub="Historial total" icon={ClipboardList} accent="green" />
+          <StatCard label="Promedio general" value={kpis.promedioGeneral} sub="Métrica institucional" icon={TrendingUp} accent="amber" />
         </div>
 
         {/* Grid: distribución + carga */}
@@ -80,31 +112,31 @@ export default function AdminDashboard() {
           <SectionCard>
             <div className="border-b border-white/6 px-5 py-4">
               <p className="text-sm font-semibold text-white">Distribución por riesgo académico</p>
-              <p className="text-xs text-white/40">{total} alumnos en el sistema</p>
+              <p className="text-xs text-white/40">{kpis.totalAlumnos} alumnos analizados</p>
             </div>
             <div className="px-5 py-4 space-y-3">
               {[
-                { label: "Alto", count: alto, barColor: "bg-red-500", textColor: "text-red-400" },
-                { label: "Medio", count: medio, barColor: "bg-amber-500", textColor: "text-amber-400" },
-                { label: "Bajo", count: bajo, barColor: "bg-emerald-500", textColor: "text-emerald-400" },
+                { label: "Alto", count: riesgo.alto, barColor: "bg-red-500", textColor: "text-red-400" },
+                { label: "Medio", count: riesgo.medio, barColor: "bg-amber-500", textColor: "text-amber-400" },
+                { label: "Bajo", count: riesgo.bajo, barColor: "bg-emerald-500", textColor: "text-emerald-400" },
               ].map(({ label, count, barColor, textColor }) => (
                 <div key={label} className="flex items-center gap-3">
                   <span className={cn("w-10 text-xs font-semibold", textColor)}>{label}</span>
                   <div className="flex-1 rounded-full bg-white/6 overflow-hidden h-1.5">
-                    <div className={cn("h-full rounded-full transition-all", barColor)} style={{ width: total > 0 ? `${(count / total) * 100}%` : "0%" }} />
+                    <div className={cn("h-full rounded-full transition-all", barColor)} style={{ width: kpis.totalAlumnos > 0 ? `${(count / kpis.totalAlumnos) * 100}%` : "0%" }} />
                   </div>
                   <span className="w-5 text-right text-sm font-bold text-white">{count}</span>
                 </div>
               ))}
               <div className="mt-4 grid grid-cols-1 gap-3 pt-2 sm:grid-cols-3">
                 {[
-                  { label: "Riesgo Alto", count: alto, cls: "border-red-500/20 bg-red-500/[0.08] text-red-400" },
-                  { label: "Riesgo Medio", count: medio, cls: "border-amber-500/20 bg-amber-500/[0.08] text-amber-400" },
-                  { label: "Sin riesgo", count: bajo, cls: "border-emerald-500/20 bg-emerald-500/[0.08] text-emerald-400" },
+                  { label: "Riesgo Alto", count: riesgo.alto, cls: "border-red-500/20 bg-red-500/[0.08] text-red-400" },
+                  { label: "Riesgo Medio", count: riesgo.medio, cls: "border-amber-500/20 bg-amber-500/[0.08] text-amber-400" },
+                  { label: "Sin riesgo", count: riesgo.bajo, cls: "border-emerald-500/20 bg-emerald-500/[0.08] text-emerald-400" },
                 ].map(({ label, count, cls }) => (
                   <div key={label} className={cn("rounded-lg border p-3 text-center", cls)}>
                     <p className="text-2xl font-extrabold leading-none">{count}</p>
-                    <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-wider opacity-70">{label}</p>
+                    <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider opacity-70">{label}</p>
                   </div>
                 ))}
               </div>
@@ -115,37 +147,38 @@ export default function AdminDashboard() {
           <SectionCard>
             <div className="border-b border-white/6 px-5 py-4">
               <p className="text-sm font-semibold text-white">Carga de trabajo por tutor</p>
-              <p className="text-xs text-white/40">{TUTORES.length} tutores activos este cuatrimestre</p>
+              <p className="text-xs text-white/40">{tutorWorkload.length} tutores en activo</p>
             </div>
-            <Table>
-              <TableHeader>
-                <TableRow className="border-white/6 hover:bg-transparent">
-                  {["Tutor", "Alumnos", "Sesiones"].map((h) => (
-                    <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-white/6 hover:bg-transparent">
+                    {["Tutor", "Alumnos", "Sesiones"].map((h) => (
+                      <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tutorWorkload.map((t: any) => (
+                    <TableRow key={t.id} className="border-white/4 hover:bg-white/3">
+                      <TableCell>
+                        <p className="text-sm font-medium text-white/90">{t.nombre}</p>
+                        <p className="text-xs text-white/35">{t.departamento}</p>
+                      </TableCell>
+                      <TableCell>
+                        <span className="inline-flex min-w-8 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-600/10 px-2 py-0.5 text-xs font-bold text-emerald-400">
+                          {t.alumnosAsignados}
+                        </span>
+                      </TableCell>
+                      <TableCell className="font-semibold text-white/80">{t.sesionesTotales}</TableCell>
+                    </TableRow>
                   ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {TUTORES.length > 0 ? TUTORES.map((t) => (
-                  <TableRow key={t.id} className="border-white/4 hover:bg-white/3">
-                    <TableCell>
-                      <p className="text-sm font-medium text-white/90">{t.nombre.split(" ").slice(0, 3).join(" ")}</p>
-                      <p className="text-xs text-white/35">{t.departamento}</p>
-                    </TableCell>
-                    <TableCell>
-                      <span className="inline-flex min-w-8 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-600/10 px-2 py-0.5 text-xs font-bold text-emerald-400">
-                        {t.alumnosAsignados}
-                      </span>
-                    </TableCell>
-                    <TableCell className="font-semibold text-white/80">{t.sesionesEsteCorte}</TableCell>
-                  </TableRow>
-                )) : (
-                  <TableRow className="border-white/4 hover:bg-white/3">
-                    <TableCell colSpan={3} className="text-center py-6 text-sm text-white/40">No hay tutores registrados.</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                </TableBody>
+              </Table>
+              {tutorWorkload.length === 0 && (
+                <p className="py-10 text-center text-xs text-white/20 italic">No hay tutores con carga activa.</p>
+              )}
+            </div>
           </SectionCard>
         </div>
 
@@ -153,26 +186,24 @@ export default function AdminDashboard() {
         <SectionCard>
           <div className="flex items-center justify-between border-b border-white/6 px-5 py-4">
             <div>
-              <p className="text-sm font-semibold text-white">Padrón de alumnos</p>
-              <p className="text-xs text-white/40">{total} alumnos registrados</p>
+              <p className="text-sm font-semibold text-white">Últimos alumnos registrados</p>
+              <p className="text-xs text-white/40">Mostrando {recentAlumnos.length} registros recientes</p>
             </div>
-            <button className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300">
-              Gestionar <ChevronRight className="h-3 w-3" />
-            </button>
+            <Link href="/dashboard/admin/usuarios?rol=Alumno" className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300">
+              Ver todos <ChevronRight className="h-3 w-3" />
+            </Link>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow className="border-white/6 hover:bg-transparent">
-                {["Alumno", "Matrícula", "Carrera", "Cuatr.", "Promedio", "Riesgo", "Tutor"].map((h) => (
-                  <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ALUMNOS.length > 0 ? ALUMNOS.map((a) => {
-                const tutor = TUTORES.find((t) => t.id === a.tutorId);
-                const gpc = gpaClass(a.promedio);
-                return (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/6 hover:bg-transparent">
+                  {["Alumno", "Matrícula", "Carrera", "Cuatr.", "Promedio", "Riesgo", "Tutor"].map((h) => (
+                    <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentAlumnos.map((a: any) => (
                   <TableRow key={a.id} className="border-white/4 hover:bg-white/3">
                     <TableCell>
                       <p className="text-sm font-medium text-white/90">{a.nombre}</p>
@@ -182,25 +213,24 @@ export default function AdminDashboard() {
                     <TableCell className="text-sm text-white/60">{a.carrera}</TableCell>
                     <TableCell className="text-sm text-white/60">{a.cuatrimestre}°</TableCell>
                     <TableCell>
-                      <span className={cn("inline-flex min-w-10 items-center justify-center rounded-full px-2 py-0.5 text-xs font-bold", {
-                        "bg-emerald-500/12 text-emerald-400": gpc === "gpa-high",
-                        "bg-amber-500/12 text-amber-400": gpc === "gpa-mid",
-                        "bg-red-500/12 text-red-400": gpc === "gpa-low",
-                      })}>
+                      <span className={cn("inline-flex min-w-10 items-center justify-center rounded-full px-2 py-0.5 text-xs font-bold", 
+                        a.promedio >= 9 ? "bg-emerald-500/12 text-emerald-400" :
+                        a.promedio >= 8 ? "bg-amber-500/12 text-amber-400" :
+                        "bg-red-500/12 text-red-400"
+                      )}>
                         {a.promedio.toFixed(1)}
                       </span>
                     </TableCell>
                     <TableCell><RiskBadge riesgo={a.riesgo} /></TableCell>
-                    <TableCell className="text-xs text-white/40">{tutor?.nombre.split(" ").slice(0, 3).join(" ") ?? "—"}</TableCell>
+                    <TableCell className="text-xs text-white/40 italic">{a.tutorNombre}</TableCell>
                   </TableRow>
-                );
-              }) : (
-                 <TableRow className="border-white/4 hover:bg-white/3">
-                    <TableCell colSpan={7} className="text-center py-6 text-sm text-white/40">No hay alumnos registrados.</TableCell>
-                  </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                ))}
+              </TableBody>
+            </Table>
+            {recentAlumnos.length === 0 && (
+              <p className="py-10 text-center text-xs text-white/20 italic">No hay alumnos registrados recientemente.</p>
+            )}
+          </div>
         </SectionCard>
       </main>
     </div>

@@ -42,6 +42,18 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
 
       // Verificar que el rol esté en la lista de roles permitidos
       if (allowedRoles && !allowedRoles.includes(role)) {
+        // REGISTRAR EN AUDITORÍA
+        await supabase.rpc('registrar_audit', {
+          p_evento: 'ACCESS_DENIED',
+          p_tabla: 'routes',
+          p_registro_id: user.id,
+          p_metadata: { 
+            path: pathname, 
+            role_user: role, 
+            allowed: allowedRoles 
+          }
+        });
+
         // No tiene permiso para esta ruta — redirigir a SU dashboard
         router.replace(getDashboardPath(role));
         return;

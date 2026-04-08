@@ -110,6 +110,9 @@ export default function DocenteDashboard() {
                 })}
               </TableBody>
             </Table>
+            {alumnos.length === 0 && (
+              <p className="py-10 text-center text-sm text-white/30">No hay alumnos asignados a este grupo.</p>
+            )}
           </SectionCard>
 
           {/* Calificaciones recientes */}
@@ -154,6 +157,9 @@ export default function DocenteDashboard() {
                 })}
               </TableBody>
             </Table>
+            {CALIFICACIONES.length === 0 && (
+              <p className="py-10 text-center text-sm text-white/30">Aún no hay calificaciones registradas.</p>
+            )}
           </SectionCard>
         </div>
       </main>

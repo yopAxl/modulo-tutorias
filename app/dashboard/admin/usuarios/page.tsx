@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Sidebar from "@/app/_components/Sidebar";
 import { PageHeader } from "@/app/_components/PageHeader";
 import { SectionCard } from "@/app/_components/SectionCard";
 import { StatusBadge } from "@/app/_components/StatusBadge";
-import { ALUMNOS, TUTORES, DOCENTES } from "@/app/_lib/mock-data";
-import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, X, UserPlus, Shield } from "lucide-react";
+import { Search, Shield, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getUsersAction } from "../actions";
+import { toast } from "sonner";
+import { CreateUserModal } from "../_components/CreateUserModal";
 
 const NAV_ITEMS = [
   { icon: "📊", label: "Dashboard", href: "/dashboard/admin" },
@@ -22,32 +24,50 @@ const NAV_ITEMS = [
   { icon: "⚙️", label: "Configuración", href: "/dashboard/admin/config" },
 ];
 
-type UserRow = { id: string; nombre: string; correo: string; rol: string; departamento?: string; activo: boolean };
-
-function buildUserRows(): UserRow[] {
-  const rows: UserRow[] = [];
-  rows.push({ id: "admin1", nombre: "Admin General", correo: "admin@utnay.edu.mx", rol: "Administrador", activo: true });
-  TUTORES.forEach((t) => rows.push({ id: t.id, nombre: t.nombre, correo: t.correo, rol: "Tutor", departamento: t.departamento, activo: t.activo }));
-  DOCENTES.forEach((d) => rows.push({ id: d.id, nombre: d.nombre, correo: d.correo, rol: "Docente", departamento: d.departamento, activo: d.activo }));
-  ALUMNOS.forEach((a) => rows.push({ id: a.id, nombre: a.nombre, correo: a.correo, rol: "Alumno", activo: a.activo }));
-  return rows;
+export default function UsuariosPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-[#0f151c]">
+        <Loader2 className="h-10 w-10 animate-spin text-emerald-500" />
+      </div>
+    }>
+      <UsuariosContent />
+    </Suspense>
+  );
 }
 
-const ROLE_COLOR: Record<string, string> = {
-  Administrador: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  Tutor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  Docente: "bg-pink-500/10 text-pink-400 border-pink-500/20",
-  Alumno: "bg-sky-500/10 text-sky-400 border-sky-500/20",
-};
-
-export default function UsuariosPage() {
-  const allUsers = buildUserRows();
+function UsuariosContent() {
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterRol, setFilterRol] = useState<string>("todos");
-  const [showForm, setShowForm] = useState(false);
+  const searchParams = useSearchParams();
 
-  const filtered = allUsers.filter((u) => {
-    const matchSearch = u.nombre.toLowerCase().includes(search.toLowerCase()) || u.correo.toLowerCase().includes(search.toLowerCase());
+  useEffect(() => {
+    const rol = searchParams.get("rol");
+    if (rol) setFilterRol(rol);
+  }, [searchParams]);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    const res = await getUsersAction();
+    if (res.data) {
+      setUsers((res.data as any).users || []);
+    } else if (res.error) {
+      toast.error(res.error);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const filtered = users.filter((u) => {
+    const searchStr = search.toLowerCase();
+    const matchSearch = 
+      u.nombre.toLowerCase().includes(searchStr) || 
+      u.correo.toLowerCase().includes(searchStr);
     const matchRol = filterRol === "todos" || u.rol === filterRol;
     return matchSearch && matchRol;
   });
@@ -59,62 +79,9 @@ export default function UsuariosPage() {
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 pt-18 md:p-8 md:pt-8">
         <PageHeader
           title="Gestión de Usuarios"
-          subtitle={`${allUsers.length} usuarios registrados en el sistema`}
-          actions={
-            <Button
-              size="sm"
-              onClick={() => setShowForm(!showForm)}
-              className="gap-2 bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500"
-            >
-              <UserPlus className="h-4 w-4" /> Nuevo usuario
-            </Button>
-          }
+          subtitle={`${users.length} usuarios registrados en el sistema`}
+          actions={<CreateUserModal onSuccess={fetchUsers} />}
         />
-
-        {/* Create user form */}
-        {showForm && (
-          <SectionCard>
-            <div className="flex items-center justify-between border-b border-white/6 px-5 py-4">
-              <p className="text-sm font-semibold text-white">Crear nuevo usuario</p>
-              <button onClick={() => setShowForm(false)} className="text-white/30 hover:text-white/60">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-white/40">Nombre completo</label>
-                <input className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none focus:border-emerald-500/40" placeholder="Nombre completo" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-white/40">Correo electrónico</label>
-                <input type="email" className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none focus:border-emerald-500/40" placeholder="correo@utnay.edu.mx" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-white/40">Rol</label>
-                <select className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-sm text-white outline-none focus:border-emerald-500/40">
-                  <option value="">Seleccionar rol</option>
-                  <option value="Administrador">Administrador</option>
-                  <option value="Tutor">Tutor</option>
-                  <option value="Docente">Docente</option>
-                  <option value="Alumno">Alumno</option>
-                </select>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-white/40">Departamento</label>
-                <input className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none focus:border-emerald-500/40" placeholder="Departamento (opcional)" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-white/40">Contraseña</label>
-                <input type="password" className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none focus:border-emerald-500/40" placeholder="Mínimo 6 caracteres" />
-              </div>
-              <div className="flex items-end">
-                <Button size="sm" className="gap-2 bg-emerald-600 text-white hover:bg-emerald-500">
-                  <Plus className="h-4 w-4" /> Crear usuario
-                </Button>
-              </div>
-            </div>
-          </SectionCard>
-        )}
 
         {/* Filters */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -127,7 +94,7 @@ export default function UsuariosPage() {
               placeholder="Buscar por nombre o correo..."
             />
           </div>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5 flex-wrap">
             {["todos", "Administrador", "Tutor", "Docente", "Alumno"].map((r) => (
               <button
                 key={r}
@@ -156,23 +123,40 @@ export default function UsuariosPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((u) => (
-                <TableRow key={u.id} className="border-white/4 hover:bg-white/3">
-                  <TableCell className="text-sm font-medium text-white/90">{u.nombre}</TableCell>
-                  <TableCell className="text-sm text-white/50">{u.correo}</TableCell>
-                  <TableCell>
-                    <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", ROLE_COLOR[u.rol] ?? "")}>
-                      <Shield className="h-3 w-3" /> {u.rol}
-                    </span>
+              {loading ? (
+                <TableRow className="border-white/4">
+                  <TableCell colSpan={5} className="py-20 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+                      <p className="text-sm text-white/40 italic">Cargando base de datos de usuarios...</p>
+                    </div>
                   </TableCell>
-                  <TableCell className="text-sm text-white/40">{u.departamento ?? "—"}</TableCell>
-                  <TableCell><StatusBadge status={u.activo ? "activo" : "inactivo"} /></TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                filtered.map((u) => (
+                  <TableRow key={u.id} className="border-white/4 hover:bg-white/3">
+                    <TableCell className="text-sm font-medium text-white/90">{u.nombre}</TableCell>
+                    <TableCell className="text-sm text-white/50">{u.correo}</TableCell>
+                    <TableCell>
+                      <span className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+                        u.rol === "Administrador" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                        u.rol === "Tutor" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                        u.rol === "Docente" ? "bg-pink-500/10 text-pink-400 border-pink-500/20" :
+                        "bg-sky-500/10 text-sky-400 border-sky-500/20"
+                      )}>
+                        <Shield className="h-3 w-3" /> {u.rol}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-sm text-white/40">{u.departamento || "—"}</TableCell>
+                    <TableCell><StatusBadge status={u.activo ? "activo" : "inactivo"} /></TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
-          {filtered.length === 0 && (
-            <p className="py-10 text-center text-sm text-white/30">No se encontraron usuarios.</p>
+          {filtered.length === 0 && !loading && (
+            <p className="py-10 text-center text-sm text-white/30">No se encontraron usuarios que coincidan con la búsqueda.</p>
           )}
         </SectionCard>
       </main>

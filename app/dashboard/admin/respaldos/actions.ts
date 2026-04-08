@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * Consulta la lista de todos los archivos de respaldo almacenados
@@ -87,6 +88,18 @@ export async function triggerManualBackup() {
        }
        return { error: `GitHub rechazó la petición: ${res.statusText}` };
     }
+
+    // Registrar en el Log de Auditoría
+    const supabaseUser = await createClient();
+    await supabaseUser.rpc('registrar_audit', {
+      p_evento: 'TRIGGER_BACKUP',
+      p_tabla: 'storage.objects',
+      p_metadata: { 
+        repo, 
+        workflow: 'backup.yml',
+        solicitado_manualmente: true 
+      }
+    });
 
     return { success: true };
   } catch (error: any) {

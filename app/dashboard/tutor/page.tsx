@@ -133,6 +133,9 @@ export default function TutorDashboard() {
                 ))}
               </TableBody>
             </Table>
+            {alumnosEnRiesgo.length === 0 && (
+              <p className="py-10 text-center text-sm text-white/30">No se encontraron alumnos en situación de riesgo.</p>
+            )}
           </SectionCard>
 
           {/* Próximas sesiones */}
@@ -159,6 +162,9 @@ export default function TutorDashboard() {
                   </div>
                 </div>
               ))}
+              {PROXIMAS_SESIONES.length === 0 && (
+                <p className="py-10 text-center text-sm text-white/20 italic">No hay sesiones programadas.</p>
+              )}
             </div>
           </SectionCard>
         </div>
@@ -202,6 +208,9 @@ export default function TutorDashboard() {
                 <span className="shrink-0 text-xs text-white/35">{s.duracionMin} min</span>
               </div>
             ))}
+            {sesiones.length === 0 && (
+              <p className="py-10 text-center text-sm text-white/30">Sin historial de sesiones registradas.</p>
+            )}
           </div>
         </SectionCard>
 
@@ -240,6 +249,9 @@ export default function TutorDashboard() {
               ))}
             </TableBody>
           </Table>
+          {alumnos.length === 0 && (
+            <p className="py-10 text-center text-sm text-white/30">No tienes alumnos asignados.</p>
+          )}
         </SectionCard>
       </main>
     </div>

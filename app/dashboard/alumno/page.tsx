@@ -188,6 +188,9 @@ export default function AlumnoDashboard() {
               ))}
             </TableBody>
           </Table>
+          {DOCUMENTOS.length === 0 && (
+            <p className="py-10 text-center text-sm text-white/30">No se encontraron documentos en tu expediente.</p>
+          )}
         </SectionCard>
       </main>
     </div>

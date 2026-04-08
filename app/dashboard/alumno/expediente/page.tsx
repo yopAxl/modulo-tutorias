@@ -78,27 +78,26 @@ export default function ExpedienteAlumnoPage() {
               <p className="text-sm font-semibold text-white">Mis calificaciones</p>
               <p className="text-xs text-white/40">{calificaciones.length} materias registradas</p>
             </div>
-            {calificaciones.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-white/6 hover:bg-transparent">
-                    {["Asignatura", "Período", "Cal.", "Tipo"].map((h) => (
-                      <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {calificaciones.map((c) => (
-                    <TableRow key={c.id} className="border-white/4 hover:bg-white/3">
-                      <TableCell className="text-sm font-medium text-white/80">{c.asignatura}</TableCell>
-                      <TableCell className="text-sm text-white/50">{c.periodo}</TableCell>
-                      <TableCell><GpaCell value={c.calificacion} /></TableCell>
-                      <TableCell><StatusBadge status={c.tipoEvaluacion} variant="neutral" /></TableCell>
-                    </TableRow>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/6 hover:bg-transparent">
+                  {["Asignatura", "Período", "Cal.", "Tipo"].map((h) => (
+                    <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
                   ))}
-                </TableBody>
-              </Table>
-            ) : (
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {calificaciones.map((c) => (
+                  <TableRow key={c.id} className="border-white/4 hover:bg-white/3">
+                    <TableCell className="text-sm font-medium text-white/80">{c.asignatura}</TableCell>
+                    <TableCell className="text-sm text-white/50">{c.periodo}</TableCell>
+                    <TableCell><GpaCell value={c.calificacion} /></TableCell>
+                    <TableCell><StatusBadge status={c.tipoEvaluacion} variant="neutral" /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {calificaciones.length === 0 && (
               <p className="py-10 text-center text-sm text-white/30">Sin calificaciones registradas.</p>
             )}
           </SectionCard>

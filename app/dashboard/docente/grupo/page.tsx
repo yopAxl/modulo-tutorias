@@ -94,7 +94,7 @@ export default function GrupoDocentePage() {
                             <GpaCell value={c.calificacion} />
                           </div>
                         )) : (
-                          <p className="text-xs text-white/30">Sin calificaciones</p>
+                          <p className="text-xs text-white/30 italic">Sin calificaciones registradas aún.</p>
                         )}
                       </div>
                     </div>
@@ -103,6 +103,9 @@ export default function GrupoDocentePage() {
               </SectionCard>
             );
           })}
+          {filtered.length === 0 && (
+            <p className="py-10 text-center text-sm text-white/30 italic">No se encontraron alumnos con los criterios de búsqueda.</p>
+          )}
         </div>
       </main>
     </div>

@@ -106,39 +106,38 @@ export default function DocumentosAlumnoPage() {
             <p className="text-sm font-semibold text-white">Documentos disponibles</p>
             <p className="text-xs text-white/40">Solo se muestran documentos con visibilidad pública</p>
           </div>
-          {documentos.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-white/6 hover:bg-transparent">
-                  {["Documento", "Tipo", "Tamaño", "Fecha", "Acciones"].map((h) => (
-                    <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {documentos.map((d) => (
-                  <TableRow key={d.id} className="border-white/4 hover:bg-white/3">
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-white/30" />
-                        <span className="text-sm font-medium text-white/80">{d.nombreArchivo}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={d.tipoDocumento} variant="neutral" />
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-white/50">{formatTamano(d.tamanoBytes)}</TableCell>
-                    <TableCell className="text-sm text-white/50">{formatFecha(d.fecha)}</TableCell>
-                    <TableCell>
-                      <button className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 transition-colors">
-                        <Download className="h-3 w-3" /> Descargar
-                      </button>
-                    </TableCell>
-                  </TableRow>
+          <Table>
+            <TableHeader>
+              <TableRow className="border-white/6 hover:bg-transparent">
+                {["Documento", "Tipo", "Tamaño", "Fecha", "Acciones"].map((h) => (
+                  <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
                 ))}
-              </TableBody>
-            </Table>
-          ) : (
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {documentos.map((d) => (
+                <TableRow key={d.id} className="border-white/4 hover:bg-white/3">
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-white/30" />
+                      <span className="text-sm font-medium text-white/80">{d.nombreArchivo}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={d.tipoDocumento} variant="neutral" />
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-white/50">{formatTamano(d.tamanoBytes)}</TableCell>
+                  <TableCell className="text-sm text-white/50">{formatFecha(d.fecha)}</TableCell>
+                  <TableCell>
+                    <button className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 transition-colors">
+                      <Download className="h-3 w-3" /> Descargar
+                    </button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          {documentos.length === 0 && (
             <p className="py-10 text-center text-sm text-white/30">No tienes documentos disponibles.</p>
           )}
         </SectionCard>

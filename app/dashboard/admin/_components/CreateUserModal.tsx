@@ -13,7 +13,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Loader2, Eye, EyeOff, User, Mail, Lock, Hash, Phone, GraduationCap, Users, Calendar, TrendingUp, Building, Award } from "lucide-react";
 
-export function CreateUserModal() {
+interface CreateUserModalProps {
+  onSuccess?: () => void;
+}
+
+export function CreateUserModal({ onSuccess }: CreateUserModalProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -69,6 +73,7 @@ export function CreateUserModal() {
       toast.success("Usuario creado exitosamente.");
       setOpen(false);
       setErrors({});
+      if (onSuccess) onSuccess();
       router.refresh();
     }
   }
