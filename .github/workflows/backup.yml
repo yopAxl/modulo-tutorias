@@ -9,18 +9,25 @@ jobs:
   backup:
     runs-on: ubuntu-latest
     steps:
-      - name: Instalar cliente de PostgreSQL
-        run: sudo apt-get install -y postgresql-client
+      - name: Instalar cliente de PostgreSQL 17
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17
 
-      - name: Generar respaldo con pg_dump
+      - name: Generar respaldo y Subir a Supabase
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          pg_dump $DATABASE_URL > backup_$(date +\%F).sql
-
-      - name: Guardar respaldo en GitHub
-        uses: actions/upload-artifact@v4
-        with:
-          name: respaldo-bd
-          path: backup_*.sql
-          retention-days: 7
+          # 1. Crear nombre de archivo con fecha y hora exacta
+          FILE_NAME="backup_$(date +'%Y-%m-%d_%H-%M-%S').sql"
+          
+          # 2. Generar backup
+          pg_dump $DATABASE_URL > $FILE_NAME
+          
+          # 3. Subir directamente al bucket privado de Supabase por API REST
+          curl -X POST "${SUPABASE_URL}/storage/v1/object/backups/${FILE_NAME}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" \
+            -H "Content-Type: application/sql" \
+            --data-binary "@${FILE_NAME}"
