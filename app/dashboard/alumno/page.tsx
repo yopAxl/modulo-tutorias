@@ -1,33 +1,27 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar from "@/app/_components/Sidebar";
 import { StatCard } from "@/app/_components/StatCard";
-import { ALUMNOS, SESIONES, formatFecha, gpaClass } from "@/app/_lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BarChart3, CalendarDays, AlertTriangle, FolderOpen, Download, Clock, CalendarRange, ChevronRight } from "lucide-react";
+import {
+  BarChart3, CalendarDays, AlertTriangle, FolderOpen,
+  Download, Clock, CalendarRange, ChevronRight, Loader2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const ALUMNO_ID = "a1";
-const FallbackAlumno = {
-  id: "a1", 
-  matricula: "—", 
-  nombre: "Alumno (Sin datos)",
-  genero: "M", 
-  carrera: "—", 
-  grupo: "—", 
-  cuatrimestre: 1,
-  promedio: 0, 
-  riesgo: "Bajo" as const,
-  correo: "—", 
-  telefono: "—",
-  tutorId: "t1", 
-  docenteId: "d1", 
-  activo: true,
-};
-
-const alumno = ALUMNOS.find((a) => a.id === ALUMNO_ID) || FallbackAlumno;
-const mySesiones = SESIONES.filter((s) => s.alumnoId === ALUMNO_ID);
+import { toast } from "sonner";
+import {
+  getAlumnoPerfil,
+  getSesionesAlumno,
+  getDocumentosAlumno,
+  getCalificacionesAlumno,
+  type AlumnoPerfil,
+  type SesionAlumno,
+  type DocumentoAlumno,
+} from "./actions";
+import { generateExpedientePDF } from "@/app/_lib/pdf-utils";
 
 const NAV_ITEMS = [
   { icon: "📊", label: "Mi panel", href: "/dashboard/alumno" },
@@ -36,66 +30,156 @@ const NAV_ITEMS = [
   { icon: "📄", label: "Documentos", href: "/dashboard/alumno/documentos" },
 ];
 
-const DOCUMENTOS = [
-  { id: "d1", nombre: "Comprobante de inscripción", tipo: "PDF", fecha: "10 Ene 2026", estado: "Aprobado" },
-  { id: "d2", nombre: "Historial académico", tipo: "PDF", fecha: "15 Ene 2026", estado: "Aprobado" },
-  { id: "d3", nombre: "Justificante médico – Feb 2026", tipo: "PDF", fecha: "20 Feb 2026", estado: "Pendiente" },
-];
-
 function SectionCard({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("rounded-xl border border-white/6 bg-[#151c24]", className)}>{children}</div>;
+  return (
+    <div className={cn("rounded-xl border border-white/6 bg-[#151c24]", className)}>
+      {children}
+    </div>
+  );
+}
+
+const riesgoMap: Record<string, { label: string; cls: string; accent: "green" | "amber" | "red" }> = {
+  bajo: { label: "Bajo", cls: "text-emerald-400", accent: "green" },
+  medio: { label: "Medio", cls: "text-amber-400", accent: "amber" },
+  alto: { label: "Alto", cls: "text-red-400", accent: "red" },
+};
+
+function gpaColor(p: number) {
+  if (p >= 8.5) return "text-emerald-400";
+  if (p >= 7.0) return "text-amber-400";
+  return "text-red-400";
 }
 
 export default function AlumnoDashboard() {
-  const gpc = gpaClass(alumno.promedio);
-  const promedioColor = gpc === "gpa-high" ? "text-emerald-400" : gpc === "gpa-mid" ? "text-amber-400" : "text-red-400";
-  
-  // Corregido: Agregado cast 'as any' para evitar error de TypeScript en la consola
-  const riesgoMap: any = {
-    Alto: { text: "Alto", cls: "bg-red-500/10 text-red-400 border-red-500/20" },
-    Medio: { text: "Medio", cls: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
-    Bajo: { text: "Bajo", cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+  const router = useRouter();
+  const [alumno, setAlumno] = useState<AlumnoPerfil | null>(null);
+  const [sesiones, setSesiones] = useState<SesionAlumno[]>([]);
+  const [documentos, setDocumentos] = useState<DocumentoAlumno[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  useEffect(() => {
+    async function cargar() {
+      const [perfilRes, sesionesRes, docsRes] = await Promise.all([
+        getAlumnoPerfil(),
+        getSesionesAlumno(),
+        getDocumentosAlumno(),
+      ]);
+
+      if ("data" in perfilRes) setAlumno(perfilRes.data);
+      else toast.error("Error al cargar perfil: " + perfilRes.error);
+
+      if ("data" in sesionesRes) setSesiones(sesionesRes.data);
+      if ("data" in docsRes) setDocumentos(docsRes.data);
+
+      setLoading(false);
+    }
+    cargar();
+  }, []);
+
+  const handleDescargarExpediente = async () => {
+    if (!alumno) return;
+    setIsDownloading(true);
+    try {
+      const [calsRes, sesRes] = await Promise.all([
+        getCalificacionesAlumno(),
+        getSesionesAlumno(),
+      ]);
+
+      await generateExpedientePDF(
+        alumno,
+        "data" in calsRes ? calsRes.data : [],
+        "data" in sesRes ? sesRes.data : []
+      );
+      toast.success("Expediente descargado correctamente");
+    } catch (e: any) {
+      toast.error("Error al generar PDF: " + e.message);
+    } finally {
+      setIsDownloading(false);
+    }
   };
-  
-  const pendientes = DOCUMENTOS.filter((d) => d.estado === "Pendiente").length;
+
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-[#0f151c]">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
+
+  if (!alumno) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-[#0f151c]">
+        <p className="text-sm text-white/40">No se encontró perfil de alumno.</p>
+      </div>
+    );
+  }
+
+  const riesgo = riesgoMap[alumno.riesgo_academico] ?? riesgoMap["bajo"];
+  const pendientes = documentos.filter((d) => (d as any).estado === "Pendiente").length;
+  const primerNombre = alumno.nombre_completo.split(" ")[0];
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#0f151c]">
-      <Sidebar role="Alumno" userName={alumno.nombre} navItems={NAV_ITEMS} />
+      <Sidebar role="Alumno" userName={alumno.nombre_completo} navItems={NAV_ITEMS} />
 
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 pt-18 md:p-8 md:pt-8">
+        {/* Header */}
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-xl font-bold text-white">Mi Panel Académico</h1>
             <p className="mt-0.5 text-sm text-white/50">
-              Hola, {alumno.nombre.split(" ")[0]}. Aquí puedes consultar tu seguimiento.
+              Hola, {primerNombre}. Aquí puedes consultar tu seguimiento.
             </p>
           </div>
-          <Button variant="outline" size="sm" className="gap-2 border-white/10 bg-white/4 text-white/60 hover:bg-white/8 hover:text-white">
-            <Download className="h-3.5 w-3.5" /> Descargar expediente
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDescargarExpediente}
+            disabled={isDownloading}
+            className="gap-2 border-white/10 bg-white/4 text-white/60 hover:bg-white/8 hover:text-white"
+          >
+            {isDownloading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Download className="h-3.5 w-3.5" />
+            )}
+            {isDownloading ? "Generando..." : "Descargar expediente"}
           </Button>
         </div>
 
-        {/* KPIs - Mantienen los valores de la imagen */}
+        {/* KPIs */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <StatCard
             label="Mi promedio"
-            value={alumno.promedio.toFixed(1)}
+            value={Number(alumno.promedio_general).toFixed(1)}
             sub="Promedio general acumulado"
-            subColor={promedioColor}
+            subColor={gpaColor(alumno.promedio_general)}
             icon={BarChart3}
-            accent={gpc === "gpa-high" ? "green" : gpc === "gpa-mid" ? "amber" : "red"}
+            accent={alumno.promedio_general >= 8.5 ? "green" : alumno.promedio_general >= 7.0 ? "amber" : "red"}
           />
-          <StatCard label="Sesiones con tutor" value={mySesiones.length} sub="Este cuatrimestre" icon={CalendarDays} accent="green" />
-          <StatCard label="Documentos subidos" value={DOCUMENTOS.length} sub={pendientes > 0 ? `${pendientes} pendiente(s)` : "Todos aprobados"} subColor={pendientes > 0 ? "text-amber-400" : "text-emerald-400"} icon={FolderOpen} accent="amber" />
+          <StatCard
+            label="Sesiones con tutor"
+            value={sesiones.length}
+            sub="Historial completo"
+            icon={CalendarDays}
+            accent="green"
+          />
+          <StatCard
+            label="Documentos"
+            value={documentos.length}
+            sub={pendientes > 0 ? `${pendientes} pendiente(s)` : "Sin pendientes"}
+            subColor={pendientes > 0 ? "text-amber-400" : "text-emerald-400"}
+            icon={FolderOpen}
+            accent="amber"
+          />
           <StatCard
             label="Estado académico"
-            value={alumno.riesgo}
+            value={riesgo.label}
             sub="Nivel de riesgo"
-            // Corregido: Acceso seguro al mapa de riesgo para evitar crash
-            subColor={riesgoMap[alumno.riesgo]?.cls?.match(/text-[^\s]+/)?.[0] ?? "text-emerald-400"}
+            subColor={riesgo.cls}
             icon={AlertTriangle}
-            accent={alumno.riesgo === "Alto" ? "red" : alumno.riesgo === "Medio" ? "amber" : "green"}
+            accent={riesgo.accent}
           />
         </div>
 
@@ -109,91 +193,114 @@ export default function AlumnoDashboard() {
             <div className="divide-y divide-white/4 px-5">
               {[
                 ["Matrícula", alumno.matricula, true],
-                ["Nombre completo", alumno.nombre, false],
+                ["Nombre completo", alumno.nombre_completo, false],
                 ["Carrera", alumno.carrera, false],
                 ["Cuatrimestre", `${alumno.cuatrimestre}°`, false],
-                ["Correo institucional", alumno.correo, false],
+                ["Correo institucional", alumno.correo_institucional, false],
                 ["Teléfono", alumno.telefono, true],
               ].map(([label, value, mono]: any) => (
                 <div key={label} className="flex items-center justify-between py-3">
                   <span className="text-xs font-medium text-white/40">{label}</span>
-                  <span className={cn("text-sm font-semibold text-white/90", mono && "font-mono text-xs")}>{value}</span>
+                  <span className={cn("text-sm font-semibold text-white/90", mono && "font-mono text-xs")}>
+                    {value}
+                  </span>
                 </div>
               ))}
             </div>
           </SectionCard>
 
-          {/* Mis sesiones */}
+          {/* Mis sesiones recientes */}
           <SectionCard>
             <div className="border-b border-white/6 px-5 py-4">
               <p className="text-sm font-semibold text-white">Mis sesiones de tutoría</p>
-              <p className="text-xs text-white/40">{mySesiones.length} sesiones este cuatrimestre</p>
+              <p className="text-xs text-white/40">{sesiones.length} sesiones registradas</p>
             </div>
             <div className="divide-y divide-white/4">
-              {mySesiones.length > 0 ? mySesiones.map((s) => (
+              {sesiones.length > 0 ? sesiones.slice(0, 4).map((s) => (
                 <div key={s.id} className="flex items-start gap-4 px-5 py-4">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-600/10">
                     <CalendarRange className="h-4 w-4 text-emerald-400" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-white/90">{s.temas[0]}</p>
-                    <p className="mt-0.5 truncate text-xs text-white/40">{s.temas.slice(1).join(" · ")}</p>
+                    <p className="text-sm font-semibold text-white/90 capitalize">
+                      {s.estatus.replace("_", " ")}
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-white/40">
+                      {s.puntos_relevantes?.slice(0, 60) ?? "Sin observaciones"}
+                    </p>
                     <div className="mt-1.5 flex items-center gap-3">
                       <span className="flex items-center gap-1 text-[11px] text-white/35">
-                        <CalendarDays className="h-3 w-3" /> {formatFecha(s.fecha)}
+                        <CalendarDays className="h-3 w-3" /> {s.fecha}
                       </span>
-                      <span className="flex items-center gap-1 text-[11px] text-white/35">
-                        <Clock className="h-3 w-3" /> {s.duracionMin} min
-                      </span>
+                      {s.duracion_minutos > 0 && (
+                        <span className="flex items-center gap-1 text-[11px] text-white/35">
+                          <Clock className="h-3 w-3" /> {s.duracion_minutos} min
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
               )) : (
-                <p className="py-20 text-center text-sm text-white/30 italic">Sin sesiones registradas aún.</p>
+                <p className="py-20 text-center text-sm text-white/30 italic">
+                  Sin sesiones registradas aún.
+                </p>
               )}
             </div>
           </SectionCard>
         </div>
 
-        {/* Tabla de Documentos - Mantiene la vista de la imagen */}
+        {/* Tabla de Documentos */}
         <SectionCard>
           <div className="flex items-center justify-between border-b border-white/6 px-5 py-4">
             <div>
               <p className="text-sm font-semibold text-white">Mis documentos</p>
               <p className="text-xs text-white/40">Expediente y archivos académicos</p>
             </div>
-            <button className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 font-medium">
+            <button
+              onClick={() => router.push("/dashboard/alumno/documentos?upload=true")}
+              className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 font-medium"
+            >
               Subir documento <ChevronRight className="h-3 w-3" />
             </button>
           </div>
+
           <Table>
             <TableHeader>
               <TableRow className="border-white/6 hover:bg-transparent">
-                {["Documento", "Tipo", "Fecha", "Estado"].map((h) => (
-                  <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
+                {["Documento", "Tipo", "Fecha", "Tamaño"].map((h) => (
+                  <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">
+                    {h}
+                  </TableHead>
                 ))}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {DOCUMENTOS.map((d) => (
+              {documentos.length > 0 ? documentos.slice(0, 5).map((d) => (
                 <TableRow key={d.id} className="border-white/4 hover:bg-white/3">
-                  <TableCell className="text-sm font-medium text-white/90">{d.nombre}</TableCell>
+                  <TableCell className="text-sm font-medium text-white/90">{d.nombre_archivo}</TableCell>
                   <TableCell>
-                    <span className="inline-flex items-center rounded-md border border-white/8 bg-white/4 px-2 py-0.5 font-mono text-xs text-white/50">
-                      {d.tipo}
+                    <span className="inline-flex items-center rounded-md border border-white/8 bg-white/4 px-2 py-0.5 font-mono text-xs text-white/50 uppercase">
+                      {d.tipo_documento}
                     </span>
                   </TableCell>
-                  <TableCell className="text-sm text-white/50">{d.fecha}</TableCell>
-                  <TableCell>
-                    <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", {
-                      "bg-emerald-500/10 text-emerald-400 border-emerald-500/20": d.estado === "Aprobado",
-                      "bg-amber-500/10 text-amber-400 border-amber-500/20": d.estado === "Pendiente",
-                    })}>
-                      {d.estado}
-                    </span>
+                  <TableCell className="text-sm text-white/50">
+                    {new Date(d.created_at).toLocaleDateString("es-MX", {
+                      day: "2-digit", month: "short", year: "numeric"
+                    })}
+                  </TableCell>
+                  <TableCell className="text-sm text-white/50">
+                    {d.tamano_bytes < 1024 * 1024
+                      ? `${Math.round(d.tamano_bytes / 1024)} KB`
+                      : `${(d.tamano_bytes / (1024 * 1024)).toFixed(1)} MB`}
                   </TableCell>
                 </TableRow>
-              ))}
+              )) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="py-10 text-center text-sm text-white/30 italic">
+                    Sin documentos disponibles.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </SectionCard>

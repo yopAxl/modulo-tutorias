@@ -245,3 +245,169 @@ export async function generateReportPDF(
 
   doc.save(fileName);
 }
+
+/** Generate the full student expediente as PDF */
+export async function generateExpedientePDF(alumno: {
+  matricula: string;
+  nombre_completo: string;
+  carrera: string;
+  grupo: string;
+  cuatrimestre: number;
+  promedio_general: number;
+  riesgo_academico: string;
+  correo_institucional: string;
+  telefono: string;
+  genero: string;
+}, calificaciones: {
+  asignatura: string;
+  periodo: string;
+  calificacion: number;
+  tipo_evaluacion: string;
+}[], sesiones: {
+  fecha: string;
+  estatus: string;
+  nivel_urgencia: string;
+  puntos_relevantes: string | null;
+}[]) {
+  const doc = new jsPDF();
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const colorPrimary: [number, number, number] = [16, 185, 129];
+  const colorDark: [number, number, number] = [31, 41, 55];
+
+  // Try to load logo
+  try {
+    const logoBase64 = await getImageBase64("/Logo_ut.png");
+    doc.addImage(logoBase64, "PNG", 14, 10, 25, 12);
+  } catch (e) {
+    console.warn("Logo not available");
+  }
+
+  // ---------- Encabezado ----------
+  doc.setFontSize(8);
+  doc.setTextColor(100);
+  doc.text("Universidad Tecnológica de Nayarit", 42, 14);
+  doc.text("Sistema de Gestión de Tutorías", 42, 18);
+
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colorDark[0], colorDark[1], colorDark[2]);
+  doc.text("EXPEDIENTE ACADÉMICO DEL ALUMNO", pageW / 2, 26, { align: "center" });
+
+  doc.setDrawColor(colorPrimary[0], colorPrimary[1], colorPrimary[2]);
+  doc.setLineWidth(0.6);
+  doc.line(14, 30, pageW - 14, 30);
+
+  // ---------- Datos del alumno ----------
+  let y = 38;
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colorDark[0], colorDark[1], colorDark[2]);
+  doc.text("DATOS PERSONALES", 14, y);
+  y += 5;
+
+  const fields: [string, string][] = [
+    ["Matrícula", alumno.matricula],
+    ["Nombre completo", alumno.nombre_completo],
+    ["Carrera", alumno.carrera],
+    ["Grupo", alumno.grupo],
+    ["Cuatrimestre", `${alumno.cuatrimestre}°`],
+    ["Correo institucional", alumno.correo_institucional],
+    ["Teléfono", alumno.telefono],
+    ["Género", alumno.genero === "M" ? "Masculino" : alumno.genero === "F" ? "Femenino" : "Otro"],
+    ["Promedio general", Number(alumno.promedio_general).toFixed(2)],
+    ["Nivel de riesgo académico", alumno.riesgo_academico.toUpperCase()],
+  ];
+
+  doc.setFontSize(8);
+  fields.forEach(([label, value]) => {
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(100);
+    doc.text(`${label}:`, 14, y);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(colorDark[0], colorDark[1], colorDark[2]);
+    doc.text(value, 70, y);
+    y += 6;
+  });
+
+  y += 4;
+
+  // ---------- Calificaciones ----------
+  if (calificaciones.length > 0) {
+    doc.setDrawColor(200);
+    doc.setLineWidth(0.3);
+    doc.line(14, y, pageW - 14, y);
+    y += 5;
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(colorDark[0], colorDark[1], colorDark[2]);
+    doc.text(`CALIFICACIONES (${calificaciones.length} registros)`, 14, y);
+    y += 4;
+
+    autoTable(doc, {
+      startY: y,
+      head: [["Asignatura", "Período", "Calificación", "Tipo"]],
+      body: calificaciones.map((c) => [
+        c.asignatura,
+        c.periodo,
+        Number(c.calificacion).toFixed(1),
+        c.tipo_evaluacion.toUpperCase(),
+      ]),
+      styles: { fontSize: 7, cellPadding: 3 },
+      headStyles: { fillColor: colorPrimary, textColor: [255, 255, 255], fontStyle: "bold" },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      margin: { left: 14, right: 14 },
+    });
+
+    y = (doc as any).lastAutoTable.finalY + 8;
+  }
+
+  // ---------- Historial de sesiones ----------
+  if (sesiones.length > 0) {
+    if (y > pageH - 60) {
+      doc.addPage();
+      y = 20;
+    }
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(colorDark[0], colorDark[1], colorDark[2]);
+    doc.text(`HISTORIAL DE SESIONES DE TUTORÍA (${sesiones.length})`, 14, y);
+    y += 4;
+
+    autoTable(doc, {
+      startY: y,
+      head: [["Fecha", "Estatus", "Urgencia", "Observaciones"]],
+      body: sesiones.map((s) => [
+        s.fecha,
+        s.estatus.toUpperCase(),
+        s.nivel_urgencia.toUpperCase(),
+        s.puntos_relevantes?.slice(0, 60) ?? "—",
+      ]),
+      styles: { fontSize: 7, cellPadding: 3 },
+      headStyles: { fillColor: colorPrimary, textColor: [255, 255, 255], fontStyle: "bold" },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      margin: { left: 14, right: 14 },
+    });
+  }
+
+  // ---------- Pie de página ----------
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7);
+    doc.setTextColor(150);
+    doc.setFont("helvetica", "italic");
+    const fecha = new Date().toLocaleString("es-MX", {
+      day: "2-digit", month: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+    doc.text(
+      `Expediente generado el ${fecha} | Sistema de Tutorías UTNay | Documento confidencial`,
+      14,
+      pageH - 8
+    );
+    doc.text(`${i} / ${totalPages}`, pageW - 20, pageH - 8);
+  }
+
+  doc.save(`expediente_${alumno.matricula}.pdf`);
+}
