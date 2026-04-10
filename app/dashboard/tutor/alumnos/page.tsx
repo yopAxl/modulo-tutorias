@@ -1,19 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar from "@/app/_components/Sidebar";
-import { PageHeader } from "@/app/_components/PageHeader";
-import { SectionCard } from "@/app/_components/SectionCard";
-import { RiskBadge } from "@/app/_components/RiskBadge";
-import { GpaCell } from "@/app/_components/GpaCell";
-import { StatusBadge } from "@/app/_components/StatusBadge";
-import { getAlumnosByTutor, getCanalizacionesByAlumno, getIncidenciasByAlumno, getSesionesByTutor, TIPOS_CANALIZACION } from "@/app/_lib/mock-data";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, ChevronDown, ChevronUp, CalendarDays, AlertTriangle, ArrowRightLeft, Mail, Phone } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { 
+  Search, ChevronDown, ChevronUp, CalendarDays, 
+  AlertTriangle, ArrowRightLeft, Mail, Phone, Loader2, Users 
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const TUTOR_ID = "t1";
-const TUTOR_NOMBRE = "Dra. María Rodríguez López";
 const NAV_ITEMS = [
   { icon: "📊", label: "Dashboard", href: "/dashboard/tutor" },
   { icon: "👥", label: "Mis alumnos", href: "/dashboard/tutor/alumnos" },
@@ -22,36 +18,132 @@ const NAV_ITEMS = [
   { icon: "📈", label: "Reportes", href: "/dashboard/tutor/reportes" },
 ];
 
+// --- COMPONENTES AUXILIARES PARA EVITAR ERRORES DE IMPORTACIÓN ---
+
+function RiskBadge({ riesgo }: { riesgo: string }) {
+  const map: any = {
+    Alto: "bg-red-500/10 text-red-400 border-red-500/20",
+    Medio: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    Bajo: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  };
+  return (
+    <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase", map[riesgo] || map.Bajo)}>
+      {riesgo}
+    </span>
+  );
+}
+
+function GpaCell({ value }: { value: number }) {
+  return (
+    <span className={cn("inline-flex min-w-10 items-center justify-center rounded-md px-2 py-0.5 text-xs font-bold", {
+      "bg-emerald-500/12 text-emerald-400": value >= 9,
+      "bg-amber-500/12 text-amber-400": value >= 8 && value < 9,
+      "bg-red-500/12 text-red-400": value < 8,
+    })}>
+      {value?.toFixed(1) || "0.0"}
+    </span>
+  );
+}
+
+// --- PÁGINA PRINCIPAL ---
+
 export default function AlumnosTutorPage() {
-  const alumnos = getAlumnosByTutor(TUTOR_ID);
+  const router = useRouter();
+  const supabase = createClient();
+
+  const [tutorNombre, setTutorNombre] = useState("");
+  const [tutorId, setTutorId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [alumnos, setAlumnos] = useState<any[]>([]);
+  
   const [search, setSearch] = useState("");
   const [filterRiesgo, setFilterRiesgo] = useState<string>("todos");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  useEffect(() => {
+    async function cargarDatosReales() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push("/login");
+          return;
+        }
+
+        setTutorId(user.id);
+        setTutorNombre(user.user_metadata?.nombre_completo || user.email);
+
+        // CONSULTA REAL A SUPABASE: Trae alumnos asignados a este tutor
+        const { data, error } = await supabase
+          .schema('tutorias')
+          .from('asignaciones_tutor')
+          .select(`
+            id,
+            alumnos (
+              id,
+              nombre_completo,
+              matricula,
+              carrera,
+              cuatrimestre,
+              promedio,
+              nivel_riesgo,
+              email,
+              telefono
+            )
+          `)
+          .eq('tutor_id', user.id)
+          .eq('activa', true);
+
+        if (error) throw error;
+
+        // Formateamos la respuesta para que sea fácil de usar
+        const alumnosFormateados = data.map(item => item.alumnos).filter(Boolean);
+        setAlumnos(alumnosFormateados);
+
+      } catch (err) {
+        console.error("Error cargando alumnos:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    cargarDatosReales();
+  }, [router, supabase]);
+
   const filtered = alumnos.filter((a) => {
-    const matchSearch = a.nombre.toLowerCase().includes(search.toLowerCase()) || a.matricula.toLowerCase().includes(search.toLowerCase());
-    const matchRiesgo = filterRiesgo === "todos" || a.riesgo === filterRiesgo;
+    const matchSearch = a.nombre_completo?.toLowerCase().includes(search.toLowerCase()) || 
+                        a.matricula?.toLowerCase().includes(search.toLowerCase());
+    const matchRiesgo = filterRiesgo === "todos" || a.nivel_riesgo === filterRiesgo;
     return matchSearch && matchRiesgo;
   });
 
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#0f151c]">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+          <p className="text-sm text-white/40 font-medium">Buscando tus alumnos...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#0f151c]">
-      <Sidebar role="Tutor" userName={TUTOR_NOMBRE} navItems={NAV_ITEMS} />
+      <Sidebar role="Tutor" userName={tutorNombre} navItems={NAV_ITEMS} />
 
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 pt-18 md:p-8 md:pt-8">
-        <PageHeader
-          title="Mis Alumnos"
-          subtitle={`${alumnos.length} alumnos asignados este cuatrimestre`}
-        />
+        <div>
+          <h1 className="text-xl font-bold text-white">Mis Alumnos</h1>
+          <p className="text-sm text-white/40">{alumnos.length} alumnos asignados actualmente.</p>
+        </div>
 
-        {/* Filters */}
+        {/* Buscador y Filtros */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/25" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-white/8 bg-white/4 py-2 pl-9 pr-3 text-sm text-white placeholder:text-white/20 outline-none focus:border-emerald-500/40"
+              className="w-full rounded-lg border border-white/8 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-emerald-500/40"
               placeholder="Buscar por nombre o matrícula..."
             />
           </div>
@@ -62,98 +154,67 @@ export default function AlumnosTutorPage() {
                 onClick={() => setFilterRiesgo(r)}
                 className={cn(
                   "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                  filterRiesgo === r ? "bg-emerald-600/15 text-emerald-400" : "text-white/40 hover:bg-white/6 hover:text-white/60"
+                  filterRiesgo === r ? "bg-emerald-600/15 text-emerald-400" : "text-white/40 hover:bg-white/6"
                 )}
               >
-                {r === "todos" ? "Todos" : r}
+                {r.charAt(0).toUpperCase() + r.slice(1)}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Alumno cards */}
+        {/* Lista de Alumnos */}
         <div className="flex flex-col gap-3">
           {filtered.map((a) => {
             const isExpanded = expandedId === a.id;
-            const sesiones = getSesionesByTutor(TUTOR_ID).filter((s) => s.alumnoId === a.id);
-            const canalizaciones = getCanalizacionesByAlumno(a.id);
-            const incidencias = getIncidenciasByAlumno(a.id);
-
             return (
-              <SectionCard key={a.id}>
+              <div key={a.id} className="rounded-xl border border-white/6 bg-[#151c24] overflow-hidden">
                 <button
                   onClick={() => setExpandedId(isExpanded ? null : a.id)}
-                  className="flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-white/2"
+                  className="flex w-full items-center gap-4 px-5 py-4 text-left hover:bg-white/2"
                 >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-600/15 text-sm font-bold text-emerald-400">
-                    {a.nombre.split(" ").slice(0, 2).map(n => n[0]).join("")}
+                    {a.nombre_completo?.split(" ").map((n: any) => n[0]).join("").substring(0, 2)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white">{a.nombre}</p>
-                    <p className="text-xs text-white/40">{a.matricula} · {a.carrera} · {a.cuatrimestre}° cuatrimestre</p>
+                    <p className="text-sm font-semibold text-white">{a.nombre_completo}</p>
+                    <p className="text-xs text-white/40">{a.matricula} · {a.carrera}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <GpaCell value={a.promedio} />
-                    <RiskBadge riesgo={a.riesgo} />
+                    <RiskBadge riesgo={a.nivel_riesgo} />
                     {isExpanded ? <ChevronUp className="h-4 w-4 text-white/30" /> : <ChevronDown className="h-4 w-4 text-white/30" />}
                   </div>
                 </button>
 
                 {isExpanded && (
-                  <div className="border-t border-white/6 px-5 py-4">
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                      {/* Contact info */}
-                      <div className="flex flex-col gap-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Contacto</p>
-                        <div className="flex items-center gap-2 text-xs text-white/50">
-                          <Mail className="h-3 w-3 text-white/30" /> {a.correo}
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-white/50">
-                          <Phone className="h-3 w-3 text-white/30" /> {a.telefono}
-                        </div>
-                        <div className="text-xs text-white/50">
-                          <span className="text-white/30">Grupo:</span> {a.grupo}
-                        </div>
+                  <div className="border-t border-white/6 bg-black/10 px-5 py-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-bold uppercase text-white/30">Contacto</p>
+                        <div className="flex items-center gap-2 text-xs text-white/60"><Mail className="h-3.5 w-3.5" /> {a.email}</div>
+                        <div className="flex items-center gap-2 text-xs text-white/60"><Phone className="h-3.5 w-3.5" /> {a.telefono}</div>
                       </div>
-
-                      {/* Stats */}
-                      <div className="flex flex-col gap-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Historial</p>
-                        <div className="flex items-center gap-2 text-xs text-white/50">
-                          <CalendarDays className="h-3 w-3 text-white/30" /> {sesiones.length} sesiones registradas
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-white/50">
-                          <AlertTriangle className="h-3 w-3 text-white/30" /> {incidencias.length} incidencias
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-white/50">
-                          <ArrowRightLeft className="h-3 w-3 text-white/30" /> {canalizaciones.length} canalizaciones
-                        </div>
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-bold uppercase text-white/30">Académico</p>
+                        <p className="text-xs text-white/60">Cuatrimestre: {a.cuatrimestre}°</p>
+                        <p className="text-xs text-white/60">Estatus: Alumno Regular</p>
                       </div>
-
-                      {/* Canalizaciones */}
-                      {canalizaciones.length > 0 && (
-                        <div className="flex flex-col gap-2">
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Canalizaciones activas</p>
-                          {canalizaciones.map((c) => (
-                            <div key={c.id} className="flex items-center gap-2">
-                              <StatusBadge status={c.estatus} />
-                              <span className="text-xs text-white/50">
-                                {TIPOS_CANALIZACION.find(t => t.codigo === c.tipoServicio)?.descripcion ?? c.tipoServicio}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
                 )}
-              </SectionCard>
+              </div>
             );
           })}
         </div>
 
+        {/* Estado vacío */}
         {filtered.length === 0 && (
-          <p className="py-10 text-center text-sm text-white/30">No se encontraron alumnos.</p>
+          <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-white/10 rounded-2xl">
+            <Users className="h-10 w-10 text-white/10 mb-3" />
+            <p className="text-sm text-white/40 italic">No se encontraron alumnos asignados.</p>
+            <p className="text-[10px] text-white/20 mt-1">ID de tutor: {tutorId}</p>
+          </div>
         )}
       </main>
     </div>

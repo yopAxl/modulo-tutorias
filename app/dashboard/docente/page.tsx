@@ -1,15 +1,16 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar from "@/app/_components/Sidebar";
 import { StatCard } from "@/app/_components/StatCard";
+import { createClient } from "@/lib/supabase/client"; // Cliente de Supabase
 import { getAlumnosByDocente, gpaClass, type RiesgoNivel } from "@/app/_lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, TrendingUp, AlertTriangle, CheckCircle2, Plus } from "lucide-react";
+import { Users, TrendingUp, AlertTriangle, CheckCircle2, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const DOCENTE_ID = "d1";
-const DOCENTE_NOMBRE = "Mtro. José Antonio Pérez Ruiz";
 const NAV_ITEMS = [
   { icon: "📊", label: "Dashboard", href: "/dashboard/docente" },
   { icon: "👥", label: "Mi grupo", href: "/dashboard/docente/grupo" },
@@ -39,22 +40,62 @@ const CALIFICACIONES = [
 ];
 
 export default function DocenteDashboard() {
-  const alumnos = getAlumnosByDocente(DOCENTE_ID);
+  const router = useRouter();
+  const supabase = createClient();
+
+  // Estados para el docente real
+  const [docenteNombre, setDocenteNombre] = useState("");
+  const [docenteId, setDocenteId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function cargarSesion() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          router.push("/login");
+          return;
+        }
+
+        // Obtener nombre desde metadata
+        const nombre = user.user_metadata?.nombre_completo || user.email || "Docente";
+        setDocenteNombre(nombre);
+        setDocenteId(user.id);
+      } catch (err) {
+        console.error("Error cargando sesión:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    cargarSesion();
+  }, [router, supabase]);
+
+  // Usamos el ID real para filtrar (aunque sean mock-data por ahora)
+  const alumnos = getAlumnosByDocente(docenteId || "d1");
   const total = alumnos.length;
   const promedio = total > 0 ? (alumnos.reduce((s, a) => s + a.promedio, 0) / total).toFixed(1) : "—";
   const enRiesgo = alumnos.filter((a) => a.riesgo !== "Bajo").length;
   const aprobacion = total > 0 ? ((alumnos.filter((a) => a.promedio >= 7).length / total) * 100).toFixed(0) : "0";
 
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#0f151c]">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#0f151c]">
-      <Sidebar role="Docente" userName={DOCENTE_NOMBRE} navItems={NAV_ITEMS} />
+      <Sidebar role="Docente" userName={docenteNombre} navItems={NAV_ITEMS} />
 
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 pt-18 md:p-8 md:pt-8">
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-xl font-bold text-white">Panel de Docente</h1>
             <p className="mt-0.5 text-sm text-white/50">
-              Bienvenido, {DOCENTE_NOMBRE.split(" ")[1]}. Grupo IDGS-7A · Cuatrimestre actual.
+              Bienvenido, {docenteNombre.split(" ")[0]}. Grupo IDGS-7A · Cuatrimestre actual.
             </p>
           </div>
           <Button size="sm" className="gap-2 bg-pink-600 text-white shadow-lg shadow-pink-600/25 hover:bg-pink-500">
@@ -65,9 +106,9 @@ export default function DocenteDashboard() {
         {/* KPIs */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <StatCard label="Alumnos en grupo" value={total} sub="Grupo IDGS-7A" icon={Users} accent="green" />
-          <StatCard label="Promedio grupal" value={promedio} sub="↑ +0.4 vs parcial anterior" subColor="text-emerald-400" icon={TrendingUp} accent="amber" />
-          <StatCard label="Alumnos en riesgo" value={enRiesgo} sub={`${((enRiesgo / total) * 100).toFixed(0)}% del grupo`} subColor="text-amber-400" icon={AlertTriangle} accent="red" />
-          <StatCard label="Índice de aprobación" value={`${aprobacion}%`} sub="Alumnos con promedio ≥ 7" subColor="text-emerald-400" icon={CheckCircle2} accent="green" />
+          <StatCard label="Promedio grupal" value={promedio} sub="↑ +0.4 vs parcial anterior" icon={TrendingUp} accent="amber" />
+          <StatCard label="Alumnos en riesgo" value={enRiesgo} sub={`${total > 0 ? ((enRiesgo / total) * 100).toFixed(0) : 0}% del grupo`} icon={AlertTriangle} accent="red" />
+          <StatCard label="Índice de aprobación" value={`${aprobacion}%`} sub="Promedio ≥ 7" icon={CheckCircle2} accent="green" />
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -157,9 +198,6 @@ export default function DocenteDashboard() {
                 })}
               </TableBody>
             </Table>
-            {CALIFICACIONES.length === 0 && (
-              <p className="py-10 text-center text-sm text-white/30">Aún no hay calificaciones registradas.</p>
-            )}
           </SectionCard>
         </div>
       </main>

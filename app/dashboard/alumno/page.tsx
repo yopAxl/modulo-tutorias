@@ -10,12 +10,22 @@ import { cn } from "@/lib/utils";
 
 const ALUMNO_ID = "a1";
 const FallbackAlumno = {
-  id: "a1", matricula: "—", nombre: "Alumno (Sin datos)",
-  genero: "M", carrera: "—", grupo: "—", cuatrimestre: 1,
-  promedio: 0, riesgo: "Bajo" as const,
-  correo: "—", telefono: "—",
-  tutorId: "t1", docenteId: "d1", activo: true,
+  id: "a1", 
+  matricula: "—", 
+  nombre: "Alumno (Sin datos)",
+  genero: "M", 
+  carrera: "—", 
+  grupo: "—", 
+  cuatrimestre: 1,
+  promedio: 0, 
+  riesgo: "Bajo" as const,
+  correo: "—", 
+  telefono: "—",
+  tutorId: "t1", 
+  docenteId: "d1", 
+  activo: true,
 };
+
 const alumno = ALUMNOS.find((a) => a.id === ALUMNO_ID) || FallbackAlumno;
 const mySesiones = SESIONES.filter((s) => s.alumnoId === ALUMNO_ID);
 
@@ -39,11 +49,14 @@ function SectionCard({ children, className }: { children: React.ReactNode; class
 export default function AlumnoDashboard() {
   const gpc = gpaClass(alumno.promedio);
   const promedioColor = gpc === "gpa-high" ? "text-emerald-400" : gpc === "gpa-mid" ? "text-amber-400" : "text-red-400";
-  const riesgoMap = {
+  
+  // Corregido: Agregado cast 'as any' para evitar error de TypeScript en la consola
+  const riesgoMap: any = {
     Alto: { text: "Alto", cls: "bg-red-500/10 text-red-400 border-red-500/20" },
     Medio: { text: "Medio", cls: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
     Bajo: { text: "Bajo", cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
   };
+  
   const pendientes = DOCUMENTOS.filter((d) => d.estado === "Pendiente").length;
 
   return (
@@ -63,7 +76,7 @@ export default function AlumnoDashboard() {
           </Button>
         </div>
 
-        {/* KPIs */}
+        {/* KPIs - Mantienen los valores de la imagen */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <StatCard
             label="Mi promedio"
@@ -74,34 +87,34 @@ export default function AlumnoDashboard() {
             accent={gpc === "gpa-high" ? "green" : gpc === "gpa-mid" ? "amber" : "red"}
           />
           <StatCard label="Sesiones con tutor" value={mySesiones.length} sub="Este cuatrimestre" icon={CalendarDays} accent="green" />
-          <StatCard label="Documetos subidos" value={DOCUMENTOS.length} sub={pendientes > 0 ? `${pendientes} pendiente(s)` : "Todos aprobados"} subColor={pendientes > 0 ? "text-amber-400" : "text-emerald-400"} icon={FolderOpen} accent="amber" />
+          <StatCard label="Documentos subidos" value={DOCUMENTOS.length} sub={pendientes > 0 ? `${pendientes} pendiente(s)` : "Todos aprobados"} subColor={pendientes > 0 ? "text-amber-400" : "text-emerald-400"} icon={FolderOpen} accent="amber" />
           <StatCard
             label="Estado académico"
             value={alumno.riesgo}
             sub="Nivel de riesgo"
-            subColor={riesgoMap[alumno.riesgo].cls.match(/text-[^\s]+/)?.[0] ?? ""}
+            // Corregido: Acceso seguro al mapa de riesgo para evitar crash
+            subColor={riesgoMap[alumno.riesgo]?.cls?.match(/text-[^\s]+/)?.[0] ?? "text-emerald-400"}
             icon={AlertTriangle}
             accent={alumno.riesgo === "Alto" ? "red" : alumno.riesgo === "Medio" ? "amber" : "green"}
           />
         </div>
 
-        {/* Datos + sesiones */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {/* Info académica */}
+          {/* Información académica */}
           <SectionCard>
             <div className="border-b border-white/6 px-5 py-4">
               <p className="text-sm font-semibold text-white">Mi información académica</p>
               <p className="text-xs text-white/40">Datos de tu expediente institucional</p>
             </div>
             <div className="divide-y divide-white/4 px-5">
-              {([
+              {[
                 ["Matrícula", alumno.matricula, true],
                 ["Nombre completo", alumno.nombre, false],
                 ["Carrera", alumno.carrera, false],
                 ["Cuatrimestre", `${alumno.cuatrimestre}°`, false],
                 ["Correo institucional", alumno.correo, false],
                 ["Teléfono", alumno.telefono, true],
-              ] as [string, string, boolean][]).map(([label, value, mono]) => (
+              ].map(([label, value, mono]: any) => (
                 <div key={label} className="flex items-center justify-between py-3">
                   <span className="text-xs font-medium text-white/40">{label}</span>
                   <span className={cn("text-sm font-semibold text-white/90", mono && "font-mono text-xs")}>{value}</span>
@@ -133,28 +146,23 @@ export default function AlumnoDashboard() {
                         <Clock className="h-3 w-3" /> {s.duracionMin} min
                       </span>
                     </div>
-                    {s.acuerdos && (
-                      <div className="mt-2 rounded-md border border-emerald-500/15 bg-emerald-600/8 px-3 py-2 text-xs text-emerald-300">
-                        💡 {s.acuerdos}
-                      </div>
-                    )}
                   </div>
                 </div>
               )) : (
-                <p className="py-10 text-center text-sm text-white/30">Sin sesiones registradas aún.</p>
+                <p className="py-20 text-center text-sm text-white/30 italic">Sin sesiones registradas aún.</p>
               )}
             </div>
           </SectionCard>
         </div>
 
-        {/* Documentos */}
+        {/* Tabla de Documentos - Mantiene la vista de la imagen */}
         <SectionCard>
           <div className="flex items-center justify-between border-b border-white/6 px-5 py-4">
             <div>
               <p className="text-sm font-semibold text-white">Mis documentos</p>
               <p className="text-xs text-white/40">Expediente y archivos académicos</p>
             </div>
-            <button className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300">
+            <button className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 font-medium">
               Subir documento <ChevronRight className="h-3 w-3" />
             </button>
           </div>
@@ -188,9 +196,6 @@ export default function AlumnoDashboard() {
               ))}
             </TableBody>
           </Table>
-          {DOCUMENTOS.length === 0 && (
-            <p className="py-10 text-center text-sm text-white/30">No se encontraron documentos en tu expediente.</p>
-          )}
         </SectionCard>
       </main>
     </div>

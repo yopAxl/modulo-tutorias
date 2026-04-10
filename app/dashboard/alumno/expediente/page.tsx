@@ -1,29 +1,37 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Sidebar from "@/app/_components/Sidebar";
 import { PageHeader } from "@/app/_components/PageHeader";
 import { SectionCard } from "@/app/_components/SectionCard";
 import { RiskBadge } from "@/app/_components/RiskBadge";
 import { GpaCell } from "@/app/_components/GpaCell";
 import { StatusBadge } from "@/app/_components/StatusBadge";
+import { createClient } from "@/lib/supabase/client"; // Cliente de Supabase
 import {
   ALUMNOS, getCalificacionesByAlumno, getPlanesAccionByAlumno, formatFecha
 } from "@/app/_lib/mock-data";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle2, Target } from "lucide-react";
+import { CheckCircle2, Target, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Fallback actualizado con los datos solicitados
 const FallbackAlumno = {
-  id: "a1", matricula: "—", nombre: "Alumno (Sin datos)",
-  genero: "M", carrera: "—", grupo: "—", cuatrimestre: 1,
-  promedio: 0, riesgo: "Bajo" as const,
-  correo: "—", telefono: "—",
-  tutorId: "t1", docenteId: "d1", activo: true,
+  id: "a1", 
+  matricula: "tic-310097", 
+  nombre: "Emiliano Estrada Parra",
+  genero: "M", 
+  carrera: "IDGS", 
+  grupo: "83", 
+  cuatrimestre: 8,
+  promedio: 9.8, 
+  riesgo: "Bajo" as const,
+  correo: "tic-310097@utnay.edu.mx", 
+  telefono: "3112447230",
+  tutorId: "t1", 
+  docenteId: "d1", 
+  activo: true,
 };
-const ALUMNO_ID = "a1";
-const alumno = ALUMNOS.find((a) => a.id === ALUMNO_ID) || FallbackAlumno;
-const calificaciones = getCalificacionesByAlumno(ALUMNO_ID);
-const planesAccion = getPlanesAccionByAlumno(ALUMNO_ID);
 
 const NAV_ITEMS = [
   { icon: "📊", label: "Mi panel", href: "/dashboard/alumno" },
@@ -33,6 +41,47 @@ const NAV_ITEMS = [
 ];
 
 export default function ExpedienteAlumnoPage() {
+  const supabase = createClient();
+  const [alumno, setAlumno] = useState(FallbackAlumno);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function cargarExpediente() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user && user.email) {
+          // Intentar buscar en la base de datos simulada por correo
+          const alumnoEncontrado = ALUMNOS.find(a => a.correo === user.email);
+          
+          if (alumnoEncontrado) {
+            setAlumno(alumnoEncontrado);
+          } else if (user.email === "tic-310097@utnay.edu.mx") {
+            // Forzar los datos de Emiliano si el correo coincide
+            setAlumno(FallbackAlumno);
+          }
+        }
+      } catch (error) {
+        console.error("Error al cargar el expediente:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    cargarExpediente();
+  }, [supabase]);
+
+  // Obtener datos relacionados usando la ID del alumno cargado
+  const calificaciones = getCalificacionesByAlumno(alumno.id);
+  const planesAccion = getPlanesAccionByAlumno(alumno.id);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-[#0f151c]">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#0f151c]">
       <Sidebar role="Alumno" userName={alumno.nombre} navItems={NAV_ITEMS} />
@@ -41,13 +90,13 @@ export default function ExpedienteAlumnoPage() {
         <PageHeader title="Mi Expediente Académico" subtitle="Vista de solo lectura de tu información" />
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {/* Personal info */}
+          {/* Información Personal - Basado en imagen_600e5d.png */}
           <SectionCard>
             <div className="border-b border-white/6 px-5 py-4">
               <p className="text-sm font-semibold text-white">Datos personales</p>
             </div>
             <div className="divide-y divide-white/4 px-5">
-              {([
+              {[
                 ["Matrícula", alumno.matricula, true],
                 ["Nombre", alumno.nombre, false],
                 ["Carrera", alumno.carrera, false],
@@ -55,7 +104,7 @@ export default function ExpedienteAlumnoPage() {
                 ["Cuatrimestre", `${alumno.cuatrimestre}°`, false],
                 ["Correo", alumno.correo, false],
                 ["Teléfono", alumno.telefono, true],
-              ] as [string, string, boolean][]).map(([label, value, mono]) => (
+              ].map(([label, value, mono]: any) => (
                 <div key={label} className="flex items-center justify-between py-3">
                   <span className="text-xs font-medium text-white/40">{label}</span>
                   <span className={cn("text-sm font-semibold text-white/90", mono && "font-mono text-xs")}>{value}</span>
@@ -98,7 +147,7 @@ export default function ExpedienteAlumnoPage() {
               </TableBody>
             </Table>
             {calificaciones.length === 0 && (
-              <p className="py-10 text-center text-sm text-white/30">Sin calificaciones registradas.</p>
+              <p className="py-10 text-center text-sm text-white/30 italic">Sin calificaciones registradas.</p>
             )}
           </SectionCard>
         </div>
