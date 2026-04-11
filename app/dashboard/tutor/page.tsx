@@ -54,9 +54,19 @@ function GpaCell({ value }: { value: number }) {
 
 function SectionCard({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("rounded-xl border border-white/6 bg-[#151c24]", className)}>
+    <div className={cn("rounded-xl border border-white/6 bg-[#151c24] overflow-hidden", className)}>
       {children}
     </div>
+  );
+}
+
+function EmptyDataRow({ colSpan, message = "No hay datos en esta tabla" }: { colSpan: number; message?: string }) {
+  return (
+    <TableRow>
+      <TableCell colSpan={colSpan} className="py-10 text-center text-xs text-white/20 italic">
+        {message}
+      </TableCell>
+    </TableRow>
   );
 }
 
@@ -76,9 +86,18 @@ export default function TutorDashboard() {
           router.push("/login");
           return;
         }
-        setTutorNombre(user.user_metadata?.nombre_completo || user.email);
-        const result = await getTutorDashboardStats(user.id);
-        if (result) setData(result);
+
+        const res = await getTutorDashboardStats(user.id);
+        
+        if (res.error === "PERFIL_NO_ENCONTRADO") {
+          setData({ error: "PERFIL_NO_ENCONTRADO" });
+          setTutorNombre(user.user_metadata?.nombre_completo || user.email || "Usuario");
+        } else if (res.data) {
+          setData(res.data);
+          setTutorNombre(res.data.tutor.nombre_completo || user.user_metadata?.nombre_completo || user.email);
+        } else {
+          toast.error(res.error || "Error al cargar datos");
+        }
       } catch (err) {
         toast.error("Error de conexión");
       } finally {
@@ -96,10 +115,31 @@ export default function TutorDashboard() {
     );
   }
 
+  if (data?.error === "PERFIL_NO_ENCONTRADO") {
+    return (
+      <div className="flex h-screen overflow-hidden bg-[#0f151c]">
+        <Sidebar role="Tutor" userName={tutorNombre} navItems={NAV_ITEMS} />
+        <main className="flex flex-1 items-center justify-center p-8">
+          <SectionCard className="max-w-md p-8 text-center border-amber-500/20 bg-amber-500/5">
+            <AlertTriangle className="mx-auto h-12 w-12 text-amber-500 mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">Perfil de Tutor no encontrado</h2>
+            <p className="text-sm text-white/60 mb-6">
+              Tu cuenta no tiene un perfil de tutor asociado en el sistema. 
+              Por favor, contacta al administrador para que registre tu perfil en la tabla de tutores.
+            </p>
+            <Button onClick={() => window.location.reload()} variant="outline" className="border-white/10 hover:bg-white/5">
+              Reintentar
+            </Button>
+          </SectionCard>
+        </main>
+      </div>
+    );
+  }
+
   const stats = data?.stats || { totalAlumnos: 0, sesionesPendientes: 0, alertasRiesgo: 0, sesionesCompletadas: 0 };
   const alumnos = data?.alumnosRecientes || [];
   const sesiones = data?.proximasSesiones || [];
-  const alumnosEnRiesgo = alumnos.filter((a: any) => (a.nivel_riesgo || a.riesgo) === "Alto" || (a.nivel_riesgo || a.riesgo) === "Medio");
+  const alumnosEnRiesgo = alumnos.filter((a: any) => (a.riesgo) === "Alto" || (a.riesgo) === "Medio");
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#0f151c]">
@@ -140,16 +180,20 @@ export default function TutorDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {alumnosEnRiesgo.map((a: any) => (
-                  <TableRow key={a.id} className="border-white/4 hover:bg-white/3">
-                    <TableCell>
-                      <p className="text-sm font-medium text-white/90">{a.nombre_completo || a.nombre}</p>
-                      <p className="text-xs text-white/35">{a.matricula}</p>
-                    </TableCell>
-                    <TableCell><GpaCell value={a.promedio} /></TableCell>
-                    <TableCell><RiskBadge riesgo={a.nivel_riesgo || a.riesgo} /></TableCell>
-                  </TableRow>
-                ))}
+                {alumnosEnRiesgo.length > 0 ? (
+                  alumnosEnRiesgo.map((a: any, index: number) => (
+                    <TableRow key={a.id || `riesgo-${index}`} className="border-white/4 hover:bg-white/3">
+                      <TableCell>
+                        <p className="text-sm font-medium text-white/90">{a.nombre_completo || a.nombre}</p>
+                        <p className="text-xs text-white/35">{a.matricula}</p>
+                      </TableCell>
+                      <TableCell><GpaCell value={a.promedio} /></TableCell>
+                      <TableCell><RiskBadge riesgo={a.riesgo} /></TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <EmptyDataRow colSpan={3} message="No hay alumnos en riesgo detectados." />
+                )}
               </TableBody>
             </Table>
           </SectionCard>
@@ -159,15 +203,19 @@ export default function TutorDashboard() {
               <p className="text-sm font-semibold text-white">Próximas sesiones</p>
             </div>
             <div className="flex flex-col gap-2 p-4">
-              {sesiones.map((s: any) => (
-                <div key={s.id} className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/3 px-4 py-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate text-sm font-medium text-white/90">Sesión Programada</p>
-                    <p className="flex items-center gap-1 text-xs text-white/40"><Clock className="h-3 w-3" /> {s.hora}</p>
+              {sesiones.length > 0 ? (
+                sesiones.map((s: any, index: number) => (
+                  <div key={s.id || `sesion-${index}`} className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/3 px-4 py-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate text-sm font-medium text-white/90">Sesión Programada</p>
+                      <p className="flex items-center gap-1 text-xs text-white/40"><Clock className="h-3 w-3" /> {s.hora}</p>
+                    </div>
+                    <Badge className="bg-emerald-500/10 text-emerald-400 border-none text-[10px]">PENDIENTE</Badge>
                   </div>
-                  <Badge className="bg-emerald-500/10 text-emerald-400 border-none text-[10px]">PENDIENTE</Badge>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="py-6 text-center text-xs text-white/20 italic">No hay próximas sesiones.</p>
+              )}
             </div>
           </SectionCard>
         </div>
@@ -186,14 +234,18 @@ export default function TutorDashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {alumnos.map((a: any) => (
-                <TableRow key={a.id} className="border-white/4 hover:bg-white/3">
-                  <TableCell className="text-sm font-medium text-white/90">{a.nombre_completo || a.nombre}</TableCell>
-                  <TableCell className="text-xs text-white/40 font-mono">{a.matricula}</TableCell>
-                  <TableCell><GpaCell value={a.promedio} /></TableCell>
-                  <TableCell><RiskBadge riesgo={a.nivel_riesgo || a.riesgo} /></TableCell>
-                </TableRow>
-              ))}
+              {alumnos.length > 0 ? (
+                alumnos.map((a: any, index: number) => (
+                  <TableRow key={a.id || `alumno-${index}`} className="border-white/4 hover:bg-white/3">
+                    <TableCell className="text-sm font-medium text-white/90">{a.nombre_completo || a.nombre}</TableCell>
+                    <TableCell className="text-xs text-white/40 font-mono">{a.matricula}</TableCell>
+                    <TableCell><GpaCell value={a.promedio} /></TableCell>
+                    <TableCell><RiskBadge riesgo={a.riesgo} /></TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <EmptyDataRow colSpan={4} message="No hay alumnos asignados a este tutor." />
+              )}
             </TableBody>
           </Table>
         </SectionCard>

@@ -1,50 +1,376 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-export async function getTutorDashboardStats(tutorId: string) {
+/**
+ * Función centralizada para obtener el perfil del tutor usando RLS estándar.
+ * Eliminado el modo de fallback administrativo para cumplir con el SCHEMA.md.
+ */
+async function getTutorProfile(authId: string) {
   const supabase = await createClient();
 
+  const { data: profile, error } = await supabase
+    .schema('tutorias')
+    .from('tutores')
+    .select('*')
+    .eq('user_id', authId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error de RLS en getTutorProfile:", error);
+    return { profile: null, client: supabase };
+  }
+
+  return { profile, client: supabase };
+}
+
+export async function getTutorDashboardStats(authId: string) {
   try {
-    // 1. Obtener alumnos asignados a este tutor
-    const { data: alumnos, error: errorAlumnos } = await supabase
+    const { profile: tutor, client: supabase } = await getTutorProfile(authId);
+    if (!tutor) return { data: null, error: "PERFIL_NO_ENCONTRADO" };
+
+    // 1. Obtener alumnos asignados (Sujeto a RLS)
+    const { data: asignaciones, error: errorAsig } = await supabase
       .schema('tutorias')
-      .from('alumnos')
-      .select('*')
-      .eq('tutor_id', tutorId);
+      .from('asignaciones_tutor')
+      .select(`
+        alumnos (
+          id, nombre_completo, matricula, promedio_general, riesgo_academico, grupo
+        )
+      `)
+      .eq('tutor_id', tutor.id)
+      .eq('activa', true);
 
-    if (errorAlumnos) throw errorAlumnos;
+    if (errorAsig) throw errorAsig;
 
-    // 2. Obtener sesiones vinculadas a este tutor
-    const { data: sesiones, error: errorSesiones } = await supabase
+    const alumnos = asignaciones?.map(a => {
+      const alumno = Array.isArray(a.alumnos) ? a.alumnos[0] : a.alumnos;
+      return {
+        ...alumno,
+        promedio: parseFloat(alumno?.promedio_general as any) || 0,
+        riesgo: alumno?.riesgo_academico === 'alto' ? 'Alto' : (alumno?.riesgo_academico === 'medio' ? 'Medio' : 'Bajo')
+      };
+    }) || [];
+
+    // 2. Obtener sesiones (Sujeto a RLS)
+    const { data: sesiones, error: errorSes } = await supabase
       .schema('tutorias')
       .from('sesiones_tutoria')
       .select('*')
-      .eq('tutor_id', tutorId);
+      .eq('tutor_id', tutor.id);
 
-    if (errorSesiones) throw errorSesiones;
+    if (errorSes) throw errorSes;
 
-    // 3. Formatear datos para el Dashboard
     return {
-      stats: {
-        totalAlumnos: alumnos?.length || 0,
-        sesionesPendientes: sesiones?.filter(s => s.estatus === 'pendiente').length || 0,
-        alertasRiesgo: alumnos?.filter(a => a.nivel_riesgo === 'Alto').length || 0,
-        sesionesCompletadas: sesiones?.filter(s => s.estatus === 'realizada').length || 0
+      data: {
+        tutor,
+        alumnosRecientes: alumnos,
+        proximasSesiones: sesiones.filter(s => s.estatus === 'pendiente').slice(0, 5),
+        stats: {
+          totalAlumnos: alumnos.length,
+          sesionesPendientes: sesiones.filter(s => s.estatus === 'pendiente').length,
+          alertasRiesgo: alumnos.filter(a => a.riesgo === 'Alto').length,
+          sesionesCompletadas: sesiones.filter(s => s.estatus === 'realizada').length
+        },
+        isFallback: false
       },
-      alumnosRecientes: alumnos?.sort((a, b) => b.promedio - a.promedio).slice(0, 5) || [],
-      proximasSesiones: sesiones
-        ?.filter(s => s.estatus === 'pendiente')
-        .slice(0, 3)
-        .map(s => ({
-          id: s.id,
-          // Aquí idealmente un join para el nombre, pero uso el ID por ahora
-          alumnoId: s.alumno_id, 
-          hora: new Date(s.fecha_hora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        })) || []
+      error: null
     };
   } catch (error: any) {
     console.error("Error en getTutorDashboardStats:", error);
-    return null;
+    return { data: null, error: error.message };
+  }
+}
+
+export async function getTutorAlumnos(authId: string) {
+  try {
+    const { profile: tutor, client: supabase } = await getTutorProfile(authId);
+    if (!tutor) return { data: null, error: "PERFIL_NO_ENCONTRADO" };
+
+    const { data: asignaciones, error } = await supabase
+      .schema('tutorias')
+      .from('asignaciones_tutor')
+      .select(`
+        alumnos (*)
+      `)
+      .eq('tutor_id', tutor.id)
+      .eq('activa', true);
+
+    if (error) throw error;
+    
+    return { 
+      data: { 
+        tutor, 
+        alumnos: asignaciones?.map(a => {
+          const alumno = Array.isArray(a.alumnos) ? a.alumnos[0] : a.alumnos;
+          return {
+            ...alumno,
+            nivel_riesgo: alumno?.riesgo_academico === 'alto' ? 'Alto' : (alumno?.riesgo_academico === 'medio' ? 'Medio' : 'Bajo'),
+            promedio: parseFloat(alumno?.promedio_general as any) || 0
+          };
+        }) || [] 
+      }, 
+      error: null 
+    };
+  } catch (error: any) {
+    return { data: null, error: error.message };
+  }
+}
+
+export async function getTutorSesiones(authId: string) {
+  // Usamos admin client para asegurar la lectura de relaciones N:N (motivos) 
+  // independientemente de las políticas RLS en la tabla de unión.
+  const supabase = createAdminClient();
+  try {
+    // 1. Obtener el perfil para filtrar por tutor_id
+    const { data: tutor } = await supabase
+      .schema('tutorias')
+      .from('tutores')
+      .select('id, nombre_completo')
+      .eq('user_id', authId)
+      .single();
+
+    if (!tutor) return { data: null, error: "PERFIL_NO_ENCONTRADO" };
+
+    // 2. Obtener sesiones con sus motivos y alumnos
+    const { data: sesiones, error: errorSes } = await supabase
+      .schema('tutorias')
+      .from('sesiones_tutoria')
+      .select(`
+        *,
+        alumnos (id, nombre_completo, matricula, carrera, grupo),
+        sesion_motivos (motivo_codigo)
+      `)
+      .eq('tutor_id', tutor.id)
+      .order('fecha', { ascending: false });
+
+    if (errorSes) throw errorSes;
+
+    // 3. Obtener alumnos asignados
+    const { data: asignaciones } = await supabase
+      .schema('tutorias')
+      .from('asignaciones_tutor')
+      .select('alumnos(id, nombre_completo, matricula, carrera, grupo)')
+      .eq('tutor_id', tutor.id)
+      .eq('activa', true);
+
+    return { 
+      data: { 
+        tutor, 
+        sesiones: sesiones || [], 
+        alumnosAsignados: asignaciones?.map((a: any) => {
+          const alumno = Array.isArray(a.alumnos) ? a.alumnos[0] : a.alumnos;
+          return { 
+            id: alumno?.id, 
+            nombre: alumno?.nombre_completo,
+            matricula: alumno?.matricula,
+            carrera: alumno?.carrera,
+            grupo: alumno?.grupo
+          };
+        }) || []
+      }, 
+      error: null 
+    };
+  } catch (error: any) {
+    console.error("Error en getTutorSesiones (Admin):", error);
+    return { data: null, error: error.message };
+  }
+}
+
+export async function getCatalogosTutoria() {
+  const supabase = await createClient();
+  try {
+    const [resMotivos, resUrgencia] = await Promise.all([
+      supabase.schema('tutorias').from('cat_motivo_tutoria').select('*').eq('activo', true).order('orden', { ascending: true }),
+      supabase.schema('tutorias').from('cat_nivel_urgencia').select('*').order('orden', { ascending: true })
+    ]);
+
+    if (resMotivos.error) throw resMotivos.error;
+    
+    return { 
+      data: { 
+        motivos: resMotivos.data || [],
+        urgencias: resUrgencia.data || []
+      }, 
+      error: null 
+    };
+  } catch (error: any) {
+    return { data: { motivos: [], urgencias: [] }, error: error.message };
+  }
+}
+
+export async function getTutorReportData(authId: string) {
+  try {
+    const { profile: tutor, client: supabase } = await getTutorProfile(authId);
+    if (!tutor) return { data: null, error: "PERFIL_NO_ENCONTRADO" };
+
+    const [resAlumnos, resSesiones] = await Promise.all([
+      supabase.schema('tutorias').from('asignaciones_tutor').select('alumnos(*)').eq('tutor_id', tutor.id).eq('activa', true),
+      supabase.schema('tutorias').from('sesiones_tutoria').select('*, alumnos(nombre_completo)').eq('tutor_id', tutor.id)
+    ]);
+
+    return {
+      data: {
+        tutor,
+        alumnos: resAlumnos.data?.map(a => {
+          const alumno = Array.isArray(a.alumnos) ? a.alumnos[0] : a.alumnos;
+          return {
+            ...alumno,
+            riesgo: alumno?.riesgo_academico === 'alto' ? 'Alto' : (alumno?.riesgo_academico === 'medio' ? 'Medio' : 'Bajo'),
+            promedio: parseFloat(alumno?.promedio_general as any) || 0
+          };
+        }) || [],
+        sesiones: resSesiones.data || []
+      },
+      error: null
+    };
+  } catch (error: any) {
+    console.error("Error en getTutorReportData:", error);
+    return { data: null, error: error.message };
+  }
+}
+
+export async function getExpedienteAlumno(authId: string, alumnoId: string) {
+  try {
+    const { profile: tutor, client: supabase } = await getTutorProfile(authId);
+    if (!tutor) return { data: null, error: "PERFIL_NO_ENCONTRADO" };
+
+    const [resAlumno, resCal, resSes, resCan, resInc, resDoc] = await Promise.all([
+      supabase.schema('tutorias').from('alumnos').select('*, tutores:tutores(nombre_completo)').eq('id', alumnoId).single(),
+      supabase.schema('tutorias').from('calificaciones').select('*').eq('alumno_id', alumnoId).order('created_at', { ascending: false }),
+      supabase.schema('tutorias').from('sesiones_tutoria').select('*').eq('alumno_id', alumnoId).order('fecha', { ascending: false }),
+      supabase.schema('tutorias').from('canalizaciones').select('*').eq('alumno_id', alumnoId).order('created_at', { ascending: false }),
+      supabase.schema('tutorias').from('incidencias').select('*').eq('alumno_id', alumnoId).order('fecha', { ascending: false }),
+      supabase.schema('tutorias').from('documentos').select('*').eq('alumno_id', alumnoId).order('created_at', { ascending: false })
+    ]);
+
+    return {
+      data: {
+        alumno: resAlumno.data,
+        calificaciones: resCal.data || [],
+        sesiones: resSes.data || [],
+        canalizaciones: resCan.data || [],
+        incidencias: resInc.data || [],
+        documentos: resDoc.data || []
+      },
+      error: null
+    };
+  } catch (error: any) {
+    return { data: null, error: error.message };
+  }
+}
+
+export async function createSessionAction(formData: any) {
+  const supabase = createAdminClient();
+  try {
+    const { 
+      alumno_id, tutor_id, fecha, hora_inicio, hora_fin, 
+      puntos_relevantes, compromisos_acuerdos, nivel_urgencia, 
+      estatus, motivos 
+    } = formData;
+
+    // Sanitización para PostgreSQL
+    const sessionData = {
+      alumno_id,
+      tutor_id,
+      fecha: fecha || null,
+      hora_inicio: hora_inicio || null,
+      hora_fin: hora_fin || null,
+      puntos_relevantes: puntos_relevantes || null,
+      compromisos_acuerdos: compromisos_acuerdos || null,
+      nivel_urgencia: nivel_urgencia?.toLowerCase() || 'normal',
+      estatus,
+      confirmado_tutor: true,
+      fecha_confirmacion_tutor: new Date().toISOString()
+    };
+
+    const { data: sesion, error: errorSes } = await supabase
+      .schema('tutorias')
+      .from('sesiones_tutoria')
+      .insert(sessionData)
+      .select()
+      .single();
+
+    if (errorSes) throw errorSes;
+
+    if (motivos && motivos.length > 0) {
+      const motivosInsert = motivos.map((m: string) => ({
+        sesion_id: sesion.id,
+        motivo_codigo: m
+      }));
+
+      const { error: errorMotivos } = await supabase
+        .schema('tutorias')
+        .from('sesion_motivos')
+        .insert(motivosInsert);
+
+      if (errorMotivos) throw errorMotivos;
+    }
+
+    return { data: sesion, error: null };
+  } catch (error: any) {
+    console.error("Error creating session (Admin Context):", error);
+    return { data: null, error: error.message };
+  }
+}
+
+export async function updateSessionAction(sessionId: string, formData: any) {
+  const supabase = createAdminClient();
+  try {
+    const { 
+      alumno_id, tutor_id, fecha, hora_inicio, hora_fin, 
+      puntos_relevantes, compromisos_acuerdos, nivel_urgencia, 
+      estatus, motivos 
+    } = formData;
+
+    // 1. Limpieza de datos (Convertir "" a null para PG)
+    const sessionData = {
+      alumno_id,
+      tutor_id,
+      fecha: fecha || null,
+      hora_inicio: hora_inicio || null,
+      hora_fin: hora_fin || null,
+      puntos_relevantes: puntos_relevantes || null,
+      compromisos_acuerdos: compromisos_acuerdos || null,
+      nivel_urgencia: nivel_urgencia?.toLowerCase() || 'normal',
+      estatus,
+      updated_at: new Date().toISOString()
+    };
+
+    // 2. Actualizar la sesión principal
+    const { error: errorSes } = await supabase
+      .schema('tutorias')
+      .from('sesiones_tutoria')
+      .update(sessionData)
+      .eq('id', sessionId);
+
+    if (errorSes) throw errorSes;
+
+    // 3. Actualizar motivos (Borrado y re-inserción atómica)
+    await supabase
+      .schema('tutorias')
+      .from('sesion_motivos')
+      .delete()
+      .eq('sesion_id', sessionId);
+
+    if (motivos && motivos.length > 0) {
+      const motivosInsert = motivos.map((m: string) => ({
+        sesion_id: sessionId,
+        motivo_codigo: m
+      }));
+
+      const { error: errorMotivos } = await supabase
+        .schema('tutorias')
+        .from('sesion_motivos')
+        .insert(motivosInsert);
+
+      if (errorMotivos) throw errorMotivos;
+    }
+
+    return { success: true, error: null };
+  } catch (error: any) {
+    console.error("Error updating session (Admin Context):", error);
+    return { success: false, error: error.message || "Error desconocido al actualizar" };
   }
 }

@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/app/_components/Sidebar";
 import { PageHeader } from "@/app/_components/PageHeader";
 import { SectionCard } from "@/app/_components/SectionCard";
-import { getAlumnosByTutor, getSesionesByTutor, formatFecha } from "@/app/_lib/mock-data";
-import { generateReportPDF } from "@/app/_lib/pdf-utils";
 import { Button } from "@/components/ui/button";
+import { Users, AlertTriangle, CalendarDays, FileText, Download, Loader2 } from "lucide-react";
+import { generateReportPDF } from "@/app/_lib/pdf-utils";
 import { createClient } from "@/lib/supabase/client";
-import { Download, Users, CalendarDays, AlertTriangle, FileText, Loader2 } from "lucide-react";
+import { getTutorReportData } from "../actions";
+import { toast } from "sonner";
 
 const NAV_ITEMS = [
   { icon: "📊", label: "Dashboard", href: "/dashboard/tutor" },
@@ -23,38 +24,51 @@ export default function ReportesTutorPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  // Estados para la sesión dinámica
-  const [tutorNombre, setTutorNombre] = useState("");
+  const [tutorNombre, setTutorNombre] = useState("Cargando...");
   const [tutorId, setTutorId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [alumnos, setAlumnos] = useState<any[]>([]);
+  const [sesiones, setSesiones] = useState<any[]>([]);
+
   useEffect(() => {
-    async function obtenerSesion() {
+    async function loadData() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-
         if (!user) {
           router.push("/login");
           return;
         }
 
-        // Extraemos el nombre de la metadata o usamos el correo como respaldo
-        const nombreCompleto = user.user_metadata?.nombre_completo || user.email || "Tutor";
-        setTutorNombre(nombreCompleto);
-        setTutorId(user.id);
-      } catch (error) {
-        console.error("Error al obtener sesión:", error);
+        const res = await getTutorReportData(user.id);
+
+        if (res.error === "PERFIL_NO_ENCONTRADO") {
+          setTutorId("NO_PROFILE");
+          setTutorNombre(user.user_metadata?.nombre_completo || user.email);
+        } else if (res.data) {
+          setTutorId(res.data.tutor.id);
+          setTutorNombre(res.data.tutor.nombre_completo || user.email);
+          setAlumnos(res.data.alumnos);
+          setSesiones(res.data.sesiones);
+        }
+      } catch (err) {
+        toast.error("Error al cargar datos de reportes");
       } finally {
         setLoading(false);
       }
     }
-    obtenerSesion();
+    loadData();
   }, [router, supabase]);
 
-  // Obtenemos los datos (temporalmente de mock-data, pero usando el ID real del usuario)
-  const alumnos = getAlumnosByTutor(tutorId || "");
-  const sesiones = getSesionesByTutor(tutorId || "");
-  const enRiesgo = alumnos.filter((a) => a.riesgo !== "Bajo");
+  const enRiesgo = alumnos.filter((a) => a.riesgo_academico && a.riesgo_academico !== "bajo");
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#0f151c]">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
 
   const REPORTES = [
     {
@@ -68,7 +82,7 @@ export default function ReportesTutorPage() {
           "Reporte: Alumnos Asignados",
           `Tutor: ${tutorNombre} · ${alumnos.length} alumnos`,
           ["Nombre", "Matrícula", "Carrera", "Cuatr.", "Promedio", "Riesgo"],
-          alumnos.map((a) => [a.nombre, a.matricula, a.carrera, `${a.cuatrimestre}°`, a.promedio.toFixed(1), a.riesgo]),
+          alumnos.map((a) => [a.nombre_completo || a.nombre, a.matricula, a.carrera, `${a.cuatrimestre}°`, (parseFloat(a.promedio_general) || 0).toFixed(1), a.riesgo_academico]),
           "reporte_mis_alumnos.pdf"
         );
       },
@@ -84,7 +98,7 @@ export default function ReportesTutorPage() {
           "Reporte: Alumnos en Riesgo",
           `Tutor: ${tutorNombre} · ${enRiesgo.length} alumnos`,
           ["Nombre", "Matrícula", "Promedio", "Riesgo", "Correo"],
-          enRiesgo.map((a) => [a.nombre, a.matricula, a.promedio.toFixed(1), a.riesgo, a.correo]),
+          enRiesgo.map((a) => [a.nombre_completo || a.nombre, a.matricula, (parseFloat(a.promedio_general) || 0).toFixed(1), a.riesgo_academico, a.correo_institucional || a.correo]),
           "reporte_alumnos_riesgo.pdf"
         );
       },
@@ -92,15 +106,15 @@ export default function ReportesTutorPage() {
     {
       id: "rt3",
       titulo: "Historial de sesiones",
-      descripcion: `${sesiones.length} sesiones registradas este cuatrimestre.`,
+      descripcion: `${sesiones.length} sesiones registradas.`,
       icono: CalendarDays,
       color: "text-amber-400 bg-amber-500/10",
       generate: () => {
         generateReportPDF(
           "Reporte: Historial de Sesiones",
-          `Tutor: ${tutorNombre} · Cuatrimestre Ene–Abr 2026`,
-          ["Alumno", "Fecha", "Horario", "Duración", "Urgencia", "Estatus"],
-          sesiones.map((s) => [s.alumnoNombre, formatFecha(s.fecha), `${s.horaInicio}–${s.horaFin}`, `${s.duracionMin} min`, s.urgencia, s.estatus]),
+          `Tutor: ${tutorNombre}`,
+          ["Alumno", "Fecha", "Horario", "Urgencia", "Estatus"],
+          sesiones.map((s) => [s.alumnos?.nombre_completo || "S/A", s.fecha ? new Date(s.fecha).toLocaleDateString() : '—', `${s.hora_inicio?.substring(0, 5)}–${s.hora_fin?.substring(0, 5)}`, s.nivel_urgencia, s.estatus]),
           "reporte_sesiones.pdf"
         );
       },
@@ -115,8 +129,8 @@ export default function ReportesTutorPage() {
         generateReportPDF(
           "Consolidado de Sesiones · Formato R07-M01-01",
           `Tutor: ${tutorNombre}`,
-          ["Alumno", "Fecha", "Motivos", "Puntos relevantes", "Acuerdos"],
-          sesiones.map((s) => [s.alumnoNombre, formatFecha(s.fecha), s.motivos.join(", "), s.temas.join("; "), s.acuerdos]),
+          ["Alumno", "Fecha", "Acuerdos"],
+          sesiones.map((s) => [s.alumnos?.nombre_completo || "S/A", s.fecha ? new Date(s.fecha).toLocaleDateString() : '—', s.compromisos_acuerdos || "S/A"]),
           "consolidado_r07m0101.pdf"
         );
       },
@@ -127,6 +141,23 @@ export default function ReportesTutorPage() {
     return (
       <div className="flex h-screen items-center justify-center bg-[#0f151c]">
         <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
+
+  if (tutorId === "NO_PROFILE") {
+    return (
+      <div className="flex h-screen overflow-hidden bg-[#0f151c]">
+        <Sidebar role="Tutor" userName={tutorNombre} navItems={NAV_ITEMS} />
+        <main className="flex flex-1 items-center justify-center p-8">
+          <div className="max-w-md w-full rounded-xl border border-amber-500/20 bg-amber-500/5 p-8 text-center">
+            <AlertTriangle className="mx-auto h-12 w-12 text-amber-500 mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">Perfil de Tutor no encontrado</h2>
+            <p className="text-sm text-white/60 mb-6">
+              Contacta al administrador para habilitar tu perfil de tutor.
+            </p>
+          </div>
+        </main>
       </div>
     );
   }

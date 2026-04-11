@@ -4,52 +4,55 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/app/_components/Sidebar";
 import { StatCard } from "@/app/_components/StatCard";
-import { createClient } from "@/lib/supabase/client"; // Cliente de Supabase
-import { getAlumnosByDocente, gpaClass, type RiesgoNivel } from "@/app/_lib/mock-data";
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, TrendingUp, AlertTriangle, CheckCircle2, Plus, Loader2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { getDocenteDashboardStats } from "./actions";
+import { toast } from "sonner";
+import { BookOpen, TrendingUp, AlertTriangle, CheckCircle2, Plus, Loader2, ChevronRight, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = [
   { icon: "📊", label: "Dashboard", href: "/dashboard/docente" },
   { icon: "👥", label: "Mi grupo", href: "/dashboard/docente/grupo" },
   { icon: "📝", label: "Calificaciones", href: "/dashboard/docente/calificaciones" },
-  { icon: "📁", label: "Reportes", href: "/dashboard/docente/reportes" },
+  { icon: "📈", label: "Reportes", href: "/dashboard/docente/reportes" },
 ];
 
-function RiskBadge({ riesgo }: { riesgo: RiesgoNivel }) {
-  const map = {
+function RiskBadge({ riesgo }: { riesgo: string }) {
+  const map: any = {
     Alto: "bg-red-500/10 text-red-400 border-red-500/20",
     Medio: "bg-amber-500/10 text-amber-400 border-amber-500/20",
     Bajo: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  } as const;
+  };
   return <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", map[riesgo] || "bg-gray-500/10 text-gray-400")}>{riesgo}</span>;
 }
 
 function SectionCard({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("rounded-xl border border-white/6 bg-[#151c24]", className)}>{children}</div>;
+  return <div className={cn("rounded-xl border border-white/6 bg-[#151c24] overflow-hidden", className)}>{children}</div>;
 }
 
-const CALIFICACIONES = [
-  { id: "c1", nombre: "Axel Eduardo García Torres", materia: "Cálculo Diferencial", cal: 6.5, fecha: "15 Mar 2026" },
-  { id: "c2", nombre: "Fernanda Ramírez Félix", materia: "Cálculo Diferencial", cal: 9.2, fecha: "15 Mar 2026" },
-  { id: "c3", nombre: "Sofía Beltrán Chávez", materia: "Ing. de Software", cal: 9.5, fecha: "14 Mar 2026" },
-  { id: "c4", nombre: "Luis Ángel Ponce Villa", materia: "Cálculo Diferencial", cal: 6.0, fecha: "12 Mar 2026" },
-  { id: "c5", nombre: "Vladimir Cortez Silva", materia: "Ing. de Software", cal: 9.8, fecha: "10 Mar 2026" },
-];
+function EmptyDataRow({ colSpan, message = "No hay datos en esta tabla" }: { colSpan: number; message?: string }) {
+  return (
+    <TableRow>
+      <TableCell colSpan={colSpan} className="py-10 text-center text-xs text-white/20 italic font-medium">
+        {message}
+      </TableCell>
+    </TableRow>
+  );
+}
 
 export default function DocenteDashboard() {
   const router = useRouter();
   const supabase = createClient();
 
-  // Estados para el docente real
-  const [docenteNombre, setDocenteNombre] = useState("");
-  const [docenteId, setDocenteId] = useState<string | null>(null);
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [docenteNombre, setDocenteNombre] = useState("Cargando...");
 
   useEffect(() => {
-    async function cargarSesion() {
+    async function cargarDatos() {
+      setLoading(true);
       try {
         const { data: { user } } = await supabase.auth.getUser();
 
@@ -58,25 +61,25 @@ export default function DocenteDashboard() {
           return;
         }
 
-        // Obtener nombre desde metadata
-        const nombre = user.user_metadata?.nombre_completo || user.email || "Docente";
-        setDocenteNombre(nombre);
-        setDocenteId(user.id);
+        const res = await getDocenteDashboardStats(user.id);
+        if (res.error === "PERFIL_NO_ENCONTRADO") {
+          setData({ error: "PERFIL_NO_ENCONTRADO" });
+          setDocenteNombre(user.user_metadata?.nombre_completo || user.email || "Docente");
+        } else if (res.data) {
+          setData(res.data);
+          setDocenteNombre(res.data.docente.nombre_completo || user.user_metadata?.nombre_completo || user.email);
+        } else {
+          toast.error(res.error || "Error al cargar datos");
+        }
       } catch (err) {
-        console.error("Error cargando sesión:", err);
+        console.error("Error cargando dashboard:", err);
+        toast.error("Error de conexión");
       } finally {
         setLoading(false);
       }
     }
-    cargarSesion();
+    cargarDatos();
   }, [router, supabase]);
-
-  // Usamos el ID real para filtrar (aunque sean mock-data por ahora)
-  const alumnos = getAlumnosByDocente(docenteId || "d1");
-  const total = alumnos.length;
-  const promedio = total > 0 ? (alumnos.reduce((s, a) => s + a.promedio, 0) / total).toFixed(1) : "—";
-  const enRiesgo = alumnos.filter((a) => a.riesgo !== "Bajo").length;
-  const aprobacion = total > 0 ? ((alumnos.filter((a) => a.promedio >= 7).length / total) * 100).toFixed(0) : "0";
 
   if (loading) {
     return (
@@ -86,6 +89,32 @@ export default function DocenteDashboard() {
     );
   }
 
+  if (data?.error === "PERFIL_NO_ENCONTRADO") {
+    return (
+      <div className="flex h-screen overflow-hidden bg-[#0f151c]">
+        <Sidebar role="Docente" userName={docenteNombre} navItems={NAV_ITEMS} />
+        <main className="flex flex-1 items-center justify-center p-8">
+          <SectionCard className="max-w-md p-8 text-center border-amber-500/20 bg-amber-500/5">
+            <AlertTriangle className="mx-auto h-12 w-12 text-amber-500 mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">Perfil de Docente no encontrado</h2>
+            <p className="text-sm text-white/60 mb-6">
+              Tu cuenta no tiene un perfil de docente asociado. Por favor, contacta al administrador.
+            </p>
+            <Button onClick={() => window.location.reload()} variant="outline" className="border-white/10 hover:bg-white/5">
+              Reintentar
+            </Button>
+          </SectionCard>
+        </main>
+      </div>
+    );
+  }
+
+  const alumnos = data?.alumnos || [];
+  const total = alumnos.length;
+  const promedio = total > 0 ? (alumnos.reduce((s: number, a: any) => s + (a.promedio || 0), 0) / total).toFixed(1) : "0.0";
+  const enRiesgo = alumnos.filter((a: any) => a.riesgo !== "Bajo").length;
+  const calificaciones = data?.calificacionesRecientes || [];
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#0f151c]">
       <Sidebar role="Docente" userName={docenteNombre} navItems={NAV_ITEMS} />
@@ -94,73 +123,71 @@ export default function DocenteDashboard() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-xl font-bold text-white">Panel de Docente</h1>
-            <p className="mt-0.5 text-sm text-white/50">
-              Bienvenido, {docenteNombre.split(" ")[0]}. Grupo IDGS-7A · Cuatrimestre actual.
+            <p className="mt-0.5 text-sm text-white/50 space-x-2">
+              <span>Bienvenido, {docenteNombre}.</span>
+              <span className="text-emerald-400 font-medium">
+                {data?.docente?.departamento || "Cuerpo Académico"}
+              </span>
             </p>
           </div>
-          <Button size="sm" className="gap-2 bg-pink-600 text-white shadow-lg shadow-pink-600/25 hover:bg-pink-500">
+          <Button size="sm" className="gap-2 bg-emerald-600 text-white shadow-lg shadow-emerald-500/10 hover:bg-emerald-700">
             <Plus className="h-4 w-4" /> Registrar calificación
           </Button>
         </div>
 
-        {/* KPIs */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard label="Alumnos en grupo" value={total} sub="Grupo IDGS-7A" icon={Users} accent="green" />
-          <StatCard label="Promedio grupal" value={promedio} sub="↑ +0.4 vs parcial anterior" icon={TrendingUp} accent="amber" />
-          <StatCard label="Alumnos en riesgo" value={enRiesgo} sub={`${total > 0 ? ((enRiesgo / total) * 100).toFixed(0) : 0}% del grupo`} icon={AlertTriangle} accent="red" />
-          <StatCard label="Índice de aprobación" value={`${aprobacion}%`} sub="Promedio ≥ 7" icon={CheckCircle2} accent="green" />
+          <StatCard label="Alumnos relacionados" value={total} sub="Vía calificaciones" icon={Users} accent="green" />
+          <StatCard label="Promedio grupal" value={promedio} sub="Global histórico" icon={TrendingUp} accent="amber" />
+          <StatCard label="Alumnos en riesgo" value={enRiesgo} sub={`${total > 0 ? ((enRiesgo / total) * 100).toFixed(0) : 0}% detectado`} icon={AlertTriangle} accent="red" />
+          <StatCard label="Calificaciones" value={calificaciones.length} sub="Registros recientes" icon={CheckCircle2} accent="green" />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {/* Lista del grupo */}
-          <SectionCard>
-            <div className="border-b border-white/6 px-5 py-4">
-              <p className="text-sm font-semibold text-white">Lista del grupo</p>
-              <p className="text-xs text-white/40">{total} alumnos · IDGS-7A</p>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <SectionCard className="lg:col-span-2">
+            <div className="flex items-center justify-between border-b border-white/6 px-5 py-4">
+              <p className="text-sm font-semibold text-white">Alumnos de mis cursos</p>
+              <button className="text-xs text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1">
+                Ver historial <ChevronRight className="h-3 w-3" />
+              </button>
             </div>
             <Table>
               <TableHeader>
                 <TableRow className="border-white/6 hover:bg-transparent">
-                  {["Alumno", "Matrícula", "Promedio", "Estado"].map((h) => (
+                  {["Alumno", "Matrícula", "Prom.", "Riesgo"].map((h) => (
                     <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
                   ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {alumnos.map((a) => {
-                  const gpc = gpaClass(a.promedio);
-                  return (
-                    <TableRow key={a.id} className="border-white/4 hover:bg-white/3">
-                      <TableCell>
-                        <p className="text-sm font-medium text-white/90">{a.nombre}</p>
-                        <p className="text-xs text-white/35">{a.carrera} · {a.cuatrimestre}°</p>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-white/50">{a.matricula}</TableCell>
-                      <TableCell>
-                        <span className={cn("inline-flex min-w-10 items-center justify-center rounded-full px-2 py-0.5 text-xs font-bold", {
-                          "bg-emerald-500/12 text-emerald-400": gpc === "gpa-high",
-                          "bg-amber-500/12 text-amber-400": gpc === "gpa-mid",
-                          "bg-red-500/12 text-red-400": gpc === "gpa-low",
-                        })}>
-                          {a.promedio.toFixed(1)}
-                        </span>
-                      </TableCell>
-                      <TableCell><RiskBadge riesgo={a.riesgo} /></TableCell>
-                    </TableRow>
-                  );
-                })}
+                {alumnos.length > 0 ? alumnos.map((a: any) => (
+                  <TableRow key={a.id} className="border-white/4 hover:bg-white/3 transition-colors">
+                    <TableCell>
+                      <p className="text-sm font-medium text-white/90">{a.nombre_completo}</p>
+                      <p className="text-[10px] text-white/35 uppercase">{a.grupo} · {a.carrera}</p>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-white/50">{a.matricula}</TableCell>
+                    <TableCell>
+                      <span className={cn("inline-flex min-w-10 items-center justify-center rounded-full px-2 py-0.5 text-xs font-bold", {
+                        "bg-emerald-500/12 text-emerald-400": a.promedio >= 8.5,
+                        "bg-amber-500/12 text-amber-400": a.promedio >= 7 && a.promedio < 8.5,
+                        "bg-red-500/12 text-red-400": a.promedio < 7,
+                      })}>
+                        {a.promedio.toFixed(1)}
+                      </span>
+                    </TableCell>
+                    <TableCell><RiskBadge riesgo={a.riesgo} /></TableCell>
+                  </TableRow>
+                )) : (
+                  <EmptyDataRow colSpan={4} message="No hay alumnos registrados con sus calificaciones." />
+                )}
               </TableBody>
             </Table>
-            {alumnos.length === 0 && (
-              <p className="py-10 text-center text-sm text-white/30">No hay alumnos asignados a este grupo.</p>
-            )}
           </SectionCard>
 
-          {/* Calificaciones recientes */}
           <SectionCard>
             <div className="border-b border-white/6 px-5 py-4">
-              <p className="text-sm font-semibold text-white">Calificaciones recientes</p>
-              <p className="text-xs text-white/40">Últimas evaluaciones registradas</p>
+              <p className="text-sm font-semibold text-white">Calificaciones registradas</p>
+              <p className="text-xs text-white/40">Últimas evaluaciones subidas</p>
             </div>
             <Table>
               <TableHeader>
@@ -171,31 +198,30 @@ export default function DocenteDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {CALIFICACIONES.map((c) => {
-                  const gpc = gpaClass(c.cal);
-                  return (
-                    <TableRow key={c.id} className="border-white/4 hover:bg-white/3">
-                      <TableCell>
-                        <p className="text-sm font-medium text-white/90">{c.nombre.split(" ").slice(0, 2).join(" ")}</p>
-                        <p className="text-xs text-white/35">{c.fecha}</p>
-                      </TableCell>
-                      <TableCell>
-                        <span className="inline-flex items-center rounded-md border border-white/8 bg-white/4 px-2 py-0.5 text-xs text-white/60">
-                          {c.materia}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className={cn("inline-flex min-w-10 items-center justify-center rounded-full px-2 py-0.5 text-xs font-bold", {
-                          "bg-emerald-500/12 text-emerald-400": gpc === "gpa-high",
-                          "bg-amber-500/12 text-amber-400": gpc === "gpa-mid",
-                          "bg-red-500/12 text-red-400": gpc === "gpa-low",
-                        })}>
-                          {c.cal.toFixed(1)}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {calificaciones.length > 0 ? calificaciones.map((c: any) => (
+                  <TableRow key={c.id} className="border-white/4 hover:bg-white/3 transition-colors">
+                    <TableCell>
+                      <p className="text-sm font-medium text-white/90">{c.nombre?.split(" ")[0]}</p>
+                      <p className="text-[10px] text-white/35 font-mono">{c.fecha}</p>
+                    </TableCell>
+                    <TableCell>
+                      <span className="truncate block max-w-[120px] text-[11px] text-white/60">
+                        {c.materia}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className={cn("inline-flex min-w-9 items-center justify-center rounded-full px-2 py-0.5 text-xs font-bold", {
+                        "bg-emerald-500/12 text-emerald-400": c.cal >= 8.5,
+                        "bg-amber-500/12 text-amber-400": c.cal >= 7 && c.cal < 8.5,
+                        "bg-red-500/12 text-red-400": c.cal < 7,
+                      })}>
+                        {c.cal.toFixed(1)}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                )) : (
+                  <EmptyDataRow colSpan={3} />
+                )}
               </TableBody>
             </Table>
           </SectionCard>

@@ -1,19 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "@/app/_components/Sidebar";
 import { PageHeader } from "@/app/_components/PageHeader";
 import { SectionCard } from "@/app/_components/SectionCard";
 import { StatusBadge } from "@/app/_components/StatusBadge";
-import { getSesionesByTutor, getAlumnosByTutor, ALUMNOS, MOTIVOS_TUTORIA, formatFecha } from "@/app/_lib/mock-data";
-import { generateSesionPDF } from "@/app/_lib/pdf-utils";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, CalendarDays, Clock, Download, X, CheckCircle2, FileText } from "lucide-react";
+import { Plus, CalendarDays, Clock, FileText, Loader2, AlertTriangle, Eye, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { getTutorSesiones, getCatalogosTutoria } from "../actions";
+import { toast } from "sonner";
 
-const TUTOR_ID = "t1";
-const TUTOR_NOMBRE = "Dra. María Rodríguez López";
+// Componentes Refactorizados
+import { CreateSessionModal } from "../_components/CreateSessionModal";
+import { SessionDetailsModal } from "../_components/SessionDetailsModal";
+
+// Formateador de fecha
+function formatFechaReal(dateStr: string) {
+  if (!dateStr) return "Sin fecha";
+  return new Date(dateStr).toLocaleDateString('es-MX', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+}
+
 const NAV_ITEMS = [
   { icon: "📊", label: "Dashboard", href: "/dashboard/tutor" },
   { icon: "👥", label: "Mis alumnos", href: "/dashboard/tutor/alumnos" },
@@ -23,25 +37,121 @@ const NAV_ITEMS = [
 ];
 
 export default function SesionesTutorPage() {
-  const sesiones = getSesionesByTutor(TUTOR_ID);
-  const misAlumnos = getAlumnosByTutor(TUTOR_ID);
-  const [showForm, setShowForm] = useState(false);
-  const [selectedMotivos, setSelectedMotivos] = useState<string[]>([]);
+  const router = useRouter();
+  const supabase = createClient();
+  
+  const [tutorNombre, setTutorNombre] = useState("Cargando...");
+  const [tutorId, setTutorId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  const [sesiones, setSesiones] = useState<any[]>([]);
+  const [misAlumnos, setMisAlumnos] = useState<any[]>([]);
+  const [catalogos, setCatalogos] = useState<any>({ motivos: [] });
+
+  // Estados de Modales
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<any | null>(null);
+  const [sessionToEdit, setSessionToEdit] = useState<any | null>(null);
+  
   const [filterStatus, setFilterStatus] = useState<string>("todas");
+
+  async function loadData() {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      const [resSesiones, resCatalogos] = await Promise.all([
+        getTutorSesiones(user.id),
+        getCatalogosTutoria()
+      ]);
+
+      if (resSesiones.error === "PERFIL_NO_ENCONTRADO") {
+        setTutorId("NO_PROFILE");
+        setTutorNombre(user.user_metadata?.nombre_completo || user.email || "Usuario");
+      } else if (resSesiones.data) {
+        setTutorId(resSesiones.data.tutor.id);
+        setTutorNombre(resSesiones.data.tutor.nombre_completo || user.email);
+        setSesiones(resSesiones.data.sesiones);
+        setMisAlumnos(resSesiones.data.alumnosAsignados);
+      }
+
+      if (resCatalogos.data) {
+        setCatalogos(resCatalogos.data);
+      }
+
+    } catch (err) {
+      toast.error("Error al cargar sesiones");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadData();
+  }, [router, supabase]);
 
   const filtered = sesiones.filter(
     (s) => filterStatus === "todas" || s.estatus === filterStatus
   );
 
-  function toggleMotivo(codigo: string) {
-    setSelectedMotivos((prev) =>
-      prev.includes(codigo) ? prev.filter((m) => m !== codigo) : [...prev, codigo]
+  const handleOpenDetails = (session: any) => {
+    // Necesitamos mapear los nombres de motivos para el modal de detalle
+    const sessionWithMotivos = {
+      ...session,
+      alumnoNombre: session.alumnos?.nombre_completo || "Alumno",
+      motivos: session.sesion_motivos?.map((sm: any) => {
+        return catalogos.motivos.find((m: any) => m.codigo === sm.motivo_codigo)?.descripcion || sm.motivo_codigo;
+      }) || []
+    };
+    setSelectedSession(sessionWithMotivos);
+    setIsDetailsModalOpen(true);
+  };
+
+  const handleOpenEdit = (e: React.MouseEvent, session: any) => {
+    e.stopPropagation();
+    setSessionToEdit(session);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCloseCreate = () => {
+    setIsCreateModalOpen(false);
+    setSessionToEdit(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#0f151c]">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
+
+  if (tutorId === "NO_PROFILE") {
+    return (
+      <div className="flex h-screen overflow-hidden bg-[#0f151c]">
+        <Sidebar role="Tutor" userName={tutorNombre} navItems={NAV_ITEMS} />
+        <main className="flex flex-1 items-center justify-center p-8">
+          <div className="max-w-md w-full rounded-xl border border-amber-500/20 bg-amber-500/5 p-8 text-center">
+            <AlertTriangle className="mx-auto h-12 w-12 text-amber-500 mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">Perfil de Tutor no encontrado</h2>
+            <p className="text-sm text-white/60 mb-6">
+              Tu cuenta no tiene un perfil de tutor asociado. 
+              Contacta al administrador para habilitar tu acceso a este módulo.
+            </p>
+          </div>
+        </main>
+      </div>
     );
   }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#0f151c]">
-      <Sidebar role="Tutor" userName={TUTOR_NOMBRE} navItems={NAV_ITEMS} />
+      <Sidebar role="Tutor" userName={tutorNombre} navItems={NAV_ITEMS} />
 
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 pt-18 md:p-8 md:pt-8">
         <PageHeader
@@ -50,7 +160,7 @@ export default function SesionesTutorPage() {
           actions={
             <Button
               size="sm"
-              onClick={() => setShowForm(!showForm)}
+              onClick={() => setIsCreateModalOpen(true)}
               className="gap-2 bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500"
             >
               <Plus className="h-4 w-4" /> Nueva sesión
@@ -58,150 +168,8 @@ export default function SesionesTutorPage() {
           }
         />
 
-        {/* ── Formulario R07-M01-01 ──────────────────────────────── */}
-        {showForm && (
-          <SectionCard>
-            <div className="flex items-center justify-between border-b border-white/6 px-5 py-4">
-              <div>
-                <p className="text-sm font-semibold text-white">Nueva Sesión de Tutoría</p>
-                <p className="text-xs text-white/40">Formato R07-M01-01</p>
-              </div>
-              <button onClick={() => setShowForm(false)} className="text-white/30 hover:text-white/60">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-5 p-5">
-              {/* Row 1: Alumno + Carrera + Grupo */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div className="flex flex-col gap-1.5 sm:col-span-1">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-white/40">Nombre del alumno</label>
-                  <select className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-sm text-white outline-none focus:border-emerald-500/40">
-                    <option value="">Seleccionar alumno</option>
-                    {misAlumnos.map((a) => (
-                      <option key={a.id} value={a.id}>{a.nombre}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-white/40">Carrera</label>
-                  <input className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-sm text-white/60 outline-none" placeholder="IDGS" readOnly />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-white/40">Grupo</label>
-                  <input className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-sm text-white/60 outline-none" placeholder="8" readOnly />
-                </div>
-              </div>
-
-              {/* Row 2: Fecha + Hr Inicio + Hr Salida */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-white/40">Fecha</label>
-                  <input type="date" className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-sm text-white outline-none focus:border-emerald-500/40" />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-white/40">Hr. Inicio</label>
-                  <input type="time" className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-sm text-white outline-none focus:border-emerald-500/40" />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-white/40">Hr. Salida</label>
-                  <input type="time" className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-sm text-white outline-none focus:border-emerald-500/40" />
-                </div>
-              </div>
-
-              {/* Row 3: Motivo de la tutoría (checkboxes) */}
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-white/40">Motivo de la tutoría</label>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-                  {MOTIVOS_TUTORIA.map((m) => (
-                    <label
-                      key={m.codigo}
-                      className={cn(
-                        "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors",
-                        selectedMotivos.includes(m.codigo)
-                          ? "border-emerald-500/30 bg-emerald-600/10 text-emerald-400"
-                          : "border-white/6 bg-white/2 text-white/50 hover:border-white/12"
-                      )}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedMotivos.includes(m.codigo)}
-                        onChange={() => toggleMotivo(m.codigo)}
-                        className="sr-only"
-                      />
-                      <div className={cn(
-                        "flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors",
-                        selectedMotivos.includes(m.codigo)
-                          ? "border-emerald-500 bg-emerald-600"
-                          : "border-white/20 bg-white/5"
-                      )}>
-                        {selectedMotivos.includes(m.codigo) && (
-                          <CheckCircle2 className="h-3 w-3 text-white" />
-                        )}
-                      </div>
-                      {m.descripcion}
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Row 4: Nivel de urgencia */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-white/40">Nivel de urgencia</label>
-                <select className="w-full rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-sm text-white outline-none focus:border-emerald-500/40 sm:w-48">
-                  <option value="Baja">Normal</option>
-                  <option value="Media">Medio</option>
-                  <option value="Alta">Urgente</option>
-                </select>
-              </div>
-
-              {/* Row 5: Puntos relevantes */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-white/40">Puntos relevantes de la sesión</label>
-                <textarea
-                  rows={4}
-                  className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none resize-none focus:border-emerald-500/40"
-                  placeholder="Describa los puntos relevantes tratados durante la sesión..."
-                />
-              </div>
-
-              {/* Row 6: Compromisos y acuerdos */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-white/40">Compromisos y acuerdos</label>
-                <textarea
-                  rows={3}
-                  className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none resize-none focus:border-emerald-500/40"
-                  placeholder="Registre los compromisos y acuerdos establecidos..."
-                />
-              </div>
-
-              {/* Row 7: Firmas digitales */}
-              <div className="flex items-center gap-6 rounded-lg border border-white/6 bg-white/2 px-4 py-3">
-                <label className="flex items-center gap-2 text-xs text-white/50">
-                  <input type="checkbox" className="h-4 w-4 rounded border-white/20 bg-white/5 accent-emerald-500" />
-                  Confirmación del tutor (firma digital)
-                </label>
-                <label className="flex items-center gap-2 text-xs text-white/50">
-                  <input type="checkbox" className="h-4 w-4 rounded border-white/20 bg-white/5 accent-emerald-500" />
-                  Confirmación del alumno (firma digital)
-                </label>
-              </div>
-
-              {/* Submit */}
-              <div className="flex gap-3">
-                <Button size="sm" className="gap-2 bg-emerald-600 text-white hover:bg-emerald-500">
-                  <Plus className="h-4 w-4" /> Registrar sesión
-                </Button>
-                <Button size="sm" variant="outline" className="gap-2 border-white/10 bg-white/4 text-white/60 hover:bg-white/8">
-                  Cancelar
-                </Button>
-              </div>
-            </div>
-          </SectionCard>
-        )}
-
         {/* Filters */}
-        <div className="flex gap-1.5 overflow-x-auto">
+        <div className="flex gap-1.5 overflow-x-auto pb-2">
           {["todas", "programada", "realizada", "cancelada", "pendiente"].map((s) => (
             <button
               key={s}
@@ -216,68 +184,94 @@ export default function SesionesTutorPage() {
           ))}
         </div>
 
-        {/* Sessions table */}
+        {/* Table */}
         <SectionCard>
           <Table>
             <TableHeader>
               <TableRow className="border-white/6 hover:bg-transparent">
-                {["Alumno", "Fecha", "Horario", "Motivos", "Urgencia", "Estatus", "PDF"].map((h) => (
-                  <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
-                ))}
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-white/30">Alumno</TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-white/30">Fecha</TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-white/30">Horario</TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-white/30 text-center">Urgencia</TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-white/30 text-center">Estatus</TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-white/30 text-center">Acción</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((s) => {
-                const alumno = ALUMNOS.find((a) => a.id === s.alumnoId);
-                const motivoLabels = s.motivos
-                  .map((m) => MOTIVOS_TUTORIA.find((mt) => mt.codigo === m)?.descripcion ?? m)
-                  .join(", ");
-
-                return (
-                  <TableRow key={s.id} className="border-white/4 hover:bg-white/3">
-                    <TableCell>
-                      <p className="text-sm font-medium text-white/90">{s.alumnoNombre}</p>
-                    </TableCell>
-                    <TableCell>
-                      <span className="flex items-center gap-1 text-sm text-white/60">
-                        <CalendarDays className="h-3 w-3 text-white/30" /> {formatFecha(s.fecha)}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="flex items-center gap-1 text-sm text-white/50">
-                        <Clock className="h-3 w-3 text-white/30" /> {s.horaInicio}–{s.horaFin}
-                      </span>
-                    </TableCell>
-                    <TableCell className="max-w-[180px]">
-                      <p className="truncate text-xs text-white/40">{motivoLabels}</p>
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge
-                        status={s.urgencia}
-                        variant={s.urgencia === "Alta" ? "danger" : s.urgencia === "Media" ? "warning" : "success"}
-                      />
-                    </TableCell>
-                    <TableCell><StatusBadge status={s.estatus} /></TableCell>
-                    <TableCell>
-                      {alumno && s.estatus === "realizada" && (
-                        <button
-                          onClick={() => generateSesionPDF(s, alumno)}
-                          className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
-                        >
-                          <FileText className="h-3 w-3" /> PDF
-                        </button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+              {filtered.map((s) => (
+                <TableRow 
+                  key={s.id} 
+                  onClick={() => handleOpenDetails(s)}
+                  className="border-white/4 hover:bg-white/3 cursor-pointer transition-colors group"
+                >
+                  <TableCell>
+                    <p className="text-sm font-medium text-white/90">{s.alumnos?.nombre_completo || "—"}</p>
+                    <p className="text-[10px] text-white/30 font-mono">{s.alumnos?.matricula || ""}</p>
+                  </TableCell>
+                  <TableCell>
+                    <span className="flex items-center gap-1.5 text-sm text-white/60">
+                      <CalendarDays className="h-3.5 w-3.5 text-white/20" /> {formatFechaReal(s.fecha)}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="flex items-center gap-1.5 text-sm text-white/50">
+                      <Clock className="h-3.5 w-3.5 text-white/20" /> {s.hora_inicio?.slice(0, 5)} - {s.hora_fin?.slice(0, 5)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <StatusBadge 
+                      status={s.nivel_urgencia} 
+                      variant={s.nivel_urgencia === "alta" ? "danger" : s.nivel_urgencia === "media" ? "warning" : "success"}
+                    />
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <StatusBadge status={s.estatus} />
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={(e) => handleOpenEdit(e, s)}
+                        className="h-8 w-8 text-white/20 hover:text-emerald-400"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-white/20 group-hover:text-white/60">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
           {filtered.length === 0 && (
-            <p className="py-10 text-center text-sm text-white/30">No se encontraron sesiones con el filtro seleccionado.</p>
+            <div className="py-20 text-center">
+              <FileText className="h-10 w-10 text-white/5 mx-auto mb-3" />
+              <p className="text-sm text-white/20 font-medium">No se encontraron sesiones registradas.</p>
+            </div>
           )}
         </SectionCard>
       </main>
+
+      {/* Modales */}
+      <CreateSessionModal 
+        isOpen={isCreateModalOpen}
+        onClose={handleCloseCreate}
+        alumnos={misAlumnos}
+        catalogos={catalogos}
+        tutorId={tutorId!}
+        sessionToEdit={sessionToEdit}
+        onSuccess={loadData}
+      />
+
+      <SessionDetailsModal 
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        session={selectedSession}
+        tutorName={tutorNombre}
+      />
     </div>
   );
 }

@@ -4,11 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/app/_components/Sidebar";
 import { createClient } from "@/lib/supabase/client";
-import { 
-  Search, ChevronDown, ChevronUp, CalendarDays, 
-  AlertTriangle, ArrowRightLeft, Mail, Phone, Loader2, Users 
+import {
+  Search, ChevronDown, ChevronUp, CalendarDays,
+  AlertTriangle, ArrowRightLeft, Mail, Phone, Loader2, Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getTutorAlumnos } from "../actions";
+import { toast } from "sonner";
 
 const NAV_ITEMS = [
   { icon: "📊", label: "Dashboard", href: "/dashboard/tutor" },
@@ -55,7 +57,7 @@ export default function AlumnosTutorPage() {
   const [tutorId, setTutorId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [alumnos, setAlumnos] = useState<any[]>([]);
-  
+
   const [search, setSearch] = useState("");
   const [filterRiesgo, setFilterRiesgo] = useState<string>("todos");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -69,38 +71,21 @@ export default function AlumnosTutorPage() {
           return;
         }
 
-        setTutorId(user.id);
-        setTutorNombre(user.user_metadata?.nombre_completo || user.email);
+        const res = await getTutorAlumnos(user.id);
 
-        // CONSULTA REAL A SUPABASE: Trae alumnos asignados a este tutor
-        const { data, error } = await supabase
-          .schema('tutorias')
-          .from('asignaciones_tutor')
-          .select(`
-            id,
-            alumnos (
-              id,
-              nombre_completo,
-              matricula,
-              carrera,
-              cuatrimestre,
-              promedio,
-              nivel_riesgo,
-              email,
-              telefono
-            )
-          `)
-          .eq('tutor_id', user.id)
-          .eq('activa', true);
-
-        if (error) throw error;
-
-        // Formateamos la respuesta para que sea fácil de usar
-        const alumnosFormateados = data.map(item => item.alumnos).filter(Boolean);
-        setAlumnos(alumnosFormateados);
-
+        if (res.error === "PERFIL_NO_ENCONTRADO") {
+          setTutorNombre(user.user_metadata?.nombre_completo || user.email || "Usuario");
+          setTutorId("NO_PROFILE");
+        } else if (res.data) {
+          setTutorId(res.data.tutor.id);
+          setTutorNombre(res.data.tutor.nombre_completo || user.user_metadata?.nombre_completo || user.email);
+          setAlumnos(res.data.alumnos);
+        } else {
+          toast.error(res.error || "Error al cargar alumnos");
+        }
       } catch (err) {
         console.error("Error cargando alumnos:", err);
+        toast.error("Error de conexión");
       } finally {
         setLoading(false);
       }
@@ -108,9 +93,10 @@ export default function AlumnosTutorPage() {
     cargarDatosReales();
   }, [router, supabase]);
 
+
   const filtered = alumnos.filter((a) => {
-    const matchSearch = a.nombre_completo?.toLowerCase().includes(search.toLowerCase()) || 
-                        a.matricula?.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = a.nombre_completo?.toLowerCase().includes(search.toLowerCase()) ||
+      a.matricula?.toLowerCase().includes(search.toLowerCase());
     const matchRiesgo = filterRiesgo === "todos" || a.nivel_riesgo === filterRiesgo;
     return matchSearch && matchRiesgo;
   });
@@ -118,10 +104,31 @@ export default function AlumnosTutorPage() {
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#0f151c]">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
-          <p className="text-sm text-white/40 font-medium">Buscando tus alumnos...</p>
-        </div>
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
+
+  if (tutorId === "NO_PROFILE") {
+    return (
+      <div className="flex h-screen overflow-hidden bg-[#0f151c]">
+        <Sidebar role="Tutor" userName={tutorNombre} navItems={NAV_ITEMS} />
+        <main className="flex flex-1 items-center justify-center p-8">
+          <div className="max-w-md w-full rounded-xl border border-amber-500/20 bg-amber-500/5 p-8 text-center">
+            <AlertTriangle className="mx-auto h-12 w-12 text-amber-500 mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">Perfil de Tutor no encontrado</h2>
+            <p className="text-sm text-white/60 mb-6">
+              Tu cuenta no tiene un perfil de tutor asociado.
+              Contacta al administrador para habilitar tu acceso a este módulo.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm hover:bg-white/10 transition-colors"
+            >
+              Reintentar
+            </button>
+          </div>
+        </main>
       </div>
     );
   }
@@ -192,7 +199,7 @@ export default function AlumnosTutorPage() {
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <p className="text-[10px] font-bold uppercase text-white/30">Contacto</p>
-                        <div className="flex items-center gap-2 text-xs text-white/60"><Mail className="h-3.5 w-3.5" /> {a.email}</div>
+                        <div className="flex items-center gap-2 text-xs text-white/60"><Mail className="h-3.5 w-3.5" /> {a.correo_institucional}</div>
                         <div className="flex items-center gap-2 text-xs text-white/60"><Phone className="h-3.5 w-3.5" /> {a.telefono}</div>
                       </div>
                       <div className="space-y-2">
@@ -210,10 +217,10 @@ export default function AlumnosTutorPage() {
 
         {/* Estado vacío */}
         {filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-white/10 rounded-2xl">
+          <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-white/10 rounded-2xl bg-white/[0.02]">
             <Users className="h-10 w-10 text-white/10 mb-3" />
-            <p className="text-sm text-white/40 italic">No se encontraron alumnos asignados.</p>
-            <p className="text-[10px] text-white/20 mt-1">ID de tutor: {tutorId}</p>
+            <p className="text-sm text-white/40 italic">No hay datos en esta tabla.</p>
+            {search && <p className="text-[10px] text-white/20 mt-1">Intenta con otro término de búsqueda o filtro.</p>}
           </div>
         )}
       </main>
