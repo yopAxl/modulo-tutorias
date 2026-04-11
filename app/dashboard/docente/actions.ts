@@ -53,11 +53,14 @@ export async function getDocenteDashboardStats(authId: string) {
     // Extraer alumnos únicos
     const alumnosMap = new Map();
     calificaciones?.forEach(c => {
-      if (c.alumnos && !alumnosMap.has(c.alumnos.id)) {
-        alumnosMap.set(c.alumnos.id, {
-          ...c.alumnos,
-          promedio: parseFloat(c.alumnos.promedio_general as any) || 0,
-          riesgo: c.alumnos.riesgo_academico === 'alto' ? 'Alto' : (c.alumnos.riesgo_academico === 'medio' ? 'Medio' : 'Bajo')
+      // Normalizar: Supabase puede devolver un objeto o un array de un solo elemento
+      const alumno = Array.isArray(c.alumnos) ? c.alumnos[0] : c.alumnos;
+      
+      if (alumno && !alumnosMap.has(alumno.id)) {
+        alumnosMap.set(alumno.id, {
+          ...alumno,
+          promedio: parseFloat(alumno.promedio_general as any) || 0,
+          riesgo: alumno.riesgo_academico === 'alto' ? 'Alto' : (alumno.riesgo_academico === 'medio' ? 'Medio' : 'Bajo')
         });
       }
     });
@@ -70,13 +73,16 @@ export async function getDocenteDashboardStats(authId: string) {
         alumnos,
         calificacionesRecientes: calificaciones?.sort((a, b) => 
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        ).slice(0, 5).map(c => ({
-          id: c.id,
-          nombre: c.alumnos?.nombre_completo,
-          materia: c.asignatura,
-          cal: parseFloat(c.calificacion as any),
-          fecha: new Date(c.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })
-        })) || [],
+        ).slice(0, 5).map(c => {
+          const alumno = Array.isArray(c.alumnos) ? c.alumnos[0] : c.alumnos;
+          return {
+            id: c.id,
+            nombre: alumno?.nombre_completo,
+            materia: c.asignatura,
+            cal: parseFloat(c.calificacion as any),
+            fecha: new Date(c.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })
+          };
+        }) || [],
         isFallback: false
       },
       error: null
