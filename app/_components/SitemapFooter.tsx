@@ -4,7 +4,18 @@ import Link from "next/link";
 import { GraduationCap, Mail, Globe, Book, Shield, ExternalLink, Link2, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const SITEMAP_DATA = [
+interface SitemapLink {
+  label: string;
+  href: string;
+  external?: boolean;
+}
+
+interface SitemapSection {
+  title: string;
+  links: SitemapLink[];
+}
+
+const SITEMAP_DATA: SitemapSection[] = [
   {
     title: "Plataforma",
     links: [
