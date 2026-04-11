@@ -22,6 +22,7 @@ import {
   type DocumentoAlumno,
 } from "./actions";
 import { generateExpedientePDF } from "@/app/_lib/pdf-utils";
+import SitemapFooter from "@/app/_components/SitemapFooter";
 
 const NAV_ITEMS = [
   { icon: "📊", label: "Mi panel", href: "/dashboard/alumno" },
@@ -304,6 +305,11 @@ export default function AlumnoDashboard() {
             </TableBody>
           </Table>
         </SectionCard>
+
+        {/* Sitemap Footer */}
+        <div className="-mx-4 -mb-4 md:-mx-8 md:-mb-8 mt-12">
+          <SitemapFooter />
+        </div>
       </main>
     </div>
   );

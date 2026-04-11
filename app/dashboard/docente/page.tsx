@@ -11,6 +11,7 @@ import { BookOpen, TrendingUp, AlertTriangle, CheckCircle2, Plus, Loader2, Chevr
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import SitemapFooter from "@/app/_components/SitemapFooter";
 
 const NAV_ITEMS = [
   { icon: "📊", label: "Dashboard", href: "/dashboard/docente" },
@@ -225,6 +226,11 @@ export default function DocenteDashboard() {
               </TableBody>
             </Table>
           </SectionCard>
+        </div>
+        
+        {/* Sitemap Footer */}
+        <div className="-mx-4 -mb-4 md:-mx-8 md:-mb-8 mt-12">
+          <SitemapFooter />
         </div>
       </main>
     </div>

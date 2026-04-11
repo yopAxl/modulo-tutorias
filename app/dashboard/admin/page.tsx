@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { getAdminDashboardStats } from "./actions";
 import { toast } from "sonner";
+import SitemapFooter from "@/app/_components/SitemapFooter";
 
 const NAV_ITEMS = [
   { icon: "📊", label: "Dashboard", href: "/dashboard/admin" },
@@ -232,6 +233,11 @@ export default function AdminDashboard() {
             )}
           </div>
         </SectionCard>
+        
+        {/* Sitemap Footer */}
+        <div className="-mx-4 -mb-4 md:-mx-8 md:-mb-8 mt-12">
+          <SitemapFooter />
+        </div>
       </main>
     </div>
   );
