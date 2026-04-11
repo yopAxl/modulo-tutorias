@@ -110,7 +110,8 @@ function SidebarContent({
 
   async function handleLogout() {
     const supabase = createClient();
-    await supabase.auth.signOut();
+    // Usamos scope local para permitir multisesiones (Vercel vs Localhost)
+    await supabase.auth.signOut({ scope: 'local' });
     router.push("/login");
   }
 

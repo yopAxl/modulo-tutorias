@@ -55,8 +55,8 @@ export default function LoginPage() {
     const role = getUserRole(user, session);
 
     if (!role) {
-      // Usuario autenticado pero sin rol asignado
-      await supabase.auth.signOut();
+      // Usuario autenticado pero sin rol asignado (cierre local para no afectar multisesiones)
+      await supabase.auth.signOut({ scope: 'local' });
       setError("Tu cuenta no tiene un rol asignado. Contacta al administrador del sistema.");
       setLoading(false);
       return;
