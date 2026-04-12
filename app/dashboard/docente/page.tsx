@@ -12,13 +12,7 @@ import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import SitemapFooter from "@/app/_components/SitemapFooter";
-
-const NAV_ITEMS = [
-  { icon: "📊", label: "Dashboard", href: "/dashboard/docente" },
-  { icon: "👥", label: "Mi grupo", href: "/dashboard/docente/grupo" },
-  { icon: "📝", label: "Calificaciones", href: "/dashboard/docente/calificaciones" },
-  { icon: "📈", label: "Reportes", href: "/dashboard/docente/reportes" },
-];
+import { useI18n } from "@/app/_i18n/context";
 
 function RiskBadge({ riesgo }: { riesgo: string }) {
   const map: any = {
@@ -33,7 +27,7 @@ function SectionCard({ children, className }: { children: React.ReactNode; class
   return <div className={cn("rounded-xl border border-white/6 bg-[#151c24] overflow-hidden", className)}>{children}</div>;
 }
 
-function EmptyDataRow({ colSpan, message = "No hay datos en esta tabla" }: { colSpan: number; message?: string }) {
+function EmptyDataRow({ colSpan, message = "No data" }: { colSpan: number; message?: string }) {
   return (
     <TableRow>
       <TableCell colSpan={colSpan} className="py-10 text-center text-xs text-white/20 italic font-medium">
@@ -46,10 +40,18 @@ function EmptyDataRow({ colSpan, message = "No hay datos en esta tabla" }: { col
 export default function DocenteDashboard() {
   const router = useRouter();
   const supabase = createClient();
+  const { t } = useI18n();
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [docenteNombre, setDocenteNombre] = useState("Cargando...");
+  const [docenteNombre, setDocenteNombre] = useState("...");
+
+  const NAV_ITEMS = [
+    { icon: "📊", label: t("nav.docente.dashboard"), href: "/dashboard/docente" },
+    { icon: "👥", label: t("nav.docente.group"), href: "/dashboard/docente/grupo" },
+    { icon: "📝", label: t("nav.docente.grades"), href: "/dashboard/docente/calificaciones" },
+    { icon: "📈", label: t("nav.docente.reports"), href: "/dashboard/docente/reportes" },
+  ];
 
   useEffect(() => {
     async function cargarDatos() {
@@ -70,11 +72,11 @@ export default function DocenteDashboard() {
           setData(res.data);
           setDocenteNombre(res.data.docente.nombre_completo || user.user_metadata?.nombre_completo || user.email);
         } else {
-          toast.error(res.error || "Error al cargar datos");
+          toast.error(res.error || t("common.errorLoading"));
         }
       } catch (err) {
         console.error("Error cargando dashboard:", err);
-        toast.error("Error de conexión");
+        toast.error(t("common.connectionError"));
       } finally {
         setLoading(false);
       }
@@ -97,12 +99,12 @@ export default function DocenteDashboard() {
         <main className="flex flex-1 items-center justify-center p-8">
           <SectionCard className="max-w-md p-8 text-center border-amber-500/20 bg-amber-500/5">
             <AlertTriangle className="mx-auto h-12 w-12 text-amber-500 mb-4" />
-            <h2 className="text-xl font-bold text-white mb-2">Perfil de Docente no encontrado</h2>
+            <h2 className="text-xl font-bold text-white mb-2">{t("docente.profileNotFound")}</h2>
             <p className="text-sm text-white/60 mb-6">
-              Tu cuenta no tiene un perfil de docente asociado. Por favor, contacta al administrador.
+              {t("docente.profileNotFoundDesc")}
             </p>
             <Button onClick={() => window.location.reload()} variant="outline" className="border-white/10 hover:bg-white/5">
-              Reintentar
+              {t("common.retry")}
             </Button>
           </SectionCard>
         </main>
@@ -123,38 +125,38 @@ export default function DocenteDashboard() {
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 pt-18 md:p-8 md:pt-8">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-bold text-white">Panel de Docente</h1>
+            <h1 className="text-xl font-bold text-white">{t("docente.title")}</h1>
             <p className="mt-0.5 text-sm text-white/50 space-x-2">
-              <span>Bienvenido, {docenteNombre}.</span>
+              <span>{t("docente.welcome", { name: docenteNombre })}</span>
               <span className="text-emerald-400 font-medium">
-                {data?.docente?.departamento || "Cuerpo Académico"}
+                {data?.docente?.departamento || t("docente.department")}
               </span>
             </p>
           </div>
           <Button size="sm" className="gap-2 bg-emerald-600 text-white shadow-lg shadow-emerald-500/10 hover:bg-emerald-700">
-            <Plus className="h-4 w-4" /> Registrar calificación
+            <Plus className="h-4 w-4" /> {t("docente.newGrade")}
           </Button>
         </div>
 
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard label="Alumnos relacionados" value={total} sub="Vía calificaciones" icon={Users} accent="green" />
-          <StatCard label="Promedio grupal" value={promedio} sub="Global histórico" icon={TrendingUp} accent="amber" />
-          <StatCard label="Alumnos en riesgo" value={enRiesgo} sub={`${total > 0 ? ((enRiesgo / total) * 100).toFixed(0) : 0}% detectado`} icon={AlertTriangle} accent="red" />
-          <StatCard label="Calificaciones" value={calificaciones.length} sub="Registros recientes" icon={CheckCircle2} accent="green" />
+          <StatCard label={t("docente.stats.relatedStudents")} value={total} sub={t("docente.stats.relatedStudentsSub")} icon={Users} accent="green" />
+          <StatCard label={t("docente.stats.groupAvg")} value={promedio} sub={t("docente.stats.groupAvgSub")} icon={TrendingUp} accent="amber" />
+          <StatCard label={t("docente.stats.atRisk")} value={enRiesgo} sub={t("docente.stats.atRiskSub", { percent: total > 0 ? ((enRiesgo / total) * 100).toFixed(0) : "0" })} icon={AlertTriangle} accent="red" />
+          <StatCard label={t("docente.stats.grades")} value={calificaciones.length} sub={t("docente.stats.gradesSub")} icon={CheckCircle2} accent="green" />
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <SectionCard className="lg:col-span-2">
             <div className="flex items-center justify-between border-b border-white/6 px-5 py-4">
-              <p className="text-sm font-semibold text-white">Alumnos de mis cursos</p>
+              <p className="text-sm font-semibold text-white">{t("docente.courseStudents")}</p>
               <button className="text-xs text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1">
-                Ver historial <ChevronRight className="h-3 w-3" />
+                {t("common.viewHistory")} <ChevronRight className="h-3 w-3" />
               </button>
             </div>
             <Table>
               <TableHeader>
                 <TableRow className="border-white/6 hover:bg-transparent">
-                  {["Alumno", "Matrícula", "Prom.", "Riesgo"].map((h) => (
+                  {[t("docente.headers.student"), t("docente.headers.matricula"), t("docente.headers.gpa"), t("docente.headers.risk")].map((h) => (
                     <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
                   ))}
                 </TableRow>
@@ -179,7 +181,7 @@ export default function DocenteDashboard() {
                     <TableCell><RiskBadge riesgo={a.riesgo} /></TableCell>
                   </TableRow>
                 )) : (
-                  <EmptyDataRow colSpan={4} message="No hay alumnos registrados con sus calificaciones." />
+                  <EmptyDataRow colSpan={4} message={t("docente.noCourseStudents")} />
                 )}
               </TableBody>
             </Table>
@@ -187,13 +189,13 @@ export default function DocenteDashboard() {
 
           <SectionCard>
             <div className="border-b border-white/6 px-5 py-4">
-              <p className="text-sm font-semibold text-white">Calificaciones registradas</p>
-              <p className="text-xs text-white/40">Últimas evaluaciones subidas</p>
+              <p className="text-sm font-semibold text-white">{t("docente.registeredGrades")}</p>
+              <p className="text-xs text-white/40">{t("docente.recentEvaluations")}</p>
             </div>
             <Table>
               <TableHeader>
                 <TableRow className="border-white/6 hover:bg-transparent">
-                  {["Alumno", "Materia", "Cal."].map((h) => (
+                  {[t("docente.headers.student"), t("docente.headers.subject"), t("docente.headers.grade")].map((h) => (
                     <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
                   ))}
                 </TableRow>

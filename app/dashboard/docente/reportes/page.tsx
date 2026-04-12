@@ -11,15 +11,19 @@ import { createClient } from "@/lib/supabase/client";
 import { getDocenteDashboardStats } from "../actions";
 import { generateReportPDF } from "@/app/_lib/pdf-utils";
 import { toast } from "sonner";
+import SitemapFooter from "@/app/_components/SitemapFooter";
+import { useI18n } from "@/app/_i18n/context";
 
-const NAV_ITEMS = [
-  { icon: "📊", label: "Dashboard", href: "/dashboard/docente" },
-  { icon: "👥", label: "Mi grupo", href: "/dashboard/docente/grupo" },
-  { icon: "📝", label: "Calificaciones", href: "/dashboard/docente/calificaciones" },
-  { icon: "📁", label: "Reportes", href: "/dashboard/docente/reportes" },
-];
 
 export default function ReportesDocentePage() {
+  const { t } = useI18n();
+
+  const NAV_ITEMS = [
+  { icon: "📊", label: t("nav.docente.dashboard"), href: "/dashboard/docente" },
+  { icon: "👥", label: t("nav.docente.group"), href: "/dashboard/docente/grupo" },
+  { icon: "📝", label: t("nav.docente.grades"), href: "/dashboard/docente/calificaciones" },
+  { icon: "📁", label: t("nav.docente.reports"), href: "/dashboard/docente/reportes" },
+];
   const router = useRouter();
   const supabase = createClient();
   
@@ -177,6 +181,10 @@ export default function ReportesDocentePage() {
               </SectionCard>
             );
           })}
+        </div>
+      
+        <div className="-mx-4 -mb-4 md:-mx-8 md:-mb-8 mt-12">
+          <SitemapFooter />
         </div>
       </main>
     </div>

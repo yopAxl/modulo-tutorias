@@ -12,17 +12,7 @@ import Link from "next/link";
 import { getAdminDashboardStats } from "./actions";
 import { toast } from "sonner";
 import SitemapFooter from "@/app/_components/SitemapFooter";
-
-const NAV_ITEMS = [
-  { icon: "📊", label: "Dashboard", href: "/dashboard/admin" },
-  { icon: "👥", label: "Usuarios", href: "/dashboard/admin/usuarios" },
-  { icon: "🎓", label: "Tutores", href: "/dashboard/admin/tutores" },
-  { icon: "📋", label: "Sesiones", href: "/dashboard/admin/sesiones" },
-  { icon: "📈", label: "Reportes", href: "/dashboard/admin/reportes" },
-  { icon: "📁", label: "Respaldos", href: "/dashboard/admin/respaldos" },
-  { icon: "📚", label: "Auditoría", href: "/dashboard/admin/audit" },
-  { icon: "⚙️", label: "Configuración", href: "/dashboard/admin/config" },
-];
+import { useI18n } from "@/app/_i18n/context";
 
 function RiskBadge({ riesgo }: { riesgo: string }) {
   const map: Record<string, string> = {
@@ -44,8 +34,20 @@ function SectionCard({ children, className }: { children: React.ReactNode; class
 }
 
 export default function AdminDashboard() {
+  const { t, locale } = useI18n();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  const NAV_ITEMS = [
+    { icon: "📊", label: t("nav.admin.dashboard"), href: "/dashboard/admin" },
+    { icon: "👥", label: t("nav.admin.users"), href: "/dashboard/admin/usuarios" },
+    { icon: "🎓", label: t("nav.admin.tutors"), href: "/dashboard/admin/tutores" },
+    { icon: "📋", label: t("nav.admin.sessions"), href: "/dashboard/admin/sesiones" },
+    { icon: "📈", label: t("nav.admin.reports"), href: "/dashboard/admin/reportes" },
+    { icon: "📁", label: t("nav.admin.backups"), href: "/dashboard/admin/respaldos" },
+    { icon: "📚", label: t("nav.admin.audit"), href: "/dashboard/admin/audit" },
+    { icon: "⚙️", label: t("nav.admin.settings"), href: "/dashboard/admin/config" },
+  ];
 
   const fetchStats = async () => {
     setLoading(true);
@@ -53,7 +55,7 @@ export default function AdminDashboard() {
     if (res.data) {
       setStats(res.data);
     } else {
-      toast.error(res.error || "Error al cargar estadísticas");
+      toast.error(res.error || t("common.errorLoading"));
     }
     setLoading(false);
   };
@@ -67,7 +69,7 @@ export default function AdminDashboard() {
       <div className="flex h-screen items-center justify-center bg-[#0f151c]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-10 w-10 animate-spin text-emerald-500" />
-          <p className="text-sm text-white/40 animate-pulse">Sincronizando panel de control...</p>
+          <p className="text-sm text-white/40 animate-pulse">{t("common.syncPanel")}</p>
         </div>
       </div>
     );
@@ -80,6 +82,8 @@ export default function AdminDashboard() {
     recentAlumnos: []
   };
 
+  const dateStr = new Date().toLocaleDateString(locale === "en" ? "en-US" : "es-MX", { month: "long", year: "numeric" });
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#0f151c]">
       <Sidebar role="Administrador" userName="Admin General" navItems={NAV_ITEMS} />
@@ -88,12 +92,12 @@ export default function AdminDashboard() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-xl font-bold text-white">Panel de Administración</h1>
-            <p className="mt-0.5 text-sm text-white/50">Datos en tiempo real · {new Date().toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })}</p>
+            <h1 className="text-xl font-bold text-white">{t("admin.title")}</h1>
+            <p className="mt-0.5 text-sm text-white/50">{t("admin.subtitle", { date: dateStr })}</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="gap-2 border-white/10 bg-white/4 text-white/60 hover:bg-white/8 hover:text-white">
-              <Download className="h-3.5 w-3.5" /> Exportar
+              <Download className="h-3.5 w-3.5" /> {t("common.export")}
             </Button>
             <CreateUserModal onSuccess={fetchStats} />
           </div>
@@ -101,10 +105,10 @@ export default function AdminDashboard() {
 
         {/* KPIs */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard label="Total alumnos" value={kpis.totalAlumnos} sub="Inscritos activos" icon={Users} accent="green" />
-          <StatCard label="Tutores activos" value={kpis.totalTutores} sub="Perfiles registrados" icon={GraduationCap} accent="green" />
-          <StatCard label="Sesiones" value={kpis.totalSesiones} sub="Historial total" icon={ClipboardList} accent="green" />
-          <StatCard label="Promedio general" value={kpis.promedioGeneral} sub="Métrica institucional" icon={TrendingUp} accent="amber" />
+          <StatCard label={t("admin.stats.totalStudents")} value={kpis.totalAlumnos} sub={t("admin.stats.totalStudentsSub")} icon={Users} accent="green" />
+          <StatCard label={t("admin.stats.activeTutors")} value={kpis.totalTutores} sub={t("admin.stats.activeTutorsSub")} icon={GraduationCap} accent="green" />
+          <StatCard label={t("admin.stats.sessions")} value={kpis.totalSesiones} sub={t("admin.stats.sessionsSub")} icon={ClipboardList} accent="green" />
+          <StatCard label={t("admin.stats.avgGpa")} value={kpis.promedioGeneral} sub={t("admin.stats.avgGpaSub")} icon={TrendingUp} accent="amber" />
         </div>
 
         {/* Grid: distribución + carga */}
@@ -112,14 +116,14 @@ export default function AdminDashboard() {
           {/* Distribución de riesgo */}
           <SectionCard>
             <div className="border-b border-white/6 px-5 py-4">
-              <p className="text-sm font-semibold text-white">Distribución por riesgo académico</p>
-              <p className="text-xs text-white/40">{kpis.totalAlumnos} alumnos analizados</p>
+              <p className="text-sm font-semibold text-white">{t("admin.riskDistribution")}</p>
+              <p className="text-xs text-white/40">{t("admin.studentsAnalyzed", { count: kpis.totalAlumnos })}</p>
             </div>
             <div className="px-5 py-4 space-y-3">
               {[
-                { label: "Alto", count: riesgo.alto, barColor: "bg-red-500", textColor: "text-red-400" },
-                { label: "Medio", count: riesgo.medio, barColor: "bg-amber-500", textColor: "text-amber-400" },
-                { label: "Bajo", count: riesgo.bajo, barColor: "bg-emerald-500", textColor: "text-emerald-400" },
+                { label: t("alumno.risk.alto"), count: riesgo.alto, barColor: "bg-red-500", textColor: "text-red-400" },
+                { label: t("alumno.risk.medio"), count: riesgo.medio, barColor: "bg-amber-500", textColor: "text-amber-400" },
+                { label: t("alumno.risk.bajo"), count: riesgo.bajo, barColor: "bg-emerald-500", textColor: "text-emerald-400" },
               ].map(({ label, count, barColor, textColor }) => (
                 <div key={label} className="flex items-center gap-3">
                   <span className={cn("w-10 text-xs font-semibold", textColor)}>{label}</span>
@@ -131,9 +135,9 @@ export default function AdminDashboard() {
               ))}
               <div className="mt-4 grid grid-cols-1 gap-3 pt-2 sm:grid-cols-3">
                 {[
-                  { label: "Riesgo Alto", count: riesgo.alto, cls: "border-red-500/20 bg-red-500/[0.08] text-red-400" },
-                  { label: "Riesgo Medio", count: riesgo.medio, cls: "border-amber-500/20 bg-amber-500/[0.08] text-amber-400" },
-                  { label: "Sin riesgo", count: riesgo.bajo, cls: "border-emerald-500/20 bg-emerald-500/[0.08] text-emerald-400" },
+                  { label: t("admin.riskHigh"), count: riesgo.alto, cls: "border-red-500/20 bg-red-500/[0.08] text-red-400" },
+                  { label: t("admin.riskMedium"), count: riesgo.medio, cls: "border-amber-500/20 bg-amber-500/[0.08] text-amber-400" },
+                  { label: t("admin.riskLow"), count: riesgo.bajo, cls: "border-emerald-500/20 bg-emerald-500/[0.08] text-emerald-400" },
                 ].map(({ label, count, cls }) => (
                   <div key={label} className={cn("rounded-lg border p-3 text-center", cls)}>
                     <p className="text-2xl font-extrabold leading-none">{count}</p>
@@ -147,37 +151,37 @@ export default function AdminDashboard() {
           {/* Carga por tutor */}
           <SectionCard>
             <div className="border-b border-white/6 px-5 py-4">
-              <p className="text-sm font-semibold text-white">Carga de trabajo por tutor</p>
-              <p className="text-xs text-white/40">{tutorWorkload.length} tutores en activo</p>
+              <p className="text-sm font-semibold text-white">{t("admin.tutorWorkload")}</p>
+              <p className="text-xs text-white/40">{t("admin.activeTutors", { count: tutorWorkload.length })}</p>
             </div>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="border-white/6 hover:bg-transparent">
-                    {["Tutor", "Alumnos", "Sesiones"].map((h) => (
+                    {[t("admin.headers.tutor"), t("admin.headers.students"), t("admin.headers.sessions")].map((h) => (
                       <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tutorWorkload.map((t: any) => (
-                    <TableRow key={t.id} className="border-white/4 hover:bg-white/3">
+                  {tutorWorkload.map((t2: any) => (
+                    <TableRow key={t2.id} className="border-white/4 hover:bg-white/3">
                       <TableCell>
-                        <p className="text-sm font-medium text-white/90">{t.nombre}</p>
-                        <p className="text-xs text-white/35">{t.departamento}</p>
+                        <p className="text-sm font-medium text-white/90">{t2.nombre}</p>
+                        <p className="text-xs text-white/35">{t2.departamento}</p>
                       </TableCell>
                       <TableCell>
                         <span className="inline-flex min-w-8 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-600/10 px-2 py-0.5 text-xs font-bold text-emerald-400">
-                          {t.alumnosAsignados}
+                          {t2.alumnosAsignados}
                         </span>
                       </TableCell>
-                      <TableCell className="font-semibold text-white/80">{t.sesionesTotales}</TableCell>
+                      <TableCell className="font-semibold text-white/80">{t2.sesionesTotales}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
               {tutorWorkload.length === 0 && (
-                <p className="py-10 text-center text-xs text-white/20 italic">No hay tutores con carga activa.</p>
+                <p className="py-10 text-center text-xs text-white/20 italic">{t("admin.noTutorWorkload")}</p>
               )}
             </div>
           </SectionCard>
@@ -187,18 +191,18 @@ export default function AdminDashboard() {
         <SectionCard>
           <div className="flex items-center justify-between border-b border-white/6 px-5 py-4">
             <div>
-              <p className="text-sm font-semibold text-white">Últimos alumnos registrados</p>
-              <p className="text-xs text-white/40">Mostrando {recentAlumnos.length} registros recientes</p>
+              <p className="text-sm font-semibold text-white">{t("admin.recentStudents")}</p>
+              <p className="text-xs text-white/40">{t("admin.showingRecent", { count: recentAlumnos.length })}</p>
             </div>
             <Link href="/dashboard/admin/usuarios?rol=Alumno" className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300">
-              Ver todos <ChevronRight className="h-3 w-3" />
+              {t("common.viewAll")} <ChevronRight className="h-3 w-3" />
             </Link>
           </div>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="border-white/6 hover:bg-transparent">
-                  {["Alumno", "Matrícula", "Carrera", "Cuatr.", "Promedio", "Riesgo", "Tutor"].map((h) => (
+                  {[t("admin.headers.student"), t("admin.headers.matricula"), t("admin.headers.career"), t("admin.headers.semester"), t("admin.headers.gpa"), t("admin.headers.risk"), t("admin.headers.tutorAssigned")].map((h) => (
                     <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
                   ))}
                 </TableRow>
@@ -229,7 +233,7 @@ export default function AdminDashboard() {
               </TableBody>
             </Table>
             {recentAlumnos.length === 0 && (
-              <p className="py-10 text-center text-xs text-white/20 italic">No hay alumnos registrados recientemente.</p>
+              <p className="py-10 text-center text-xs text-white/20 italic">{t("admin.noRecentStudents")}</p>
             )}
           </div>
         </SectionCard>

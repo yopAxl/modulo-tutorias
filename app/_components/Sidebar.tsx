@@ -7,10 +7,11 @@ import {
   LayoutDashboard, Users, CalendarDays, FolderOpen,
   BarChart3, Settings, GraduationCap, ClipboardList,
   FileText, BookOpen, CheckSquare,
-  Menu, X, LogOut,
+  Menu, X, LogOut, Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { useI18n, type Locale } from "@/app/_i18n/context";
 
 export interface NavItem {
   icon: string;
@@ -46,6 +47,38 @@ const AVATAR_GRADIENT: Record<string, string> = {
   Docente: "from-pink-500 to-rose-600",
 };
 
+/* ─── Language Switcher ──────────────────────────────────────────────────── */
+function LanguageSwitcher() {
+  const { locale, setLocale } = useI18n();
+
+  return (
+    <div className="flex items-center gap-1.5 rounded-lg bg-white/4 p-0.5">
+      <button
+        onClick={() => setLocale("es")}
+        className={cn(
+          "relative rounded-md px-2.5 py-1 text-[11px] font-bold tracking-wide transition-all duration-200",
+          locale === "es"
+            ? "bg-emerald-500/20 text-emerald-400 shadow-sm shadow-emerald-500/10"
+            : "text-white/35 hover:text-white/60"
+        )}
+      >
+        ES
+      </button>
+      <button
+        onClick={() => setLocale("en")}
+        className={cn(
+          "relative rounded-md px-2.5 py-1 text-[11px] font-bold tracking-wide transition-all duration-200",
+          locale === "en"
+            ? "bg-emerald-500/20 text-emerald-400 shadow-sm shadow-emerald-500/10"
+            : "text-white/35 hover:text-white/60"
+        )}
+      >
+        EN
+      </button>
+    </div>
+  );
+}
+
 /** Inner content shared by both desktop sidebar and mobile drawer */
 function SidebarContent({
   role,
@@ -55,6 +88,7 @@ function SidebarContent({
 }: SidebarProps & { onNavClick?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useI18n();
 
   const [realName, setRealName] = useState(userName);
   const [loadingName, setLoadingName] = useState(true); // Nuevo estado de carga
@@ -115,6 +149,9 @@ function SidebarContent({
     router.push("/login");
   }
 
+  // Map role to translated role key
+  const roleKey = role === "Administrador" ? "admin" : role.toLowerCase();
+
   return (
     <div className="flex h-full flex-col">
       {/* Brand */}
@@ -123,15 +160,18 @@ function SidebarContent({
           <GraduationCap className="h-5 w-5 text-white" />
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold tracking-tight text-white">TutorTrack</p>
-          <p className="truncate text-[11px] text-white/40">Sistema de Tutorías</p>
+          <p className="truncate text-sm font-bold tracking-tight text-white">{t("brand.name")}</p>
+          <p className="truncate text-[11px] text-white/40">{t("brand.subtitle")}</p>
         </div>
       </div>
 
-      {/* Role label */}
-      <p className="px-4 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-widest text-white/30">
-        Panel de {role}
-      </p>
+      {/* Role label + Language switcher */}
+      <div className="flex items-center justify-between px-4 pb-1 pt-4">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30">
+          {t("nav.panelOf", { role: t(`roles.${roleKey}`) })}
+        </p>
+        <LanguageSwitcher />
+      </div>
 
       {/* Navigation */}
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-1">
@@ -163,7 +203,7 @@ function SidebarContent({
           className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-red-400/70 transition-colors hover:bg-red-500/10 hover:text-red-400"
         >
           <LogOut className="h-4 w-4 shrink-0 text-red-400/50" />
-          Cerrar sesión
+          {t("common.logout")}
         </button>
       </nav>
 
@@ -181,7 +221,7 @@ function SidebarContent({
           ) : (
             <p className="truncate text-[13px] font-semibold text-white/90">{realName}</p>
           )}
-          <p className="text-[11px] text-white/35">{role}</p>
+          <p className="text-[11px] text-white/35">{t(`roles.${roleKey}`)}</p>
         </div>
       </div>
     </div>
@@ -202,7 +242,7 @@ export default function Sidebar(props: SidebarProps) {
       <div className="fixed inset-x-0 top-0 z-30 flex h-14 items-center gap-3 border-b border-white/6 bg-[#0f151c] px-4 md:hidden">
         <button
           onClick={() => setOpen(true)}
-          aria-label="Abrir menú"
+          aria-label="Open menu"
           className="flex h-8 w-8 items-center justify-center rounded-lg text-white/60 transition-colors hover:bg-white/8 hover:text-white"
         >
           <Menu className="h-5 w-5" />
@@ -235,7 +275,7 @@ export default function Sidebar(props: SidebarProps) {
         {/* Close button */}
         <button
           onClick={() => setOpen(false)}
-          aria-label="Cerrar menú"
+          aria-label="Close menu"
           className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition-colors hover:bg-white/8 hover:text-white"
         >
           <X className="h-5 w-5" />

@@ -12,19 +12,23 @@ import { listBackups, getBackupDownloadUrl, triggerManualBackup } from "./action
 import { toast } from "sonner";
 import { HardDrive, Play, Clock, CheckCircle2, XCircle, Settings, Download } from "lucide-react";
 import { StatCard } from "@/app/_components/StatCard";
+import SitemapFooter from "@/app/_components/SitemapFooter";
+import { useI18n } from "@/app/_i18n/context";
 
-const NAV_ITEMS = [
-  { icon: "📊", label: "Dashboard", href: "/dashboard/admin" },
-  { icon: "👥", label: "Usuarios", href: "/dashboard/admin/usuarios" },
-  { icon: "🎓", label: "Tutores", href: "/dashboard/admin/tutores" },
-  { icon: "📋", label: "Sesiones", href: "/dashboard/admin/sesiones" },
-  { icon: "📈", label: "Reportes", href: "/dashboard/admin/reportes" },
-  { icon: "📁", label: "Respaldos", href: "/dashboard/admin/respaldos" },
-  { icon: "📚", label: "Auditoría", href: "/dashboard/admin/audit" },
-  { icon: "⚙️", label: "Configuración", href: "/dashboard/admin/config" },
-];
 
 export default function RespaldosPage() {
+  const { t } = useI18n();
+
+  const NAV_ITEMS = [
+  { icon: "📊", label: t("nav.admin.dashboard"), href: "/dashboard/admin" },
+  { icon: "👥", label: t("nav.admin.users"), href: "/dashboard/admin/usuarios" },
+  { icon: "🎓", label: t("nav.admin.tutors"), href: "/dashboard/admin/tutores" },
+  { icon: "📋", label: t("nav.admin.sessions"), href: "/dashboard/admin/sesiones" },
+  { icon: "📈", label: t("nav.admin.reports"), href: "/dashboard/admin/reportes" },
+  { icon: "📁", label: t("nav.admin.backups"), href: "/dashboard/admin/respaldos" },
+  { icon: "📚", label: t("nav.admin.audit"), href: "/dashboard/admin/audit" },
+  { icon: "⚙️", label: t("nav.admin.settings"), href: "/dashboard/admin/config" },
+];
   const [frecuencia, setFrecuencia] = useState("diario");
   const [hora, setHora] = useState("02:00");
   const [ejecutando, setEjecutando] = useState(false);
@@ -204,6 +208,10 @@ export default function RespaldosPage() {
               </div>
             )}
           </SectionCard>
+        </div>
+      
+        <div className="-mx-4 -mb-4 md:-mx-8 md:-mb-8 mt-12">
+          <SitemapFooter />
         </div>
       </main>
     </div>

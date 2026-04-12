@@ -1,0 +1,524 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "logout": "Cerrar sesión",
+    "retry": "Reintentar",
+    "export": "Exportar",
+    "viewAll": "Ver todos",
+    "viewHistory": "Ver historial",
+    "noData": "Sin datos disponibles",
+    "noDataTable": "No hay datos en esta tabla.",
+    "noResults": "No se encontraron resultados.",
+    "error": "Error",
+    "success": "Éxito",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar",
+    "download": "Descargar",
+    "downloadPDF": "Descargar PDF",
+    "upload": "Subir",
+    "save": "Guardar",
+    "close": "Cerrar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "search": "Buscar",
+    "searchPlaceholder": "Buscar por nombre o matrícula...",
+    "filter": "Filtrar",
+    "all": "Todas",
+    "allFilter": "Todos",
+    "syncPanel": "Sincronizando panel de control...",
+    "profileNotFound": "No se encontró perfil.",
+    "connectionError": "Error de conexión",
+    "errorLoading": "Error al cargar datos",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "status": "Estatus",
+    "date": "Fecha",
+    "actions": "Acciones",
+    "yes": "Sí",
+    "no": "No",
+    "details": "Detalles",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "create": "Crear",
+    "add": "Agregar",
+    "remove": "Quitar",
+    "contact": "Contacto",
+    "academic": "Académico",
+    "name": "Nombre",
+    "user": "Usuario",
+    "role": "Rol",
+    "email": "Correo",
+    "phone": "Teléfono",
+    "of": "de",
+    "page": "Página",
+    "showing": "Mostrando",
+    "results": "resultados",
+    "noDate": "Sin fecha"
+  },
+
+  "brand": {
+    "name": "TutorTrack",
+    "subtitle": "Sistema de Tutorías",
+    "university": "Universidad Tecnológica de Nayarit",
+    "fullTitle": "Sistema de Seguimiento Académico Enfocado a Tutorías",
+    "copyright": "© {year} Universidad Tecnológica de Nayarit. Todos los derechos reservados."
+  },
+
+  "nav": {
+    "panelOf": "Panel de {role}",
+    "alumno": {
+      "dashboard": "Mi panel",
+      "sessions": "Mis sesiones",
+      "record": "Expediente",
+      "documents": "Documentos"
+    },
+    "tutor": {
+      "dashboard": "Dashboard",
+      "students": "Mis alumnos",
+      "sessions": "Sesiones",
+      "records": "Expedientes",
+      "reports": "Reportes"
+    },
+    "admin": {
+      "dashboard": "Dashboard",
+      "users": "Usuarios",
+      "tutors": "Tutores",
+      "sessions": "Sesiones",
+      "reports": "Reportes",
+      "backups": "Respaldos",
+      "audit": "Auditoría",
+      "settings": "Configuración"
+    },
+    "docente": {
+      "dashboard": "Dashboard",
+      "group": "Mi grupo",
+      "grades": "Calificaciones",
+      "reports": "Reportes"
+    }
+  },
+
+  "roles": {
+    "alumno": "Alumno",
+    "tutor": "Tutor",
+    "admin": "Administrador",
+    "docente": "Docente"
+  },
+
+  "home": {
+    "title": "Sistema de Tutorías",
+    "description": "Plataforma integral para el seguimiento académico y gestión de tutorías de la Universidad Tecnológica de Nayarit.",
+    "login": "Iniciar sesión",
+    "features": {
+      "tracking": {
+        "title": "Seguimiento",
+        "desc": "Monitoreo continuo del desempeño académico de cada alumno."
+      },
+      "sessions": {
+        "title": "Sesiones",
+        "desc": "Registro digital de tutorías con formato oficial R07-M01-01."
+      },
+      "reports": {
+        "title": "Reportes",
+        "desc": "Estadísticas y reportes en tiempo real del sistema de tutorías."
+      }
+    }
+  },
+
+  "login": {
+    "title": "Iniciar Sesión",
+    "subtitle": "Sistema de Tutorías Académicas · UTNay",
+    "email": "Correo institucional",
+    "emailPlaceholder": "correo@utnay.edu.mx",
+    "password": "Contraseña",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "submit": "Acceder",
+    "backHome": "Volver al inicio",
+    "errors": {
+      "emailRequired": "El correo es requerido",
+      "emailInvalid": "Formato de correo inválido",
+      "passwordRequired": "La contraseña es requerida",
+      "passwordMin": "Mínimo 6 caracteres",
+      "invalidCredentials": "Correo o contraseña incorrectos",
+      "noRole": "Tu cuenta no tiene un rol asignado. Contacta al administrador del sistema.",
+      "notAuthenticated": "No autenticado"
+    }
+  },
+
+  "alumno": {
+    "panel": {
+      "title": "Mi Panel Académico",
+      "greeting": "Hola, {name}. Aquí puedes consultar tu seguimiento.",
+      "downloadRecord": "Descargar expediente",
+      "generating": "Generando...",
+      "downloadSuccess": "Expediente descargado correctamente",
+      "downloadError": "Error al generar PDF: {error}"
+    },
+    "stats": {
+      "gpa": "Mi promedio",
+      "gpaDescription": "Promedio general acumulado",
+      "sessions": "Sesiones con tutor",
+      "sessionsDescription": "Historial completo",
+      "documents": "Documentos",
+      "pendingDocs": "{count} pendiente(s)",
+      "noPendingDocs": "Sin pendientes",
+      "academicStatus": "Estado académico",
+      "riskLevel": "Nivel de riesgo"
+    },
+    "info": {
+      "title": "Mi información académica",
+      "subtitle": "Datos de tu expediente institucional",
+      "matricula": "Matrícula",
+      "fullName": "Nombre completo",
+      "career": "Carrera",
+      "semester": "Cuatrimestre",
+      "email": "Correo institucional",
+      "phone": "Teléfono"
+    },
+    "sessionsList": {
+      "title": "Mis sesiones de tutoría",
+      "count": "{count} sesiones registradas",
+      "noSessions": "Sin sesiones registradas aún.",
+      "noObservations": "Sin observaciones"
+    },
+    "docs": {
+      "title": "Mis documentos",
+      "subtitle": "Expediente y archivos académicos",
+      "uploadDoc": "Subir documento",
+      "headers": {
+        "document": "Documento",
+        "type": "Tipo",
+        "date": "Fecha",
+        "size": "Tamaño"
+      },
+      "noDocs": "Sin documentos disponibles."
+    },
+    "sessionsPage": {
+      "title": "Mis Sesiones de Tutoría",
+      "subtitle": "{count} sesiones registradas con tu tutor",
+      "filterAll": "Todas",
+      "session": "Sesión {status}",
+      "tutor": "Tutor: {name}",
+      "motivos": "Motivos",
+      "puntosRelevantes": "Puntos relevantes",
+      "compromisos": "Compromisos y acuerdos",
+      "firmaTutor": "Firma Tutor",
+      "firmaAlumno": "Mi Firma",
+      "confirmarAsistencia": "Confirmar asistencia",
+      "confirmando": "Confirmando...",
+      "confirmSuccess": "Asistencia confirmada correctamente",
+      "noSessions": "No se encontraron sesiones."
+    },
+    "docsPage": {
+      "title": "Mis Documentos",
+      "subtitle": "{count} documento(s) en tu expediente",
+      "uploadButton": "Subir documento",
+      "uploadTitle": "Subir nuevo documento",
+      "docType": "Tipo de documento *",
+      "docTypePlaceholder": "Seleccionar tipo",
+      "docName": "Nombre descriptivo",
+      "docNamePlaceholder": "Ej: Kárdex 2026-1",
+      "fileLabel": "Archivo * (PDF, PNG, JPG · Máx 10 MB)",
+      "fileDrag": "Arrastra tu archivo aquí o haz clic para seleccionar",
+      "fileFormats": "PDF, PNG, JPG · Máx 10 MB",
+      "uploading": "Subiendo...",
+      "uploadSuccess": "Documento subido correctamente",
+      "available": "Documentos disponibles",
+      "visibleOnly": "Solo se muestran documentos con visibilidad pública",
+      "viewDownload": "Ver / Descargar",
+      "opening": "Abriendo...",
+      "noDocsUpload": "No tienes documentos disponibles. Sube tu primer documento.",
+      "fileTooLarge": "El archivo no puede superar 10 MB.",
+      "requiredFields": "Selecciona un archivo y un tipo de documento.",
+      "docTypes": {
+        "kardex": "Kárdex",
+        "constancia": "Constancia",
+        "plan_accion": "Plan de acción",
+        "justificante": "Justificante",
+        "otro": "Otro"
+      }
+    },
+    "expediente": {
+      "title": "Mi Expediente Académico",
+      "subtitle": "Vista de solo lectura de tu información",
+      "personalData": "Datos personales",
+      "matricula": "Matrícula",
+      "name": "Nombre",
+      "career": "Carrera",
+      "group": "Grupo",
+      "semester": "Cuatrimestre",
+      "email": "Correo institucional",
+      "phone": "Teléfono",
+      "gpa": "Promedio",
+      "risk": "Riesgo académico",
+      "grades": "Mis calificaciones",
+      "gradesCount": "{count} registros",
+      "gradesHeaders": {
+        "subject": "Asignatura",
+        "period": "Período",
+        "grade": "Cal.",
+        "type": "Tipo"
+      },
+      "noGrades": "Sin calificaciones registradas.",
+      "actionPlan": "Mi Plan de Acción",
+      "period": "Período {period}",
+      "deadline": "Fecha límite: {date}"
+    },
+    "risk": { "bajo": "Bajo", "medio": "Medio", "alto": "Alto" },
+    "urgency": { "normal": "Normal", "medio": "Medio", "urgente": "Urgente", "critico": "Crítico" }
+  },
+
+  "tutor": {
+    "title": "Panel de Tutor",
+    "welcome": "Bienvenido, {name}",
+    "newSession": "Nueva sesión",
+    "profileNotFound": "Perfil de Tutor no encontrado",
+    "profileNotFoundDesc": "Tu cuenta no tiene un perfil de tutor asociado en el sistema. Por favor, contacta al administrador para que registre tu perfil en la tabla de tutores.",
+    "contactAdmin": "Contacta al administrador para habilitar tu acceso a este módulo.",
+    "stats": {
+      "assigned": "Alumnos asignados",
+      "assignedSub": "Total cuatrimestre",
+      "pending": "Sesiones pendientes",
+      "pendingSub": "Por realizar",
+      "risk": "En riesgo alto",
+      "riskSub": "Atención urgente",
+      "completed": "Sesiones completadas",
+      "completedSub": "Historial"
+    },
+    "attentionNeeded": "Alumnos que requieren atención",
+    "noRiskStudents": "No hay alumnos en riesgo detectados.",
+    "upcomingSessions": "Próximas sesiones",
+    "scheduledSession": "Sesión Programada",
+    "pending": "PENDIENTE",
+    "noUpcoming": "No hay próximas sesiones.",
+    "allStudents": "Todos mis alumnos asignados",
+    "noStudents": "No hay alumnos asignados a este tutor.",
+    "headers": {
+      "student": "Alumno",
+      "gpa": "Prom.",
+      "risk": "Riesgo",
+      "matricula": "Matrícula"
+    },
+    "studentsPage": {
+      "title": "Mis Alumnos",
+      "subtitle": "{count} alumnos asignados actualmente.",
+      "regularStatus": "Alumno Regular",
+      "tryOtherSearch": "Intenta con otro término de búsqueda o filtro."
+    },
+    "sessionsPage": {
+      "title": "Sesiones de Tutoría",
+      "subtitle": "{count} sesiones registradas",
+      "newSession": "Nueva sesión",
+      "filterAll": "Todas",
+      "headers": { "student": "Alumno", "date": "Fecha", "schedule": "Horario", "urgency": "Urgencia", "status": "Estatus", "action": "Acción" },
+      "noSessions": "No se encontraron sesiones registradas.",
+      "noProfile": "Perfil de Tutor no encontrado",
+      "errorLoading": "Error al cargar sesiones"
+    },
+    "recordsPage": {
+      "title": "Expedientes",
+      "subtitle": "Expediente integral por alumno",
+      "noStudentsAssigned": "No hay alumnos asignados",
+      "tabs": { "data": "Datos", "grades": "Calificaciones", "sessions": "Sesiones", "referrals": "Canalizaciones", "incidents": "Incidencias", "documents": "Documentos", "plan": "Plan de acción" },
+      "fields": { "matricula": "Matrícula", "fullName": "Nombre completo", "gender": "Género", "male": "Masculino", "female": "Femenino", "other": "Otro", "career": "Carrera", "group": "Grupo", "semester": "Cuatrimestre", "email": "Correo institucional", "phone": "Teléfono" },
+      "gradesHeaders": { "subject": "Asignatura", "period": "Período", "grade": "Calificación", "type": "Tipo", "observations": "Observaciones" },
+      "sessionNote": "Sesión de Tutoría",
+      "referralHeaders": { "service": "Servicio", "date": "Fecha", "reason": "Motivo", "status": "Estatus", "followUp": "Seguimiento" },
+      "incidentHeaders": { "date": "Fecha", "type": "Tipo", "description": "Descripción", "status": "Estatus", "resolution": "Resolución" },
+      "docHeaders": { "file": "Archivo", "type": "Tipo", "privacy": "Privacidad", "size": "Tamaño", "date": "Fecha" },
+      "actionPlan": "Plan de Acción · {period}",
+      "reviewDate": "Revisión programada: {date}",
+      "noPlans": "No hay planes de acción para este alumno."
+    },
+    "reportsPage": {
+      "title": "Reportes",
+      "subtitle": "Genera y descarga reportes de tus alumnos y sesiones",
+      "reports": {
+        "assignedStudents": { "title": "Mis alumnos asignados", "desc": "Lista de {count} alumnos con datos académicos y riesgo." },
+        "atRisk": { "title": "Alumnos en riesgo", "desc": "{count} alumnos con riesgo Medio o Alto." },
+        "sessionHistory": { "title": "Historial de sesiones", "desc": "{count} sesiones registradas." },
+        "consolidated": { "title": "Consolidado R07-M01-01", "desc": "Reporte general con todas las sesiones en formato oficial." }
+      },
+      "errorLoading": "Error al cargar datos de reportes"
+    }
+  },
+
+  "admin": {
+    "title": "Panel de Administración",
+    "subtitle": "Datos en tiempo real · {date}",
+    "stats": {
+      "totalStudents": "Total alumnos",
+      "totalStudentsSub": "Inscritos activos",
+      "activeTutors": "Tutores activos",
+      "activeTutorsSub": "Perfiles registrados",
+      "sessions": "Sesiones",
+      "sessionsSub": "Historial total",
+      "avgGpa": "Promedio general",
+      "avgGpaSub": "Métrica institucional"
+    },
+    "riskDistribution": "Distribución por riesgo académico",
+    "studentsAnalyzed": "{count} alumnos analizados",
+    "riskHigh": "Riesgo Alto",
+    "riskMedium": "Riesgo Medio",
+    "riskLow": "Sin riesgo",
+    "tutorWorkload": "Carga de trabajo por tutor",
+    "activeTutors": "{count} tutores en activo",
+    "noTutorWorkload": "No hay tutores con carga activa.",
+    "recentStudents": "Últimos alumnos registrados",
+    "showingRecent": "Mostrando {count} registros recientes",
+    "noRecentStudents": "No hay alumnos registrados recientemente.",
+    "headers": {
+      "tutor": "Tutor",
+      "students": "Alumnos",
+      "sessions": "Sesiones",
+      "student": "Alumno",
+      "matricula": "Matrícula",
+      "career": "Carrera",
+      "semester": "Cuatr.",
+      "gpa": "Promedio",
+      "risk": "Riesgo",
+      "tutorAssigned": "Tutor"
+    },
+    "usersPage": {
+      "title": "Gestión de Usuarios",
+      "subtitle": "Usuarios registrados en el sistema",
+      "searchPlaceholder": "Buscar por nombre, correo o matrícula...",
+      "headers": { "user": "Usuario", "role": "Rol", "email": "Correo", "status": "Estado" },
+      "noResults": "No se encontraron usuarios que coincidan con la búsqueda."
+    },
+    "sessionsPage": {
+      "title": "Sesiones de Tutoría",
+      "subtitle": "Vista general de todas las sesiones",
+      "searchPlaceholder": "Buscar por alumno o tutor...",
+      "headers": { "student": "Alumno", "tutor": "Tutor", "date": "Fecha", "urgency": "Urgencia", "status": "Estatus" },
+      "noResults": "No se encontraron sesiones."
+    },
+    "tutorsPage": {
+      "title": "Gestión de Tutores y Asignaciones",
+      "subtitle": "Administra las asignaciones tutor-alumno",
+      "newAssignment": "Nueva asignación",
+      "selectedCount": "{count} seleccionado(s)",
+      "deleteSelected": "Eliminar seleccionados",
+      "searchPlaceholder": "Buscar por tutor o alumno...",
+      "headers": { "tutor": "Tutor", "student": "Alumno", "startDate": "Fecha inicio", "endDate": "Fecha fin", "status": "Estado" },
+      "activeLabel": "Activa",
+      "inactiveLabel": "Inactiva",
+      "noResults": "No se encontraron asignaciones.",
+      "assignTutor": "Tutor *",
+      "selectTutor": "Seleccionar tutor...",
+      "assignStudent": "Alumno *",
+      "selectStudent": "Seleccionar alumno...",
+      "startDate": "Fecha inicio",
+      "assignButton": "Crear asignación",
+      "assigning": "Asignando...",
+      "deleteConfirmTitle": "Confirmar eliminación",
+      "deleteConfirmSingle": "¿Estás seguro de que deseas desactivar esta asignación? Los registros se marcarán como inactivos pero se conservará el historial.",
+      "deleteConfirmMultiple": "¿Estás seguro de que deseas desactivar estas {count} asignaciones? Los registros se marcarán como inactivos pero se conservará el historial.",
+      "deleteConfirmYes": "Sí, eliminar",
+      "deleteConfirmNo": "No, cancelar"
+    },
+    "reportsPage": {
+      "title": "Reportes Administrativos",
+      "subtitle": "Genera reportes institucionales descargables",
+      "reports": {
+        "allStudents": { "title": "Todos los alumnos", "desc": "Lista completa de {count} alumnos con datos académicos." },
+        "atRisk": { "title": "Alumnos en riesgo", "desc": "{count} alumnos con riesgo Medio o Alto." },
+        "tutorAssignments": { "title": "Asignaciones tutor-alumno", "desc": "{count} asignaciones registradas." },
+        "sessionsSummary": { "title": "Resumen de sesiones", "desc": "{count} sesiones totales en el sistema." }
+      }
+    },
+    "backupsPage": {
+      "title": "Respaldos del Sistema",
+      "subtitle": "Gestión de copias de seguridad de la base de datos",
+      "createBackup": "Crear respaldo",
+      "creatingBackup": "Creando respaldo...",
+      "headers": { "name": "Nombre", "date": "Fecha", "size": "Tamaño", "status": "Estado" },
+      "noBackups": "Aún no hay respaldos generados",
+      "autoBackupNote": "La tarea automática creará tu primer respaldo a la medianoche."
+    },
+    "auditPage": {
+      "title": "Registro de Auditoría",
+      "subtitle": "Historial de eventos del sistema",
+      "headers": { "date": "Fecha", "user": "Usuario", "role": "Rol", "event": "Evento", "table": "Tabla", "details": "Detalles" },
+      "noEvents": "No se encontraron eventos de auditoría."
+    },
+    "configPage": {
+      "title": "Configuración del Sistema",
+      "subtitle": "Parámetros generales de la plataforma",
+      "sections": {
+        "general": "General",
+        "security": "Seguridad",
+        "notifications": "Notificaciones",
+        "backup": "Respaldo"
+      }
+    }
+  },
+
+  "docente": {
+    "title": "Panel de Docente",
+    "welcome": "Bienvenido, {name}.",
+    "department": "Cuerpo Académico",
+    "newGrade": "Registrar calificación",
+    "profileNotFound": "Perfil de Docente no encontrado",
+    "profileNotFoundDesc": "Tu cuenta no tiene un perfil de docente asociado. Por favor, contacta al administrador.",
+    "contactAdmin": "Contacta al administrador para habilitar tu perfil de docente.",
+    "stats": {
+      "relatedStudents": "Alumnos relacionados",
+      "relatedStudentsSub": "Vía calificaciones",
+      "groupAvg": "Promedio grupal",
+      "groupAvgSub": "Global histórico",
+      "atRisk": "Alumnos en riesgo",
+      "atRiskSub": "{percent}% detectado",
+      "grades": "Calificaciones",
+      "gradesSub": "Registros recientes"
+    },
+    "courseStudents": "Alumnos de mis cursos",
+    "noCourseStudents": "No hay alumnos registrados con sus calificaciones.",
+    "registeredGrades": "Calificaciones registradas",
+    "recentEvaluations": "Últimas evaluaciones subidas",
+    "headers": {
+      "student": "Alumno",
+      "matricula": "Matrícula",
+      "gpa": "Prom.",
+      "risk": "Riesgo",
+      "subject": "Materia",
+      "grade": "Cal."
+    },
+    "gradesPage": {
+      "title": "Calificaciones",
+      "subtitle": "Registro y gestión de calificaciones",
+      "newGrade": "Nueva calificación",
+      "headers": { "student": "Alumno", "subject": "Asignatura", "period": "Período", "grade": "Calificación", "type": "Tipo", "observations": "Observaciones" }
+    },
+    "groupPage": {
+      "title": "Mi Grupo",
+      "subtitle": "Alumnos relacionados con mis cursos",
+      "searchPlaceholder": "Buscar por nombre o matrícula...",
+      "noStudents": "No se encontraron alumnos relacionados."
+    },
+    "reportsPage": {
+      "title": "Reportes Docente",
+      "subtitle": "Genera reportes de tu grupo y calificaciones",
+      "reports": {
+        "myStudents": { "title": "Mis alumnos relacionados", "desc": "Lista de {count} alumnos con datos académicos." },
+        "atRisk": { "title": "Alumnos en riesgo", "desc": "{count} alumnos con riesgo Medio o Alto." },
+        "grades": { "title": "Mis calificaciones registradas", "desc": "{count} calificaciones en el sistema." },
+        "courseReport": { "title": "Reporte por asignatura", "desc": "Reporte detallado por materia y grupo." }
+      }
+    }
+  },
+
+  "footer": {
+    "sections": { "platform": "Plataforma", "university": "Universidad", "resources": "Recursos", "legal": "Legal" },
+    "links": {
+      "dashboard": "Dashboard", "sessions": "Sesiones", "records": "Expedientes", "reports": "Reportes",
+      "portalUTN": "Portal UTN", "email": "Correo Institucional", "library": "Biblioteca Digital", "calendar": "Calendario Escolar",
+      "tutorManual": "Manual de Tutor", "userGuide": "Guía de Usuario", "faq": "Preguntas Frecuentes", "support": "Soporte Técnico",
+      "privacy": "Aviso de Privacidad", "terms": "Términos de Uso", "regulations": "Reglamento"
+    },
+    "description": "Sistema integral de seguimiento académico y gestión de tutorías para la UTN.",
+    "cookies": "Políticas de cookies", "sitemap": "Mapa del sitio", "accessibility": "Accesibilidad"
+  },
+
+  "i18n": { "es": "ES", "en": "EN", "language": "Idioma" }
+}

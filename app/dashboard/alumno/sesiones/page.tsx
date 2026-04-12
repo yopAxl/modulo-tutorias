@@ -9,6 +9,7 @@ import { MOTIVOS_TUTORIA } from "@/app/_lib/mock-data";
 import { CalendarDays, Clock, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import SitemapFooter from "@/app/_components/SitemapFooter";
 import {
   getSesionesAlumno,
   getAlumnoPerfil,
@@ -16,34 +17,36 @@ import {
   type SesionAlumno,
   type AlumnoPerfil,
 } from "../actions";
-
-const NAV_ITEMS = [
-  { icon: "📊", label: "Mi panel", href: "/dashboard/alumno" },
-  { icon: "📅", label: "Mis sesiones", href: "/dashboard/alumno/sesiones" },
-  { icon: "📁", label: "Expediente", href: "/dashboard/alumno/expediente" },
-  { icon: "📄", label: "Documentos", href: "/dashboard/alumno/documentos" },
-];
-
-const URGENCIA_LABEL: Record<string, string> = {
-  normal: "Normal",
-  medio: "Medio",
-  urgente: "Urgente",
-  critico: "Crítico",
-};
-
-const URGENCIA_VARIANT: Record<string, "success" | "warning" | "danger"> = {
-  normal: "success",
-  medio: "warning",
-  urgente: "danger",
-  critico: "danger",
-};
+import { useI18n } from "@/app/_i18n/context";
 
 export default function SesionesAlumnoPage() {
+  const { t } = useI18n();
   const [alumno, setAlumno] = useState<AlumnoPerfil | null>(null);
   const [sesiones, setSesiones] = useState<SesionAlumno[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>("todas");
   const [confirmando, setConfirmando] = useState<string | null>(null);
+
+  const NAV_ITEMS = [
+    { icon: "📊", label: t("nav.alumno.dashboard"), href: "/dashboard/alumno" },
+    { icon: "📅", label: t("nav.alumno.sessions"), href: "/dashboard/alumno/sesiones" },
+    { icon: "📁", label: t("nav.alumno.record"), href: "/dashboard/alumno/expediente" },
+    { icon: "📄", label: t("nav.alumno.documents"), href: "/dashboard/alumno/documentos" },
+  ];
+
+  const URGENCIA_LABEL: Record<string, string> = {
+    normal: t("alumno.urgency.normal"),
+    medio: t("alumno.urgency.medio"),
+    urgente: t("alumno.urgency.urgente"),
+    critico: t("alumno.urgency.critico"),
+  };
+
+  const URGENCIA_VARIANT: Record<string, "success" | "warning" | "danger"> = {
+    normal: "success",
+    medio: "warning",
+    urgente: "danger",
+    critico: "danger",
+  };
 
   useEffect(() => {
     async function cargar() {
@@ -67,7 +70,7 @@ export default function SesionesAlumnoPage() {
     setConfirmando(sesionId);
     const result = await confirmarAsistenciaAlumno(sesionId);
     if ("success" in result) {
-      toast.success("Asistencia confirmada correctamente");
+      toast.success(t("alumno.sessionsPage.confirmSuccess"));
       // Actualizar localmente sin refetch
       setSesiones((prev) =>
         prev.map((s) =>
@@ -102,8 +105,8 @@ export default function SesionesAlumnoPage() {
 
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 pt-18 md:p-8 md:pt-8">
         <PageHeader
-          title="Mis Sesiones de Tutoría"
-          subtitle={`${sesiones.length} sesiones registradas con tu tutor`}
+          title={t("alumno.sessionsPage.title")}
+          subtitle={t("alumno.sessionsPage.subtitle", { count: sesiones.length })}
         />
 
         {/* Filtros */}
@@ -119,7 +122,7 @@ export default function SesionesAlumnoPage() {
                   : "text-white/40 hover:bg-white/6 hover:text-white/60"
               )}
             >
-              {s === "todas" ? "Todas" : s.replace("_", " ").charAt(0).toUpperCase() + s.replace("_", " ").slice(1)}
+              {s === "todas" ? t("alumno.sessionsPage.filterAll") : s.replace("_", " ").charAt(0).toUpperCase() + s.replace("_", " ").slice(1)}
             </button>
           ))}
         </div>
@@ -149,10 +152,10 @@ export default function SesionesAlumnoPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-white capitalize">
-                        Sesión {s.estatus.replace("_", " ")}
+                        {t("alumno.sessionsPage.session", { status: s.estatus.replace("_", " ") })}
                       </p>
                       {s.tutor && (
-                        <p className="text-xs text-white/40 mt-0.5">Tutor: {s.tutor.nombre_completo}</p>
+                        <p className="text-xs text-white/40 mt-0.5">{t("alumno.sessionsPage.tutor", { name: s.tutor.nombre_completo })}</p>
                       )}
                       <div className="mt-1 flex flex-wrap items-center gap-3">
                         <span className="flex items-center gap-1 text-xs text-white/40">
@@ -171,7 +174,7 @@ export default function SesionesAlumnoPage() {
                   {motivoLabels.length > 0 && (
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-2">
-                        Motivos
+                        {t("alumno.sessionsPage.motivos")}
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {motivoLabels.map((m) => (
@@ -190,7 +193,7 @@ export default function SesionesAlumnoPage() {
                   {s.puntos_relevantes && (
                     <div className="rounded-lg border border-emerald-500/15 bg-emerald-600/5 px-4 py-3">
                       <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400/50 mb-1">
-                        Puntos relevantes
+                        {t("alumno.sessionsPage.puntosRelevantes")}
                       </p>
                       <p className="text-sm text-emerald-300/80 italic">"{s.puntos_relevantes}"</p>
                     </div>
@@ -200,7 +203,7 @@ export default function SesionesAlumnoPage() {
                   {s.compromisos_acuerdos && (
                     <div className="rounded-lg border border-white/6 bg-white/2 px-4 py-3">
                       <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-1">
-                        Compromisos y acuerdos
+                        {t("alumno.sessionsPage.compromisos")}
                       </p>
                       <p className="text-sm text-white/70 italic">"{s.compromisos_acuerdos}"</p>
                     </div>
@@ -215,7 +218,7 @@ export default function SesionesAlumnoPage() {
                         <XCircle className="h-3.5 w-3.5 text-white/10" />
                       )}
                       <span className={s.confirmado_tutor ? "text-emerald-400" : "text-white/20"}>
-                        Firma Tutor
+                        {t("alumno.sessionsPage.firmaTutor")}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 text-[11px]">
@@ -225,7 +228,7 @@ export default function SesionesAlumnoPage() {
                         <XCircle className="h-3.5 w-3.5 text-white/10" />
                       )}
                       <span className={s.confirmado_alumno ? "text-emerald-400" : "text-white/20"}>
-                        Mi Firma
+                        {t("alumno.sessionsPage.firmaAlumno")}
                       </span>
                     </div>
 
@@ -235,7 +238,7 @@ export default function SesionesAlumnoPage() {
                         onClick={() => handleConfirmar(s.id)}
                         className="ml-auto rounded-lg bg-emerald-600/20 px-3 py-1 text-[11px] font-bold text-emerald-400 hover:bg-emerald-600/30 transition-all disabled:opacity-50"
                       >
-                        {confirmando === s.id ? "Confirmando..." : "Confirmar asistencia"}
+                        {confirmando === s.id ? t("alumno.sessionsPage.confirmando") : t("alumno.sessionsPage.confirmarAsistencia")}
                       </button>
                     )}
                   </div>
@@ -247,9 +250,13 @@ export default function SesionesAlumnoPage() {
           {filtered.length === 0 && (
             <div className="py-20 text-center">
               <CalendarDays className="h-10 w-10 text-white/5 mx-auto mb-3" />
-              <p className="text-sm text-white/20 font-medium">No se encontraron sesiones.</p>
+              <p className="text-sm text-white/20 font-medium">{t("alumno.sessionsPage.noSessions")}</p>
             </div>
           )}
+        </div>
+
+        <div className="-mx-4 -mb-4 md:-mx-8 md:-mb-8 mt-12">
+          <SitemapFooter />
         </div>
       </main>
     </div>

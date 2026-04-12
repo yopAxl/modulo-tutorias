@@ -12,15 +12,19 @@ import { Search, ChevronDown, ChevronUp, Mail, Phone, BookOpen, Loader2, AlertTr
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { getAlumnosGrupoDocente } from "../actions";
+import SitemapFooter from "@/app/_components/SitemapFooter";
+import { useI18n } from "@/app/_i18n/context";
 
-const NAV_ITEMS = [
-  { icon: "📊", label: "Dashboard", href: "/dashboard/docente" },
-  { icon: "👥", label: "Mi grupo", href: "/dashboard/docente/grupo" },
-  { icon: "📝", label: "Calificaciones", href: "/dashboard/docente/calificaciones" },
-  { icon: "📈", label: "Reportes", href: "/dashboard/docente/reportes" },
-];
 
 export default function MiGrupoPage() {
+  const { t } = useI18n();
+
+  const NAV_ITEMS = [
+  { icon: "📊", label: t("nav.docente.dashboard"), href: "/dashboard/docente" },
+  { icon: "👥", label: t("nav.docente.group"), href: "/dashboard/docente/grupo" },
+  { icon: "📝", label: t("nav.docente.grades"), href: "/dashboard/docente/calificaciones" },
+  { icon: "📈", label: t("nav.docente.reports"), href: "/dashboard/docente/reportes" },
+];
   const router = useRouter();
   const supabase = createClient();
 
@@ -159,6 +163,10 @@ export default function MiGrupoPage() {
               <p className="text-sm text-white/30 italic">No se encontraron alumnos relacionados.</p>
             </div>
           )}
+        </div>
+      
+        <div className="-mx-4 -mb-4 md:-mx-8 md:-mb-8 mt-12">
+          <SitemapFooter />
         </div>
       </main>
     </div>

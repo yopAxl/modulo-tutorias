@@ -23,13 +23,7 @@ import {
 } from "./actions";
 import { generateExpedientePDF } from "@/app/_lib/pdf-utils";
 import SitemapFooter from "@/app/_components/SitemapFooter";
-
-const NAV_ITEMS = [
-  { icon: "📊", label: "Mi panel", href: "/dashboard/alumno" },
-  { icon: "📅", label: "Mis sesiones", href: "/dashboard/alumno/sesiones" },
-  { icon: "📁", label: "Expediente", href: "/dashboard/alumno/expediente" },
-  { icon: "📄", label: "Documentos", href: "/dashboard/alumno/documentos" },
-];
+import { useI18n } from "@/app/_i18n/context";
 
 function SectionCard({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
@@ -39,12 +33,6 @@ function SectionCard({ children, className }: { children: React.ReactNode; class
   );
 }
 
-const riesgoMap: Record<string, { label: string; cls: string; accent: "green" | "amber" | "red" }> = {
-  bajo: { label: "Bajo", cls: "text-emerald-400", accent: "green" },
-  medio: { label: "Medio", cls: "text-amber-400", accent: "amber" },
-  alto: { label: "Alto", cls: "text-red-400", accent: "red" },
-};
-
 function gpaColor(p: number) {
   if (p >= 8.5) return "text-emerald-400";
   if (p >= 7.0) return "text-amber-400";
@@ -53,11 +41,19 @@ function gpaColor(p: number) {
 
 export default function AlumnoDashboard() {
   const router = useRouter();
+  const { t } = useI18n();
   const [alumno, setAlumno] = useState<AlumnoPerfil | null>(null);
   const [sesiones, setSesiones] = useState<SesionAlumno[]>([]);
   const [documentos, setDocumentos] = useState<DocumentoAlumno[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
+
+  const NAV_ITEMS = [
+    { icon: "📊", label: t("nav.alumno.dashboard"), href: "/dashboard/alumno" },
+    { icon: "📅", label: t("nav.alumno.sessions"), href: "/dashboard/alumno/sesiones" },
+    { icon: "📁", label: t("nav.alumno.record"), href: "/dashboard/alumno/expediente" },
+    { icon: "📄", label: t("nav.alumno.documents"), href: "/dashboard/alumno/documentos" },
+  ];
 
   useEffect(() => {
     async function cargar() {
@@ -92,9 +88,9 @@ export default function AlumnoDashboard() {
         "data" in calsRes ? calsRes.data : [],
         "data" in sesRes ? sesRes.data : []
       );
-      toast.success("Expediente descargado correctamente");
+      toast.success(t("alumno.panel.downloadSuccess"));
     } catch (e: any) {
-      toast.error("Error al generar PDF: " + e.message);
+      toast.error(t("alumno.panel.downloadError", { error: e.message }));
     } finally {
       setIsDownloading(false);
     }
@@ -111,10 +107,16 @@ export default function AlumnoDashboard() {
   if (!alumno) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-[#0f151c]">
-        <p className="text-sm text-white/40">No se encontró perfil de alumno.</p>
+        <p className="text-sm text-white/40">{t("common.profileNotFound")}</p>
       </div>
     );
   }
+
+  const riesgoMap: Record<string, { label: string; cls: string; accent: "green" | "amber" | "red" }> = {
+    bajo: { label: t("alumno.risk.bajo"), cls: "text-emerald-400", accent: "green" },
+    medio: { label: t("alumno.risk.medio"), cls: "text-amber-400", accent: "amber" },
+    alto: { label: t("alumno.risk.alto"), cls: "text-red-400", accent: "red" },
+  };
 
   const riesgo = riesgoMap[alumno.riesgo_academico] ?? riesgoMap["bajo"];
   const pendientes = documentos.filter((d) => (d as any).estado === "Pendiente").length;
@@ -128,9 +130,9 @@ export default function AlumnoDashboard() {
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-bold text-white">Mi Panel Académico</h1>
+            <h1 className="text-xl font-bold text-white">{t("alumno.panel.title")}</h1>
             <p className="mt-0.5 text-sm text-white/50">
-              Hola, {primerNombre}. Aquí puedes consultar tu seguimiento.
+              {t("alumno.panel.greeting", { name: primerNombre })}
             </p>
           </div>
           <Button
@@ -145,39 +147,39 @@ export default function AlumnoDashboard() {
             ) : (
               <Download className="h-3.5 w-3.5" />
             )}
-            {isDownloading ? "Generando..." : "Descargar expediente"}
+            {isDownloading ? t("alumno.panel.generating") : t("alumno.panel.downloadRecord")}
           </Button>
         </div>
 
         {/* KPIs */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <StatCard
-            label="Mi promedio"
+            label={t("alumno.stats.gpa")}
             value={Number(alumno.promedio_general).toFixed(1)}
-            sub="Promedio general acumulado"
+            sub={t("alumno.stats.gpaDescription")}
             subColor={gpaColor(alumno.promedio_general)}
             icon={BarChart3}
             accent={alumno.promedio_general >= 8.5 ? "green" : alumno.promedio_general >= 7.0 ? "amber" : "red"}
           />
           <StatCard
-            label="Sesiones con tutor"
+            label={t("alumno.stats.sessions")}
             value={sesiones.length}
-            sub="Historial completo"
+            sub={t("alumno.stats.sessionsDescription")}
             icon={CalendarDays}
             accent="green"
           />
           <StatCard
-            label="Documentos"
+            label={t("alumno.stats.documents")}
             value={documentos.length}
-            sub={pendientes > 0 ? `${pendientes} pendiente(s)` : "Sin pendientes"}
+            sub={pendientes > 0 ? t("alumno.stats.pendingDocs", { count: pendientes }) : t("alumno.stats.noPendingDocs")}
             subColor={pendientes > 0 ? "text-amber-400" : "text-emerald-400"}
             icon={FolderOpen}
             accent="amber"
           />
           <StatCard
-            label="Estado académico"
+            label={t("alumno.stats.academicStatus")}
             value={riesgo.label}
-            sub="Nivel de riesgo"
+            sub={t("alumno.stats.riskLevel")}
             subColor={riesgo.cls}
             icon={AlertTriangle}
             accent={riesgo.accent}
@@ -188,17 +190,17 @@ export default function AlumnoDashboard() {
           {/* Información académica */}
           <SectionCard>
             <div className="border-b border-white/6 px-5 py-4">
-              <p className="text-sm font-semibold text-white">Mi información académica</p>
-              <p className="text-xs text-white/40">Datos de tu expediente institucional</p>
+              <p className="text-sm font-semibold text-white">{t("alumno.info.title")}</p>
+              <p className="text-xs text-white/40">{t("alumno.info.subtitle")}</p>
             </div>
             <div className="divide-y divide-white/4 px-5">
               {[
-                ["Matrícula", alumno.matricula, true],
-                ["Nombre completo", alumno.nombre_completo, false],
-                ["Carrera", alumno.carrera, false],
-                ["Cuatrimestre", `${alumno.cuatrimestre}°`, false],
-                ["Correo institucional", alumno.correo_institucional, false],
-                ["Teléfono", alumno.telefono, true],
+                [t("alumno.info.matricula"), alumno.matricula, true],
+                [t("alumno.info.fullName"), alumno.nombre_completo, false],
+                [t("alumno.info.career"), alumno.carrera, false],
+                [t("alumno.info.semester"), `${alumno.cuatrimestre}°`, false],
+                [t("alumno.info.email"), alumno.correo_institucional, false],
+                [t("alumno.info.phone"), alumno.telefono, true],
               ].map(([label, value, mono]: any) => (
                 <div key={label} className="flex items-center justify-between py-3">
                   <span className="text-xs font-medium text-white/40">{label}</span>
@@ -213,8 +215,8 @@ export default function AlumnoDashboard() {
           {/* Mis sesiones recientes */}
           <SectionCard>
             <div className="border-b border-white/6 px-5 py-4">
-              <p className="text-sm font-semibold text-white">Mis sesiones de tutoría</p>
-              <p className="text-xs text-white/40">{sesiones.length} sesiones registradas</p>
+              <p className="text-sm font-semibold text-white">{t("alumno.sessionsList.title")}</p>
+              <p className="text-xs text-white/40">{t("alumno.sessionsList.count", { count: sesiones.length })}</p>
             </div>
             <div className="divide-y divide-white/4">
               {sesiones.length > 0 ? sesiones.slice(0, 4).map((s) => (
@@ -227,7 +229,7 @@ export default function AlumnoDashboard() {
                       {s.estatus.replace("_", " ")}
                     </p>
                     <p className="mt-0.5 truncate text-xs text-white/40">
-                      {s.puntos_relevantes?.slice(0, 60) ?? "Sin observaciones"}
+                      {s.puntos_relevantes?.slice(0, 60) ?? t("alumno.sessionsList.noObservations")}
                     </p>
                     <div className="mt-1.5 flex items-center gap-3">
                       <span className="flex items-center gap-1 text-[11px] text-white/35">
@@ -243,7 +245,7 @@ export default function AlumnoDashboard() {
                 </div>
               )) : (
                 <p className="py-20 text-center text-sm text-white/30 italic">
-                  Sin sesiones registradas aún.
+                  {t("alumno.sessionsList.noSessions")}
                 </p>
               )}
             </div>
@@ -254,21 +256,21 @@ export default function AlumnoDashboard() {
         <SectionCard>
           <div className="flex items-center justify-between border-b border-white/6 px-5 py-4">
             <div>
-              <p className="text-sm font-semibold text-white">Mis documentos</p>
-              <p className="text-xs text-white/40">Expediente y archivos académicos</p>
+              <p className="text-sm font-semibold text-white">{t("alumno.docs.title")}</p>
+              <p className="text-xs text-white/40">{t("alumno.docs.subtitle")}</p>
             </div>
             <button
               onClick={() => router.push("/dashboard/alumno/documentos?upload=true")}
               className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 font-medium"
             >
-              Subir documento <ChevronRight className="h-3 w-3" />
+              {t("alumno.docs.uploadDoc")} <ChevronRight className="h-3 w-3" />
             </button>
           </div>
 
           <Table>
             <TableHeader>
               <TableRow className="border-white/6 hover:bg-transparent">
-                {["Documento", "Tipo", "Fecha", "Tamaño"].map((h) => (
+                {[t("alumno.docs.headers.document"), t("alumno.docs.headers.type"), t("alumno.docs.headers.date"), t("alumno.docs.headers.size")].map((h) => (
                   <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">
                     {h}
                   </TableHead>
@@ -298,7 +300,7 @@ export default function AlumnoDashboard() {
               )) : (
                 <TableRow>
                   <TableCell colSpan={4} className="py-10 text-center text-sm text-white/30 italic">
-                    Sin documentos disponibles.
+                    {t("alumno.docs.noDocs")}
                   </TableCell>
                 </TableRow>
               )}

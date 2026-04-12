@@ -96,7 +96,7 @@ export async function getAlumnoPerfil(): Promise<
       .from("alumnos")
       .select("*")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     if (error || !data) {
       console.error("getAlumnoPerfil error:", error);

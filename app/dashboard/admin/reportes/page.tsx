@@ -15,19 +15,23 @@ import {
   getStudentRosterReportData 
 } from "./actions";
 import { toast } from "sonner";
+import SitemapFooter from "@/app/_components/SitemapFooter";
+import { useI18n } from "@/app/_i18n/context";
 
-const NAV_ITEMS = [
-  { icon: "📊", label: "Dashboard", href: "/dashboard/admin" },
-  { icon: "👥", label: "Usuarios", href: "/dashboard/admin/usuarios" },
-  { icon: "🎓", label: "Tutores", href: "/dashboard/admin/tutores" },
-  { icon: "📋", label: "Sesiones", href: "/dashboard/admin/sesiones" },
-  { icon: "📈", label: "Reportes", href: "/dashboard/admin/reportes" },
-  { icon: "📁", label: "Respaldos", href: "/dashboard/admin/respaldos" },
-  { icon: "📚", label: "Auditoría", href: "/dashboard/admin/audit" },
-  { icon: "⚙️", label: "Configuración", href: "/dashboard/admin/config" },
-];
 
 export default function ReportesAdminPage() {
+  const { t } = useI18n();
+
+  const NAV_ITEMS = [
+  { icon: "📊", label: t("nav.admin.dashboard"), href: "/dashboard/admin" },
+  { icon: "👥", label: t("nav.admin.users"), href: "/dashboard/admin/usuarios" },
+  { icon: "🎓", label: t("nav.admin.tutors"), href: "/dashboard/admin/tutores" },
+  { icon: "📋", label: t("nav.admin.sessions"), href: "/dashboard/admin/sesiones" },
+  { icon: "📈", label: t("nav.admin.reports"), href: "/dashboard/admin/reportes" },
+  { icon: "📁", label: t("nav.admin.backups"), href: "/dashboard/admin/respaldos" },
+  { icon: "📚", label: t("nav.admin.audit"), href: "/dashboard/admin/audit" },
+  { icon: "⚙️", label: t("nav.admin.settings"), href: "/dashboard/admin/config" },
+];
   const [loadingReport, setLoadingReport] = useState<string | null>(null);
 
   const handleGenerateReport = async (reportId: string) => {
@@ -193,6 +197,10 @@ export default function ReportesAdminPage() {
               </SectionCard>
             );
           })}
+        </div>
+      
+        <div className="-mx-4 -mb-4 md:-mx-8 md:-mb-8 mt-12">
+          <SitemapFooter />
         </div>
       </main>
     </div>

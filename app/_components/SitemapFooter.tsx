@@ -3,57 +3,60 @@
 import Link from "next/link";
 import { GraduationCap, Mail, Globe, Book, Shield, ExternalLink, Link2, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/app/_i18n/context";
 
 interface SitemapLink {
-  label: string;
+  labelKey: string;
   href: string;
   external?: boolean;
 }
 
 interface SitemapSection {
-  title: string;
+  titleKey: string;
   links: SitemapLink[];
 }
 
 const SITEMAP_DATA: SitemapSection[] = [
   {
-    title: "Plataforma",
+    titleKey: "footer.sections.platform",
     links: [
-      { label: "Dashboard", href: "/dashboard" },
-      { label: "Sesiones", href: "#" },
-      { label: "Expedientes", href: "#" },
-      { label: "Reportes", href: "#" },
+      { labelKey: "footer.links.dashboard", href: "/dashboard" },
+      { labelKey: "footer.links.sessions", href: "#" },
+      { labelKey: "footer.links.records", href: "#" },
+      { labelKey: "footer.links.reports", href: "#" },
     ],
   },
   {
-    title: "Universidad",
+    titleKey: "footer.sections.university",
     links: [
-      { label: "Portal UTN", href: "https://www.utnay.edu.mx", external: true },
-      { label: "Correo Institucional", href: "https://outlook.office.com", external: true },
-      { label: "Biblioteca Digital", href: "#", external: true },
-      { label: "Calendario Escolar", href: "#", external: true },
+      { labelKey: "footer.links.portalUTN", href: "https://www.utnay.edu.mx", external: true },
+      { labelKey: "footer.links.email", href: "https://outlook.office.com", external: true },
+      { labelKey: "footer.links.library", href: "#", external: true },
+      { labelKey: "footer.links.calendar", href: "#", external: true },
     ],
   },
   {
-    title: "Recursos",
+    titleKey: "footer.sections.resources",
     links: [
-      { label: "Manual de Tutor", href: "#" },
-      { label: "Guía de Usuario", href: "#" },
-      { label: "Preguntas Frecuentes", href: "#" },
-      { label: "Soporte Técnico", href: "#" },
+      { labelKey: "footer.links.tutorManual", href: "#" },
+      { labelKey: "footer.links.userGuide", href: "#" },
+      { labelKey: "footer.links.faq", href: "#" },
+      { labelKey: "footer.links.support", href: "#" },
     ],
   },
   {
-    title: "Legal",
+    titleKey: "footer.sections.legal",
     links: [
-      { label: "Aviso de Privacidad", href: "#" },
-      { label: "Términos de Uso", href: "#" },
-      { label: "Reglamento", href: "#" },
+      { labelKey: "footer.links.privacy", href: "#" },
+      { labelKey: "footer.links.terms", href: "#" },
+      { labelKey: "footer.links.regulations", href: "#" },
     ],
   },
 ];
 
 export default function SitemapFooter() {
+  const { t } = useI18n();
+
   return (
     <footer className="mt-auto w-full border-t border-white/6 bg-[#0f151c]/50 py-12 backdrop-blur-md">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
@@ -65,10 +68,10 @@ export default function SitemapFooter() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 shadow-lg shadow-emerald-600/20">
                 <GraduationCap className="h-5 w-5 text-white" />
               </div>
-              <span className="text-lg font-bold tracking-tight text-white">TutorTrack</span>
+              <span className="text-lg font-bold tracking-tight text-white">{t("brand.name")}</span>
             </div>
             <p className="text-sm text-white/40 leading-relaxed mb-6">
-              Sistema integral de seguimiento académico y gestión de tutorías para la UTN.
+              {t("footer.description")}
             </p>
             <div className="flex gap-4">
               <Link href="#" className="text-white/30 hover:text-emerald-400 transition-colors">
@@ -85,19 +88,19 @@ export default function SitemapFooter() {
 
           {/* Sitemap Columns */}
           {SITEMAP_DATA.map((section) => (
-            <div key={section.title} className="flex flex-col gap-4">
+            <div key={section.titleKey} className="flex flex-col gap-4">
               <h3 className="text-xs font-bold uppercase tracking-widest text-white/20">
-                {section.title}
+                {t(section.titleKey)}
               </h3>
               <ul className="flex flex-col gap-2.5">
                 {section.links.map((link) => (
-                  <li key={link.label}>
+                  <li key={link.labelKey}>
                     <Link
                       href={link.href}
                       target={link.external ? "_blank" : undefined}
                       className="group flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors"
                     >
-                      {link.label}
+                      {t(link.labelKey)}
                       {link.external && (
                         <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                       )}
@@ -111,17 +114,17 @@ export default function SitemapFooter() {
 
         <div className="mt-12 pt-8 border-t border-white/4 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-white/30">
-            © {new Date().getFullYear()} Universidad Tecnológica de Nayarit. Todos los derechos reservados.
+            {t("brand.copyright", { year: String(new Date().getFullYear()) })}
           </p>
           <div className="flex items-center gap-6">
             <Link href="#" className="text-[11px] font-medium text-white/30 hover:text-white/70 transition-colors">
-              Poliíticas de cookies
+              {t("footer.cookies")}
             </Link>
             <Link href="#" className="text-[11px] font-medium text-white/30 hover:text-white/70 transition-colors">
-              Mapa del sitio
+              {t("footer.sitemap")}
             </Link>
             <Link href="#" className="text-[11px] font-medium text-white/30 hover:text-white/70 transition-colors">
-              Accesibilidad
+              {t("footer.accessibility")}
             </Link>
           </div>
         </div>

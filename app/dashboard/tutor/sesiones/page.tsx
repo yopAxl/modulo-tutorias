@@ -17,6 +17,8 @@ import { toast } from "sonner";
 // Componentes Refactorizados
 import { CreateSessionModal } from "../_components/CreateSessionModal";
 import { SessionDetailsModal } from "../_components/SessionDetailsModal";
+import SitemapFooter from "@/app/_components/SitemapFooter";
+import { useI18n } from "@/app/_i18n/context";
 
 // Formateador de fecha
 function formatFechaReal(dateStr: string) {
@@ -28,15 +30,17 @@ function formatFechaReal(dateStr: string) {
   });
 }
 
-const NAV_ITEMS = [
-  { icon: "📊", label: "Dashboard", href: "/dashboard/tutor" },
-  { icon: "👥", label: "Mis alumnos", href: "/dashboard/tutor/alumnos" },
-  { icon: "📅", label: "Sesiones", href: "/dashboard/tutor/sesiones" },
-  { icon: "📁", label: "Expedientes", href: "/dashboard/tutor/expedientes" },
-  { icon: "📈", label: "Reportes", href: "/dashboard/tutor/reportes" },
-];
 
 export default function SesionesTutorPage() {
+  const { t } = useI18n();
+
+  const NAV_ITEMS = [
+  { icon: "📊", label: t("nav.tutor.dashboard"), href: "/dashboard/tutor" },
+  { icon: "👥", label: t("nav.tutor.students"), href: "/dashboard/tutor/alumnos" },
+  { icon: "📅", label: t("nav.tutor.sessions"), href: "/dashboard/tutor/sesiones" },
+  { icon: "📁", label: t("nav.tutor.records"), href: "/dashboard/tutor/expedientes" },
+  { icon: "📈", label: t("nav.tutor.reports"), href: "/dashboard/tutor/reportes" },
+];
   const router = useRouter();
   const supabase = createClient();
   
@@ -253,6 +257,10 @@ export default function SesionesTutorPage() {
             </div>
           )}
         </SectionCard>
+      
+        <div className="-mx-4 -mb-4 md:-mx-8 md:-mb-8 mt-12">
+          <SitemapFooter />
+        </div>
       </main>
 
       {/* Modales */}

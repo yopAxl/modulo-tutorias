@@ -19,14 +19,7 @@ import { cn } from "@/lib/utils";
 import { getTutorDashboardStats } from "./actions"; 
 import { toast } from "sonner";
 import SitemapFooter from "@/app/_components/SitemapFooter";
-
-const NAV_ITEMS = [
-  { icon: "📊", label: "Dashboard", href: "/dashboard/tutor" },
-  { icon: "👥", label: "Mis alumnos", href: "/dashboard/tutor/alumnos" },
-  { icon: "📅", label: "Sesiones", href: "/dashboard/tutor/sesiones" },
-  { icon: "📁", label: "Expedientes", href: "/dashboard/tutor/expedientes" },
-  { icon: "📈", label: "Reportes", href: "/dashboard/tutor/reportes" },
-];
+import { useI18n } from "@/app/_i18n/context";
 
 function RiskBadge({ riesgo }: { riesgo: string }) {
   const map = {
@@ -61,7 +54,7 @@ function SectionCard({ children, className }: { children: React.ReactNode; class
   );
 }
 
-function EmptyDataRow({ colSpan, message = "No hay datos en esta tabla" }: { colSpan: number; message?: string }) {
+function EmptyDataRow({ colSpan, message = "No data" }: { colSpan: number; message?: string }) {
   return (
     <TableRow>
       <TableCell colSpan={colSpan} className="py-10 text-center text-xs text-white/20 italic">
@@ -74,10 +67,19 @@ function EmptyDataRow({ colSpan, message = "No hay datos en esta tabla" }: { col
 export default function TutorDashboard() {
   const router = useRouter();
   const supabase = createClient();
+  const { t } = useI18n();
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [tutorNombre, setTutorNombre] = useState("");
+
+  const NAV_ITEMS = [
+    { icon: "📊", label: t("nav.tutor.dashboard"), href: "/dashboard/tutor" },
+    { icon: "👥", label: t("nav.tutor.students"), href: "/dashboard/tutor/alumnos" },
+    { icon: "📅", label: t("nav.tutor.sessions"), href: "/dashboard/tutor/sesiones" },
+    { icon: "📁", label: t("nav.tutor.records"), href: "/dashboard/tutor/expedientes" },
+    { icon: "📈", label: t("nav.tutor.reports"), href: "/dashboard/tutor/reportes" },
+  ];
 
   useEffect(() => {
     async function loadDashboard() {
@@ -97,10 +99,10 @@ export default function TutorDashboard() {
           setData(res.data);
           setTutorNombre(res.data.tutor.nombre_completo || user.user_metadata?.nombre_completo || user.email);
         } else {
-          toast.error(res.error || "Error al cargar datos");
+          toast.error(res.error || t("common.errorLoading"));
         }
       } catch (err) {
-        toast.error("Error de conexión");
+        toast.error(t("common.connectionError"));
       } finally {
         setLoading(false);
       }
@@ -123,13 +125,12 @@ export default function TutorDashboard() {
         <main className="flex flex-1 items-center justify-center p-8">
           <SectionCard className="max-w-md p-8 text-center border-amber-500/20 bg-amber-500/5">
             <AlertTriangle className="mx-auto h-12 w-12 text-amber-500 mb-4" />
-            <h2 className="text-xl font-bold text-white mb-2">Perfil de Tutor no encontrado</h2>
+            <h2 className="text-xl font-bold text-white mb-2">{t("tutor.profileNotFound")}</h2>
             <p className="text-sm text-white/60 mb-6">
-              Tu cuenta no tiene un perfil de tutor asociado en el sistema. 
-              Por favor, contacta al administrador para que registre tu perfil en la tabla de tutores.
+              {t("tutor.profileNotFoundDesc")}
             </p>
             <Button onClick={() => window.location.reload()} variant="outline" className="border-white/10 hover:bg-white/5">
-              Reintentar
+              {t("common.retry")}
             </Button>
           </SectionCard>
         </main>
@@ -149,35 +150,35 @@ export default function TutorDashboard() {
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 pt-18 md:p-8 md:pt-8">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-bold text-white">Panel de Tutor</h1>
-            <p className="mt-0.5 text-sm text-white/50">Bienvenido, {tutorNombre}</p>
+            <h1 className="text-xl font-bold text-white">{t("tutor.title")}</h1>
+            <p className="mt-0.5 text-sm text-white/50">{t("tutor.welcome", { name: tutorNombre })}</p>
           </div>
           <Button size="sm" className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700">
-            <Plus className="h-4 w-4" /> Nueva sesión
+            <Plus className="h-4 w-4" /> {t("tutor.newSession")}
           </Button>
         </div>
         
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard label="Alumnos asignados" value={stats.totalAlumnos} sub="Total cuatrimestre" icon={Users} accent="green" />
-          <StatCard label="Sesiones pendientes" value={stats.sesionesPendientes} sub="Por realizar" icon={CalendarDays} accent="green" />
-          <StatCard label="En riesgo alto" value={stats.alertasRiesgo} sub="Atención urgente" icon={AlertTriangle} accent="red" />
-          <StatCard label="Sesiones completadas" value={stats.sesionesCompletadas} sub="Historial" icon={CalendarCheck2} accent="green" />
+          <StatCard label={t("tutor.stats.assigned")} value={stats.totalAlumnos} sub={t("tutor.stats.assignedSub")} icon={Users} accent="green" />
+          <StatCard label={t("tutor.stats.pending")} value={stats.sesionesPendientes} sub={t("tutor.stats.pendingSub")} icon={CalendarDays} accent="green" />
+          <StatCard label={t("tutor.stats.risk")} value={stats.alertasRiesgo} sub={t("tutor.stats.riskSub")} icon={AlertTriangle} accent="red" />
+          <StatCard label={t("tutor.stats.completed")} value={stats.sesionesCompletadas} sub={t("tutor.stats.completedSub")} icon={CalendarCheck2} accent="green" />
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <SectionCard className="col-span-1 lg:col-span-2">
             <div className="flex items-center justify-between border-b border-white/6 px-5 py-4">
-              <p className="text-sm font-semibold text-white">Alumnos que requieren atención</p>
+              <p className="text-sm font-semibold text-white">{t("tutor.attentionNeeded")}</p>
               <button className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
-                Ver todos <ChevronRight className="h-3 w-3" />
+                {t("common.viewAll")} <ChevronRight className="h-3 w-3" />
               </button>
             </div>
             <Table>
               <TableHeader>
                 <TableRow className="border-white/6 hover:bg-transparent">
-                  <TableHead className="text-[11px] text-white/30 uppercase">Alumno</TableHead>
-                  <TableHead className="text-[11px] text-white/30 uppercase">Prom.</TableHead>
-                  <TableHead className="text-[11px] text-white/30 uppercase">Riesgo</TableHead>
+                  <TableHead className="text-[11px] text-white/30 uppercase">{t("tutor.headers.student")}</TableHead>
+                  <TableHead className="text-[11px] text-white/30 uppercase">{t("tutor.headers.gpa")}</TableHead>
+                  <TableHead className="text-[11px] text-white/30 uppercase">{t("tutor.headers.risk")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -193,7 +194,7 @@ export default function TutorDashboard() {
                     </TableRow>
                   ))
                 ) : (
-                  <EmptyDataRow colSpan={3} message="No hay alumnos en riesgo detectados." />
+                  <EmptyDataRow colSpan={3} message={t("tutor.noRiskStudents")} />
                 )}
               </TableBody>
             </Table>
@@ -201,21 +202,21 @@ export default function TutorDashboard() {
 
           <SectionCard>
             <div className="border-b border-white/6 px-5 py-4">
-              <p className="text-sm font-semibold text-white">Próximas sesiones</p>
+              <p className="text-sm font-semibold text-white">{t("tutor.upcomingSessions")}</p>
             </div>
             <div className="flex flex-col gap-2 p-4">
               {sesiones.length > 0 ? (
                 sesiones.map((s: any, index: number) => (
                   <div key={s.id || `sesion-${index}`} className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/3 px-4 py-3">
                     <div className="flex-1 min-w-0">
-                      <p className="truncate text-sm font-medium text-white/90">Sesión Programada</p>
+                      <p className="truncate text-sm font-medium text-white/90">{t("tutor.scheduledSession")}</p>
                       <p className="flex items-center gap-1 text-xs text-white/40"><Clock className="h-3 w-3" /> {s.hora}</p>
                     </div>
-                    <Badge className="bg-emerald-500/10 text-emerald-400 border-none text-[10px]">PENDIENTE</Badge>
+                    <Badge className="bg-emerald-500/10 text-emerald-400 border-none text-[10px]">{t("tutor.pending")}</Badge>
                   </div>
                 ))
               ) : (
-                <p className="py-6 text-center text-xs text-white/20 italic">No hay próximas sesiones.</p>
+                <p className="py-6 text-center text-xs text-white/20 italic">{t("tutor.noUpcoming")}</p>
               )}
             </div>
           </SectionCard>
@@ -223,15 +224,15 @@ export default function TutorDashboard() {
 
         <SectionCard>
           <div className="border-b border-white/6 px-5 py-4">
-            <p className="text-sm font-semibold text-white">Todos mis alumnos asignados</p>
+            <p className="text-sm font-semibold text-white">{t("tutor.allStudents")}</p>
           </div>
           <Table>
             <TableHeader>
               <TableRow className="border-white/6 hover:bg-transparent">
-                <TableHead className="text-[11px] text-white/30 uppercase">Nombre</TableHead>
-                <TableHead className="text-[11px] text-white/30 uppercase">Matrícula</TableHead>
-                <TableHead className="text-[11px] text-white/30 uppercase">Promedio</TableHead>
-                <TableHead className="text-[11px] text-white/30 uppercase">Riesgo</TableHead>
+                <TableHead className="text-[11px] text-white/30 uppercase">{t("tutor.headers.student")}</TableHead>
+                <TableHead className="text-[11px] text-white/30 uppercase">{t("tutor.headers.matricula")}</TableHead>
+                <TableHead className="text-[11px] text-white/30 uppercase">{t("tutor.headers.gpa")}</TableHead>
+                <TableHead className="text-[11px] text-white/30 uppercase">{t("tutor.headers.risk")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -245,7 +246,7 @@ export default function TutorDashboard() {
                   </TableRow>
                 ))
               ) : (
-                <EmptyDataRow colSpan={4} message="No hay alumnos asignados a este tutor." />
+                <EmptyDataRow colSpan={4} message={t("tutor.noStudents")} />
               )}
             </TableBody>
           </Table>

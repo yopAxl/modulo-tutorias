@@ -6,9 +6,11 @@ import { GraduationCap, Mail, Lock, Eye, EyeOff, AlertCircle, ArrowRight, ArrowL
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { getUserRole, getDashboardPath } from "@/app/_lib/auth-utils";
+import { useI18n } from "@/app/_i18n/context";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -19,10 +21,10 @@ export default function LoginPage() {
 
   function validate() {
     const e: typeof errors = {};
-    if (!email) e.email = "El correo es requerido";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Formato de correo inválido";
-    if (!password) e.password = "La contraseña es requerida";
-    else if (password.length < 6) e.password = "Mínimo 6 caracteres";
+    if (!email) e.email = t("login.errors.emailRequired");
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = t("login.errors.emailInvalid");
+    if (!password) e.password = t("login.errors.passwordRequired");
+    else if (password.length < 6) e.password = t("login.errors.passwordMin");
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -42,7 +44,7 @@ export default function LoginPage() {
 
     if (authError) {
       setError(authError.message === "Invalid login credentials"
-        ? "Correo o contraseña incorrectos"
+        ? t("login.errors.invalidCredentials")
         : authError.message
       );
       setLoading(false);
@@ -57,7 +59,7 @@ export default function LoginPage() {
     if (!role) {
       // Usuario autenticado pero sin rol asignado (cierre local para no afectar multisesiones)
       await supabase.auth.signOut({ scope: 'local' });
-      setError("Tu cuenta no tiene un rol asignado. Contacta al administrador del sistema.");
+      setError(t("login.errors.noRole"));
       setLoading(false);
       return;
     }
@@ -91,8 +93,8 @@ export default function LoginPage() {
             <GraduationCap className="h-7 w-7 text-white" />
           </div>
           <div className="text-center">
-            <h1 className="text-2xl font-extrabold tracking-tight text-white">Iniciar Sesión</h1>
-            <p className="mt-1 text-sm text-white/45">Sistema de Tutorías Académicas · UTNay</p>
+            <h1 className="text-2xl font-extrabold tracking-tight text-white">{t("login.title")}</h1>
+            <p className="mt-1 text-sm text-white/45">{t("login.subtitle")}</p>
           </div>
         </div>
 
@@ -110,7 +112,7 @@ export default function LoginPage() {
             {/* Email */}
             <div className="flex flex-col gap-1.5">
               <label htmlFor="login-email" className="text-xs font-semibold uppercase tracking-wider text-white/40">
-                Correo institucional
+                {t("login.email")}
               </label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/25" />
@@ -119,7 +121,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                  placeholder="correo@utnay.edu.mx"
+                  placeholder={t("login.emailPlaceholder")}
                   className={`w-full rounded-xl border bg-white/4 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus:border-emerald-500/40 focus:ring-1 focus:ring-emerald-500/20 ${
                     errors.email ? "border-red-500/40" : "border-white/8"
                   }`}
@@ -131,7 +133,7 @@ export default function LoginPage() {
             {/* Password */}
             <div className="flex flex-col gap-1.5">
               <label htmlFor="login-password" className="text-xs font-semibold uppercase tracking-wider text-white/40">
-                Contraseña
+                {t("login.password")}
               </label>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/25" />
@@ -140,7 +142,7 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(""); }}
-                  placeholder="••••••••"
+                  placeholder={t("login.passwordPlaceholder")}
                   className={`w-full rounded-xl border bg-white/4 py-2.5 pl-10 pr-11 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus:border-emerald-500/40 focus:ring-1 focus:ring-emerald-500/20 ${
                     errors.password ? "border-red-500/40" : "border-white/8"
                   }`}
@@ -159,7 +161,7 @@ export default function LoginPage() {
                   href="/recuperar-contrasena"
                   className="text-xs font-medium text-emerald-400/70 transition-colors hover:text-emerald-400"
                 >
-                  ¿Olvidaste tu contraseña?
+                  {t("login.forgotPassword")}
                 </Link>
               </div>
             </div>
@@ -174,7 +176,7 @@ export default function LoginPage() {
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
               ) : (
                 <>
-                  Acceder <ArrowRight className="h-4 w-4" />
+                  {t("login.submit")} <ArrowRight className="h-4 w-4" />
                 </>
               )}
             </button>
@@ -187,7 +189,7 @@ export default function LoginPage() {
           className="group flex items-center justify-center gap-2 text-sm text-white/30 transition-colors hover:text-white/60"
         >
           <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
-          Volver al inicio
+          {t("login.backHome")}
         </Link>
       </div>
     </div>

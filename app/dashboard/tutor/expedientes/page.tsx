@@ -14,6 +14,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { getTutorAlumnos, getExpedienteAlumno } from "../actions";
 import { toast } from "sonner";
+import SitemapFooter from "@/app/_components/SitemapFooter";
+import { useI18n } from "@/app/_i18n/context";
 
 function formatFechaReal(date: string | null) {
   if (!date) return "—";
@@ -22,17 +24,19 @@ function formatFechaReal(date: string | null) {
 
 const TUTOR_ID = "t1";
 const TUTOR_NOMBRE = "Dra. María Rodríguez López";
-const NAV_ITEMS = [
-  { icon: "📊", label: "Dashboard", href: "/dashboard/tutor" },
-  { icon: "👥", label: "Mis alumnos", href: "/dashboard/tutor/alumnos" },
-  { icon: "📅", label: "Sesiones", href: "/dashboard/tutor/sesiones" },
-  { icon: "📁", label: "Expedientes", href: "/dashboard/tutor/expedientes" },
-  { icon: "📈", label: "Reportes", href: "/dashboard/tutor/reportes" },
-];
 
 type Tab = "datos" | "calificaciones" | "sesiones" | "canalizaciones" | "incidencias" | "documentos" | "plan";
 
 export default function ExpedientesTutorPage() {
+  const { t } = useI18n();
+
+  const NAV_ITEMS = [
+  { icon: "📊", label: t("nav.tutor.dashboard"), href: "/dashboard/tutor" },
+  { icon: "👥", label: t("nav.tutor.students"), href: "/dashboard/tutor/alumnos" },
+  { icon: "📅", label: t("nav.tutor.sessions"), href: "/dashboard/tutor/sesiones" },
+  { icon: "📁", label: t("nav.tutor.records"), href: "/dashboard/tutor/expedientes" },
+  { icon: "📈", label: t("nav.tutor.reports"), href: "/dashboard/tutor/reportes" },
+];
   const router = useRouter();
   const supabase = createClient();
 
@@ -137,7 +141,7 @@ export default function ExpedientesTutorPage() {
   const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
     { key: "datos", label: "Datos", icon: User },
     { key: "calificaciones", label: "Calificaciones", icon: BookOpen },
-    { key: "sesiones", label: "Sesiones", icon: CalendarDays },
+    { key: "sesiones", label: t("nav.tutor.sessions"), icon: CalendarDays },
     { key: "canalizaciones", label: "Canalizaciones", icon: ArrowRightLeft },
     { key: "incidencias", label: "Incidencias", icon: AlertTriangle },
     { key: "documentos", label: "Documentos", icon: FileText },
@@ -390,6 +394,10 @@ export default function ExpedientesTutorPage() {
             )}
           </div>
         )}
+      
+        <div className="-mx-4 -mb-4 md:-mx-8 md:-mb-8 mt-12">
+          <SitemapFooter />
+        </div>
       </main>
     </div>
   );

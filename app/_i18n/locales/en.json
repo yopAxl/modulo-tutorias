@@ -1,0 +1,479 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "logout": "Log out",
+    "retry": "Retry",
+    "export": "Export",
+    "viewAll": "View all",
+    "viewHistory": "View history",
+    "noData": "No data available",
+    "noDataTable": "No data in this table.",
+    "noResults": "No results found.",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "download": "Download",
+    "downloadPDF": "Download PDF",
+    "upload": "Upload",
+    "save": "Save",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "search": "Search",
+    "searchPlaceholder": "Search by name or student ID...",
+    "filter": "Filter",
+    "all": "All",
+    "allFilter": "All",
+    "syncPanel": "Syncing control panel...",
+    "profileNotFound": "Profile not found.",
+    "connectionError": "Connection error",
+    "errorLoading": "Error loading data",
+    "active": "Active",
+    "inactive": "Inactive",
+    "status": "Status",
+    "date": "Date",
+    "actions": "Actions",
+    "yes": "Yes",
+    "no": "No",
+    "details": "Details",
+    "edit": "Edit",
+    "delete": "Delete",
+    "create": "Create",
+    "add": "Add",
+    "remove": "Remove",
+    "contact": "Contact",
+    "academic": "Academic",
+    "name": "Name",
+    "user": "User",
+    "role": "Role",
+    "email": "Email",
+    "phone": "Phone",
+    "of": "of",
+    "page": "Page",
+    "showing": "Showing",
+    "results": "results",
+    "noDate": "No date"
+  },
+
+  "brand": {
+    "name": "TutorTrack",
+    "subtitle": "Tutoring System",
+    "university": "Technological University of Nayarit",
+    "fullTitle": "Academic Tracking System for Tutoring",
+    "copyright": "© {year} Technological University of Nayarit. All rights reserved."
+  },
+
+  "nav": {
+    "panelOf": "{role} Panel",
+    "alumno": {
+      "dashboard": "My Dashboard",
+      "sessions": "My Sessions",
+      "record": "Academic Record",
+      "documents": "Documents"
+    },
+    "tutor": {
+      "dashboard": "Dashboard",
+      "students": "My Students",
+      "sessions": "Sessions",
+      "records": "Records",
+      "reports": "Reports"
+    },
+    "admin": {
+      "dashboard": "Dashboard",
+      "users": "Users",
+      "tutors": "Tutors",
+      "sessions": "Sessions",
+      "reports": "Reports",
+      "backups": "Backups",
+      "audit": "Audit Log",
+      "settings": "Settings"
+    },
+    "docente": {
+      "dashboard": "Dashboard",
+      "group": "My Group",
+      "grades": "Grades",
+      "reports": "Reports"
+    }
+  },
+
+  "roles": {
+    "alumno": "Student",
+    "tutor": "Tutor",
+    "admin": "Administrator",
+    "docente": "Faculty"
+  },
+
+  "home": {
+    "title": "Tutoring System",
+    "description": "Comprehensive platform for academic tracking and tutoring management at the Technological University of Nayarit.",
+    "login": "Log in",
+    "features": {
+      "tracking": { "title": "Tracking", "desc": "Continuous monitoring of each student's academic performance." },
+      "sessions": { "title": "Sessions", "desc": "Digital record of tutoring sessions with official R07-M01-01 format." },
+      "reports": { "title": "Reports", "desc": "Real-time statistics and reports from the tutoring system." }
+    }
+  },
+
+  "login": {
+    "title": "Log In",
+    "subtitle": "Academic Tutoring System · UTNay",
+    "email": "Institutional email",
+    "emailPlaceholder": "email@utnay.edu.mx",
+    "password": "Password",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "Forgot your password?",
+    "submit": "Sign in",
+    "backHome": "Back to home",
+    "errors": {
+      "emailRequired": "Email is required",
+      "emailInvalid": "Invalid email format",
+      "passwordRequired": "Password is required",
+      "passwordMin": "Minimum 6 characters",
+      "invalidCredentials": "Invalid email or password",
+      "noRole": "Your account has no assigned role. Please contact the system administrator.",
+      "notAuthenticated": "Not authenticated"
+    }
+  },
+
+  "alumno": {
+    "panel": {
+      "title": "My Academic Dashboard",
+      "greeting": "Hello, {name}. Here you can check your academic progress.",
+      "downloadRecord": "Download record",
+      "generating": "Generating...",
+      "downloadSuccess": "Record downloaded successfully",
+      "downloadError": "Error generating PDF: {error}"
+    },
+    "stats": {
+      "gpa": "My GPA",
+      "gpaDescription": "Cumulative grade point average",
+      "sessions": "Tutor sessions",
+      "sessionsDescription": "Full history",
+      "documents": "Documents",
+      "pendingDocs": "{count} pending",
+      "noPendingDocs": "No pending",
+      "academicStatus": "Academic status",
+      "riskLevel": "Risk level"
+    },
+    "info": {
+      "title": "My academic information",
+      "subtitle": "Data from your institutional record",
+      "matricula": "Student ID",
+      "fullName": "Full name",
+      "career": "Major",
+      "semester": "Semester",
+      "email": "Institutional email",
+      "phone": "Phone"
+    },
+    "sessionsList": {
+      "title": "My tutoring sessions",
+      "count": "{count} sessions recorded",
+      "noSessions": "No sessions recorded yet.",
+      "noObservations": "No observations"
+    },
+    "docs": {
+      "title": "My documents",
+      "subtitle": "Record and academic files",
+      "uploadDoc": "Upload document",
+      "headers": { "document": "Document", "type": "Type", "date": "Date", "size": "Size" },
+      "noDocs": "No documents available."
+    },
+    "sessionsPage": {
+      "title": "My Tutoring Sessions",
+      "subtitle": "{count} sessions recorded with your tutor",
+      "filterAll": "All",
+      "session": "Session {status}",
+      "tutor": "Tutor: {name}",
+      "motivos": "Reasons",
+      "puntosRelevantes": "Key points",
+      "compromisos": "Agreements & commitments",
+      "firmaTutor": "Tutor Signature",
+      "firmaAlumno": "My Signature",
+      "confirmarAsistencia": "Confirm attendance",
+      "confirmando": "Confirming...",
+      "confirmSuccess": "Attendance confirmed successfully",
+      "noSessions": "No sessions found."
+    },
+    "docsPage": {
+      "title": "My Documents",
+      "subtitle": "{count} document(s) in your record",
+      "uploadButton": "Upload document",
+      "uploadTitle": "Upload new document",
+      "docType": "Document type *",
+      "docTypePlaceholder": "Select type",
+      "docName": "Descriptive name",
+      "docNamePlaceholder": "E.g.: Transcript 2026-1",
+      "fileLabel": "File * (PDF, PNG, JPG · Max 10 MB)",
+      "fileDrag": "Drag your file here or click to browse",
+      "fileFormats": "PDF, PNG, JPG · Max 10 MB",
+      "uploading": "Uploading...",
+      "uploadSuccess": "Document uploaded successfully",
+      "available": "Available documents",
+      "visibleOnly": "Only documents with public visibility are shown",
+      "viewDownload": "View / Download",
+      "opening": "Opening...",
+      "noDocsUpload": "You have no documents available. Upload your first document.",
+      "fileTooLarge": "File cannot exceed 10 MB.",
+      "requiredFields": "Please select a file and document type.",
+      "docTypes": { "kardex": "Transcript", "constancia": "Certificate", "plan_accion": "Action plan", "justificante": "Justification", "otro": "Other" }
+    },
+    "expediente": {
+      "title": "My Academic Record",
+      "subtitle": "Read-only view of your information",
+      "personalData": "Personal data",
+      "matricula": "Student ID",
+      "name": "Name",
+      "career": "Major",
+      "group": "Group",
+      "semester": "Semester",
+      "email": "Institutional email",
+      "phone": "Phone",
+      "gpa": "GPA",
+      "risk": "Academic risk",
+      "grades": "My grades",
+      "gradesCount": "{count} records",
+      "gradesHeaders": { "subject": "Subject", "period": "Period", "grade": "Grade", "type": "Type" },
+      "noGrades": "No grades recorded.",
+      "actionPlan": "My Action Plan",
+      "period": "Period {period}",
+      "deadline": "Deadline: {date}"
+    },
+    "risk": { "bajo": "Low", "medio": "Medium", "alto": "High" },
+    "urgency": { "normal": "Normal", "medio": "Medium", "urgente": "Urgent", "critico": "Critical" }
+  },
+
+  "tutor": {
+    "title": "Tutor Dashboard",
+    "welcome": "Welcome, {name}",
+    "newSession": "New session",
+    "profileNotFound": "Tutor profile not found",
+    "profileNotFoundDesc": "Your account does not have a tutor profile linked in the system. Please contact the administrator to register your profile in the tutors table.",
+    "contactAdmin": "Please contact the administrator to enable your access to this module.",
+    "stats": {
+      "assigned": "Assigned students",
+      "assignedSub": "Semester total",
+      "pending": "Pending sessions",
+      "pendingSub": "To be held",
+      "risk": "High risk",
+      "riskSub": "Urgent attention",
+      "completed": "Completed sessions",
+      "completedSub": "History"
+    },
+    "attentionNeeded": "Students requiring attention",
+    "noRiskStudents": "No at-risk students detected.",
+    "upcomingSessions": "Upcoming sessions",
+    "scheduledSession": "Scheduled Session",
+    "pending": "PENDING",
+    "noUpcoming": "No upcoming sessions.",
+    "allStudents": "All my assigned students",
+    "noStudents": "No students assigned to this tutor.",
+    "headers": { "student": "Student", "gpa": "GPA", "risk": "Risk", "matricula": "Student ID" },
+    "studentsPage": {
+      "title": "My Students",
+      "subtitle": "{count} students currently assigned.",
+      "regularStatus": "Regular Student",
+      "tryOtherSearch": "Try a different search term or filter."
+    },
+    "sessionsPage": {
+      "title": "Tutoring Sessions",
+      "subtitle": "{count} sessions recorded",
+      "newSession": "New session",
+      "filterAll": "All",
+      "headers": { "student": "Student", "date": "Date", "schedule": "Schedule", "urgency": "Urgency", "status": "Status", "action": "Action" },
+      "noSessions": "No sessions found.",
+      "noProfile": "Tutor profile not found",
+      "errorLoading": "Error loading sessions"
+    },
+    "recordsPage": {
+      "title": "Records",
+      "subtitle": "Comprehensive student records",
+      "noStudentsAssigned": "No students assigned",
+      "tabs": { "data": "Data", "grades": "Grades", "sessions": "Sessions", "referrals": "Referrals", "incidents": "Incidents", "documents": "Documents", "plan": "Action Plan" },
+      "fields": { "matricula": "Student ID", "fullName": "Full name", "gender": "Gender", "male": "Male", "female": "Female", "other": "Other", "career": "Major", "group": "Group", "semester": "Semester", "email": "Institutional email", "phone": "Phone" },
+      "gradesHeaders": { "subject": "Subject", "period": "Period", "grade": "Grade", "type": "Type", "observations": "Observations" },
+      "sessionNote": "Tutoring Session",
+      "referralHeaders": { "service": "Service", "date": "Date", "reason": "Reason", "status": "Status", "followUp": "Follow-up" },
+      "incidentHeaders": { "date": "Date", "type": "Type", "description": "Description", "status": "Status", "resolution": "Resolution" },
+      "docHeaders": { "file": "File", "type": "Type", "privacy": "Privacy", "size": "Size", "date": "Date" },
+      "actionPlan": "Action Plan · {period}",
+      "reviewDate": "Scheduled review: {date}",
+      "noPlans": "No action plans for this student."
+    },
+    "reportsPage": {
+      "title": "Reports",
+      "subtitle": "Generate and download reports for your students and sessions",
+      "reports": {
+        "assignedStudents": { "title": "My assigned students", "desc": "List of {count} students with academic data and risk." },
+        "atRisk": { "title": "At-risk students", "desc": "{count} students with Medium or High risk." },
+        "sessionHistory": { "title": "Session history", "desc": "{count} sessions recorded." },
+        "consolidated": { "title": "Consolidated R07-M01-01", "desc": "General report with all sessions in official format." }
+      },
+      "errorLoading": "Error loading report data"
+    }
+  },
+
+  "admin": {
+    "title": "Administration Panel",
+    "subtitle": "Real-time data · {date}",
+    "stats": {
+      "totalStudents": "Total students",
+      "totalStudentsSub": "Active enrollments",
+      "activeTutors": "Active tutors",
+      "activeTutorsSub": "Registered profiles",
+      "sessions": "Sessions",
+      "sessionsSub": "Total history",
+      "avgGpa": "Overall GPA",
+      "avgGpaSub": "Institutional metric"
+    },
+    "riskDistribution": "Academic risk distribution",
+    "studentsAnalyzed": "{count} students analyzed",
+    "riskHigh": "High Risk",
+    "riskMedium": "Medium Risk",
+    "riskLow": "No risk",
+    "tutorWorkload": "Tutor workload",
+    "activeTutors": "{count} active tutors",
+    "noTutorWorkload": "No tutors with active workload.",
+    "recentStudents": "Recently registered students",
+    "showingRecent": "Showing {count} recent records",
+    "noRecentStudents": "No recently registered students.",
+    "headers": {
+      "tutor": "Tutor", "students": "Students", "sessions": "Sessions", "student": "Student",
+      "matricula": "Student ID", "career": "Major", "semester": "Sem.", "gpa": "GPA", "risk": "Risk", "tutorAssigned": "Tutor"
+    },
+    "usersPage": {
+      "title": "User Management",
+      "subtitle": "Users registered in the system",
+      "searchPlaceholder": "Search by name, email, or student ID...",
+      "headers": { "user": "User", "role": "Role", "email": "Email", "status": "Status" },
+      "noResults": "No users found matching the search."
+    },
+    "sessionsPage": {
+      "title": "Tutoring Sessions",
+      "subtitle": "Overview of all sessions",
+      "searchPlaceholder": "Search by student or tutor...",
+      "headers": { "student": "Student", "tutor": "Tutor", "date": "Date", "urgency": "Urgency", "status": "Status" },
+      "noResults": "No sessions found."
+    },
+    "tutorsPage": {
+      "title": "Tutor & Assignment Management",
+      "subtitle": "Manage tutor-student assignments",
+      "newAssignment": "New assignment",
+      "selectedCount": "{count} selected",
+      "deleteSelected": "Delete selected",
+      "searchPlaceholder": "Search by tutor or student...",
+      "headers": { "tutor": "Tutor", "student": "Student", "startDate": "Start date", "endDate": "End date", "status": "Status" },
+      "activeLabel": "Active",
+      "inactiveLabel": "Inactive",
+      "noResults": "No assignments found.",
+      "assignTutor": "Tutor *",
+      "selectTutor": "Select tutor...",
+      "assignStudent": "Student *",
+      "selectStudent": "Select student...",
+      "startDate": "Start date",
+      "assignButton": "Create assignment",
+      "assigning": "Assigning...",
+      "deleteConfirmTitle": "Confirm deletion",
+      "deleteConfirmSingle": "Are you sure you want to deactivate this assignment? Records will be marked as inactive but history will be preserved.",
+      "deleteConfirmMultiple": "Are you sure you want to deactivate these {count} assignments? Records will be marked as inactive but history will be preserved.",
+      "deleteConfirmYes": "Yes, delete",
+      "deleteConfirmNo": "No, cancel"
+    },
+    "reportsPage": {
+      "title": "Administrative Reports",
+      "subtitle": "Generate downloadable institutional reports",
+      "reports": {
+        "allStudents": { "title": "All students", "desc": "Complete list of {count} students with academic data." },
+        "atRisk": { "title": "At-risk students", "desc": "{count} students with Medium or High risk." },
+        "tutorAssignments": { "title": "Tutor-student assignments", "desc": "{count} assignments recorded." },
+        "sessionsSummary": { "title": "Sessions summary", "desc": "{count} total sessions in the system." }
+      }
+    },
+    "backupsPage": {
+      "title": "System Backups",
+      "subtitle": "Database backup management",
+      "createBackup": "Create backup",
+      "creatingBackup": "Creating backup...",
+      "headers": { "name": "Name", "date": "Date", "size": "Size", "status": "Status" },
+      "noBackups": "No backups generated yet",
+      "autoBackupNote": "The automatic task will create your first backup at midnight."
+    },
+    "auditPage": {
+      "title": "Audit Log",
+      "subtitle": "System event history",
+      "headers": { "date": "Date", "user": "User", "role": "Role", "event": "Event", "table": "Table", "details": "Details" },
+      "noEvents": "No audit events found."
+    },
+    "configPage": {
+      "title": "System Settings",
+      "subtitle": "General platform parameters",
+      "sections": {
+        "general": "General",
+        "security": "Security",
+        "notifications": "Notifications",
+        "backup": "Backup"
+      }
+    }
+  },
+
+  "docente": {
+    "title": "Faculty Dashboard",
+    "welcome": "Welcome, {name}.",
+    "department": "Academic Department",
+    "newGrade": "Register grade",
+    "profileNotFound": "Faculty profile not found",
+    "profileNotFoundDesc": "Your account does not have a faculty profile linked. Please contact the administrator.",
+    "contactAdmin": "Please contact the administrator to enable your faculty profile.",
+    "stats": {
+      "relatedStudents": "Related students",
+      "relatedStudentsSub": "Via grades",
+      "groupAvg": "Group average",
+      "groupAvgSub": "Global history",
+      "atRisk": "At-risk students",
+      "atRiskSub": "{percent}% detected",
+      "grades": "Grades",
+      "gradesSub": "Recent records"
+    },
+    "courseStudents": "Students in my courses",
+    "noCourseStudents": "No students registered with their grades.",
+    "registeredGrades": "Registered grades",
+    "recentEvaluations": "Latest uploaded evaluations",
+    "headers": { "student": "Student", "matricula": "Student ID", "gpa": "GPA", "risk": "Risk", "subject": "Subject", "grade": "Grade" },
+    "gradesPage": {
+      "title": "Grades",
+      "subtitle": "Grade registration and management",
+      "newGrade": "New grade",
+      "headers": { "student": "Student", "subject": "Subject", "period": "Period", "grade": "Grade", "type": "Type", "observations": "Observations" }
+    },
+    "groupPage": {
+      "title": "My Group",
+      "subtitle": "Students related to my courses",
+      "searchPlaceholder": "Search by name or student ID...",
+      "noStudents": "No related students found."
+    },
+    "reportsPage": {
+      "title": "Faculty Reports",
+      "subtitle": "Generate reports for your group and grades",
+      "reports": {
+        "myStudents": { "title": "My related students", "desc": "List of {count} students with academic data." },
+        "atRisk": { "title": "At-risk students", "desc": "{count} students with Medium or High risk." },
+        "grades": { "title": "My registered grades", "desc": "{count} grades in the system." },
+        "courseReport": { "title": "Course report", "desc": "Detailed report by subject and group." }
+      }
+    }
+  },
+
+  "footer": {
+    "sections": { "platform": "Platform", "university": "University", "resources": "Resources", "legal": "Legal" },
+    "links": {
+      "dashboard": "Dashboard", "sessions": "Sessions", "records": "Records", "reports": "Reports",
+      "portalUTN": "UTN Portal", "email": "Institutional Email", "library": "Digital Library", "calendar": "Academic Calendar",
+      "tutorManual": "Tutor Manual", "userGuide": "User Guide", "faq": "FAQ", "support": "Technical Support",
+      "privacy": "Privacy Policy", "terms": "Terms of Use", "regulations": "Regulations"
+    },
+    "description": "Comprehensive academic tracking and tutoring management system for UTN.",
+    "cookies": "Cookie Policy", "sitemap": "Sitemap", "accessibility": "Accessibility"
+  },
+
+  "i18n": { "es": "ES", "en": "EN", "language": "Language" }
+}

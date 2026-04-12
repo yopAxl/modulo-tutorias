@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Upload, Download, FileText, X, Plus, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import SitemapFooter from "@/app/_components/SitemapFooter";
 import {
   getAlumnoPerfil,
   getDocumentosAlumno,
@@ -17,23 +18,10 @@ import {
   type AlumnoPerfil,
   type DocumentoAlumno,
 } from "../actions";
-
-const NAV_ITEMS = [
-  { icon: "📊", label: "Mi panel", href: "/dashboard/alumno" },
-  { icon: "📅", label: "Mis sesiones", href: "/dashboard/alumno/sesiones" },
-  { icon: "📁", label: "Expediente", href: "/dashboard/alumno/expediente" },
-  { icon: "📄", label: "Documentos", href: "/dashboard/alumno/documentos" },
-];
-
-const TIPOS_DOCUMENTO = [
-  { codigo: "kardex", descripcion: "Kárdex" },
-  { codigo: "constancia", descripcion: "Constancia" },
-  { codigo: "plan_accion", descripcion: "Plan de acción" },
-  { codigo: "justificante", descripcion: "Justificante" },
-  { codigo: "otro", descripcion: "Otro" },
-];
+import { useI18n } from "@/app/_i18n/context";
 
 export default function DocumentosAlumnoPage() {
+  const { t } = useI18n();
   const [alumno, setAlumno] = useState<AlumnoPerfil | null>(null);
   const [documentos, setDocumentos] = useState<DocumentoAlumno[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +34,21 @@ export default function DocumentosAlumnoPage() {
   const [descripcion, setDescripcion] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const NAV_ITEMS = [
+    { icon: "📊", label: t("nav.alumno.dashboard"), href: "/dashboard/alumno" },
+    { icon: "📅", label: t("nav.alumno.sessions"), href: "/dashboard/alumno/sesiones" },
+    { icon: "📁", label: t("nav.alumno.record"), href: "/dashboard/alumno/expediente" },
+    { icon: "📄", label: t("nav.alumno.documents"), href: "/dashboard/alumno/documentos" },
+  ];
+
+  const TIPOS_DOCUMENTO = [
+    { codigo: "kardex", descripcion: t("alumno.docsPage.docTypes.kardex") },
+    { codigo: "constancia", descripcion: t("alumno.docsPage.docTypes.constancia") },
+    { codigo: "plan_accion", descripcion: t("alumno.docsPage.docTypes.plan_accion") },
+    { codigo: "justificante", descripcion: t("alumno.docsPage.docTypes.justificante") },
+    { codigo: "otro", descripcion: t("alumno.docsPage.docTypes.otro") },
+  ];
 
   useEffect(() => {
     async function cargar() {
@@ -74,7 +77,7 @@ export default function DocumentosAlumnoPage() {
 
   const handleSubir = async () => {
     if (!selectedFile || !tipoDoc) {
-      toast.error("Selecciona un archivo y un tipo de documento.");
+      toast.error(t("alumno.docsPage.requiredFields"));
       return;
     }
     setUploading(true);
@@ -85,7 +88,7 @@ export default function DocumentosAlumnoPage() {
 
     const result = await subirDocumentoAlumno(formData);
     if ("success" in result) {
-      toast.success("Documento subido correctamente");
+      toast.success(t("alumno.docsPage.uploadSuccess"));
       setShowUpload(false);
       setSelectedFile(null);
       setTipoDoc("");
@@ -128,15 +131,15 @@ export default function DocumentosAlumnoPage() {
 
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 pt-18 md:p-8 md:pt-8">
         <PageHeader
-          title="Mis Documentos"
-          subtitle={`${documentos.length} documento(s) en tu expediente`}
+          title={t("alumno.docsPage.title")}
+          subtitle={t("alumno.docsPage.subtitle", { count: documentos.length })}
           actions={
             <Button
               size="sm"
               onClick={() => setShowUpload(!showUpload)}
               className="gap-2 bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500"
             >
-              <Upload className="h-4 w-4" /> Subir documento
+              <Upload className="h-4 w-4" /> {t("alumno.docsPage.uploadButton")}
             </Button>
           }
         />
@@ -145,7 +148,7 @@ export default function DocumentosAlumnoPage() {
         {showUpload && (
           <SectionCard>
             <div className="flex items-center justify-between border-b border-white/6 px-5 py-4">
-              <p className="text-sm font-semibold text-white">Subir nuevo documento</p>
+              <p className="text-sm font-semibold text-white">{t("alumno.docsPage.uploadTitle")}</p>
               <button
                 onClick={() => { setShowUpload(false); setSelectedFile(null); }}
                 className="text-white/30 hover:text-white/60"
@@ -157,35 +160,35 @@ export default function DocumentosAlumnoPage() {
               {/* Tipo */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wider text-white/40">
-                  Tipo de documento *
+                  {t("alumno.docsPage.docType")}
                 </label>
                 <select
                   value={tipoDoc}
                   onChange={(e) => setTipoDoc(e.target.value)}
                   className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-sm text-white outline-none focus:border-emerald-500/40 appearance-none"
                 >
-                  <option value="">Seleccionar tipo</option>
-                  {TIPOS_DOCUMENTO.map((t) => (
-                    <option key={t.codigo} value={t.codigo}>{t.descripcion}</option>
+                  <option value="">{t("alumno.docsPage.docTypePlaceholder")}</option>
+                  {TIPOS_DOCUMENTO.map((td) => (
+                    <option key={td.codigo} value={td.codigo}>{td.descripcion}</option>
                   ))}
                 </select>
               </div>
               {/* Descripción */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wider text-white/40">
-                  Nombre descriptivo
+                  {t("alumno.docsPage.docName")}
                 </label>
                 <input
                   value={descripcion}
                   onChange={(e) => setDescripcion(e.target.value)}
                   className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none focus:border-emerald-500/40"
-                  placeholder="Ej: Kárdex 2026-1"
+                  placeholder={t("alumno.docsPage.docNamePlaceholder")}
                 />
               </div>
               {/* Zona de archivos */}
               <div className="flex flex-col gap-1.5 sm:col-span-2">
                 <label className="text-xs font-semibold uppercase tracking-wider text-white/40">
-                  Archivo * (PDF, PNG, JPG · Máx 10 MB)
+                  {t("alumno.docsPage.fileLabel")}
                 </label>
                 <div
                   onClick={() => fileInputRef.current?.click()}
@@ -197,8 +200,8 @@ export default function DocumentosAlumnoPage() {
                       <p className="text-sm text-emerald-400 font-medium">{selectedFile.name}</p>
                     ) : (
                       <>
-                        <p className="text-sm text-white/40">Arrastra tu archivo aquí o haz clic para seleccionar</p>
-                        <p className="text-xs text-white/20">PDF, PNG, JPG · Máx 10 MB</p>
+                        <p className="text-sm text-white/40">{t("alumno.docsPage.fileDrag")}</p>
+                        <p className="text-xs text-white/20">{t("alumno.docsPage.fileFormats")}</p>
                       </>
                     )}
                   </div>
@@ -210,7 +213,7 @@ export default function DocumentosAlumnoPage() {
                     onChange={(e) => {
                       const file = e.target.files?.[0] ?? null;
                       if (file && file.size > 10 * 1024 * 1024) {
-                        toast.error("El archivo no puede superar 10 MB.");
+                        toast.error(t("alumno.docsPage.fileTooLarge"));
                         return;
                       }
                       setSelectedFile(file);
@@ -230,7 +233,7 @@ export default function DocumentosAlumnoPage() {
                   ) : (
                     <Plus className="h-4 w-4" />
                   )}
-                  {uploading ? "Subiendo..." : "Subir documento"}
+                  {uploading ? t("alumno.docsPage.uploading") : t("alumno.docsPage.uploadButton")}
                 </Button>
               </div>
             </div>
@@ -240,16 +243,16 @@ export default function DocumentosAlumnoPage() {
         {/* Tabla de Documentos */}
         <SectionCard>
           <div className="border-b border-white/6 px-5 py-4">
-            <p className="text-sm font-semibold text-white">Documentos disponibles</p>
-            <p className="text-xs text-white/40">Solo se muestran documentos con visibilidad pública</p>
+            <p className="text-sm font-semibold text-white">{t("alumno.docsPage.available")}</p>
+            <p className="text-xs text-white/40">{t("alumno.docsPage.visibleOnly")}</p>
           </div>
           <Table>
             <TableHeader>
               <TableRow className="border-white/6 hover:bg-transparent">
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-white/30">Documento</TableHead>
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-white/30 text-center">Tipo</TableHead>
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-white/30">Fecha</TableHead>
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-white/30 text-right">Acción</TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{t("alumno.docs.headers.document")}</TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-white/30 text-center">{t("alumno.docs.headers.type")}</TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{t("alumno.docs.headers.date")}</TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-white/30 text-right">{t("common.download")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -282,7 +285,7 @@ export default function DocumentosAlumnoPage() {
                       ) : (
                         <ExternalLink className="h-3 w-3" />
                       )}
-                      {downloadingId === d.id ? "Abriendo..." : "Ver / Descargar"}
+                      {downloadingId === d.id ? t("alumno.docsPage.opening") : t("alumno.docsPage.viewDownload")}
                     </button>
                   </TableCell>
                 </TableRow>
@@ -291,10 +294,14 @@ export default function DocumentosAlumnoPage() {
           </Table>
           {documentos.length === 0 && (
             <p className="py-10 text-center text-sm text-white/30 italic">
-              No tienes documentos disponibles. Sube tu primer documento.
+              {t("alumno.docsPage.noDocsUpload")}
             </p>
           )}
         </SectionCard>
+
+        <div className="-mx-4 -mb-4 md:-mx-8 md:-mb-8 mt-12">
+          <SitemapFooter />
+        </div>
       </main>
     </div>
   );

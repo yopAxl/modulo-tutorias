@@ -7,6 +7,7 @@ import { SectionCard } from "@/app/_components/SectionCard";
 import { RiskBadge } from "@/app/_components/RiskBadge";
 import { GpaCell } from "@/app/_components/GpaCell";
 import { StatusBadge } from "@/app/_components/StatusBadge";
+import SitemapFooter from "@/app/_components/SitemapFooter";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Target, Loader2, Download } from "lucide-react";
@@ -22,13 +23,7 @@ import {
   type PlanAccionAlumno,
 } from "../actions";
 import { generateExpedientePDF } from "@/app/_lib/pdf-utils";
-
-const NAV_ITEMS = [
-  { icon: "📊", label: "Mi panel", href: "/dashboard/alumno" },
-  { icon: "📅", label: "Mis sesiones", href: "/dashboard/alumno/sesiones" },
-  { icon: "📁", label: "Expediente", href: "/dashboard/alumno/expediente" },
-  { icon: "📄", label: "Documentos", href: "/dashboard/alumno/documentos" },
-];
+import { useI18n } from "@/app/_i18n/context";
 
 // Mapa de colores para riesgo académico (backend usa lowercase)
 const riesgoDisplay: Record<string, "Bajo" | "Medio" | "Alto"> = {
@@ -38,11 +33,19 @@ const riesgoDisplay: Record<string, "Bajo" | "Medio" | "Alto"> = {
 };
 
 export default function ExpedienteAlumnoPage() {
+  const { t } = useI18n();
   const [alumno, setAlumno] = useState<AlumnoPerfil | null>(null);
   const [calificaciones, setCalificaciones] = useState<CalificacionAlumno[]>([]);
   const [planes, setPlanes] = useState<PlanAccionAlumno[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
+
+  const NAV_ITEMS = [
+    { icon: "📊", label: t("nav.alumno.dashboard"), href: "/dashboard/alumno" },
+    { icon: "📅", label: t("nav.alumno.sessions"), href: "/dashboard/alumno/sesiones" },
+    { icon: "📁", label: t("nav.alumno.record"), href: "/dashboard/alumno/expediente" },
+    { icon: "📄", label: t("nav.alumno.documents"), href: "/dashboard/alumno/documentos" },
+  ];
 
   useEffect(() => {
     async function cargar() {
@@ -73,9 +76,9 @@ export default function ExpedienteAlumnoPage() {
         calificaciones,
         "data" in sesionesRes ? sesionesRes.data : []
       );
-      toast.success("Expediente descargado correctamente");
+      toast.success(t("alumno.panel.downloadSuccess"));
     } catch (e: any) {
-      toast.error("Error al generar PDF: " + e.message);
+      toast.error(t("alumno.panel.downloadError", { error: e.message }));
     } finally {
       setIsDownloading(false);
     }
@@ -92,7 +95,7 @@ export default function ExpedienteAlumnoPage() {
   if (!alumno) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-[#0f151c]">
-        <p className="text-sm text-white/40">No se encontró perfil de alumno.</p>
+        <p className="text-sm text-white/40">{t("common.profileNotFound")}</p>
       </div>
     );
   }
@@ -105,8 +108,8 @@ export default function ExpedienteAlumnoPage() {
 
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 pt-18 md:p-8 md:pt-8">
         <PageHeader
-          title="Mi Expediente Académico"
-          subtitle="Vista de solo lectura de tu información"
+          title={t("alumno.expediente.title")}
+          subtitle={t("alumno.expediente.subtitle")}
           actions={
             <Button
               size="sm"
@@ -120,7 +123,7 @@ export default function ExpedienteAlumnoPage() {
               ) : (
                 <Download className="h-3.5 w-3.5" />
               )}
-              {isDownloading ? "Generando..." : "Descargar expediente"}
+              {isDownloading ? t("alumno.panel.generating") : t("alumno.panel.downloadRecord")}
             </Button>
           }
         />
@@ -129,17 +132,17 @@ export default function ExpedienteAlumnoPage() {
           {/* Datos personales */}
           <SectionCard>
             <div className="border-b border-white/6 px-5 py-4">
-              <p className="text-sm font-semibold text-white">Datos personales</p>
+              <p className="text-sm font-semibold text-white">{t("alumno.expediente.personalData")}</p>
             </div>
             <div className="divide-y divide-white/4 px-5">
               {[
-                ["Matrícula", alumno.matricula, true],
-                ["Nombre", alumno.nombre_completo, false],
-                ["Carrera", alumno.carrera, false],
-                ["Grupo", alumno.grupo, false],
-                ["Cuatrimestre", `${alumno.cuatrimestre}°`, false],
-                ["Correo institucional", alumno.correo_institucional, false],
-                ["Teléfono", alumno.telefono, true],
+                [t("alumno.expediente.matricula"), alumno.matricula, true],
+                [t("alumno.expediente.name"), alumno.nombre_completo, false],
+                [t("alumno.expediente.career"), alumno.carrera, false],
+                [t("alumno.expediente.group"), alumno.grupo, false],
+                [t("alumno.expediente.semester"), `${alumno.cuatrimestre}°`, false],
+                [t("alumno.expediente.email"), alumno.correo_institucional, false],
+                [t("alumno.expediente.phone"), alumno.telefono, true],
               ].map(([label, value, mono]: any) => (
                 <div key={label} className="flex items-center justify-between py-3">
                   <span className="text-xs font-medium text-white/40">{label}</span>
@@ -149,11 +152,11 @@ export default function ExpedienteAlumnoPage() {
                 </div>
               ))}
               <div className="flex items-center justify-between py-3">
-                <span className="text-xs font-medium text-white/40">Promedio</span>
+                <span className="text-xs font-medium text-white/40">{t("alumno.expediente.gpa")}</span>
                 <GpaCell value={alumno.promedio_general} />
               </div>
               <div className="flex items-center justify-between py-3">
-                <span className="text-xs font-medium text-white/40">Riesgo académico</span>
+                <span className="text-xs font-medium text-white/40">{t("alumno.expediente.risk")}</span>
                 <RiskBadge riesgo={riesgoLabel} />
               </div>
             </div>
@@ -162,13 +165,13 @@ export default function ExpedienteAlumnoPage() {
           {/* Calificaciones */}
           <SectionCard>
             <div className="border-b border-white/6 px-5 py-4">
-              <p className="text-sm font-semibold text-white">Mis calificaciones</p>
-              <p className="text-xs text-white/40">{calificaciones.length} registros</p>
+              <p className="text-sm font-semibold text-white">{t("alumno.expediente.grades")}</p>
+              <p className="text-xs text-white/40">{t("alumno.expediente.gradesCount", { count: calificaciones.length })}</p>
             </div>
             <Table>
               <TableHeader>
                 <TableRow className="border-white/6 hover:bg-transparent">
-                  {["Asignatura", "Período", "Cal.", "Tipo"].map((h) => (
+                  {[t("alumno.expediente.gradesHeaders.subject"), t("alumno.expediente.gradesHeaders.period"), t("alumno.expediente.gradesHeaders.grade"), t("alumno.expediente.gradesHeaders.type")].map((h) => (
                     <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">
                       {h}
                     </TableHead>
@@ -188,7 +191,7 @@ export default function ExpedienteAlumnoPage() {
             </Table>
             {calificaciones.length === 0 && (
               <p className="py-10 text-center text-sm text-white/30 italic">
-                Sin calificaciones registradas.
+                {t("alumno.expediente.noGrades")}
               </p>
             )}
           </SectionCard>
@@ -199,14 +202,14 @@ export default function ExpedienteAlumnoPage() {
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <Target className="h-4 w-4 text-emerald-400" />
-              <p className="text-sm font-semibold text-white">Mi Plan de Acción</p>
+              <p className="text-sm font-semibold text-white">{t("alumno.expediente.actionPlan")}</p>
             </div>
             {planes.map((p) => (
               <SectionCard key={p.id}>
                 <div className="border-b border-white/6 px-5 py-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-white">Período {p.periodo}</p>
+                      <p className="text-sm font-semibold text-white">{t("alumno.expediente.period", { period: p.periodo })}</p>
                       <p className="text-xs text-white/40">{p.objetivo_general}</p>
                       {p.tutor && (
                         <p className="mt-0.5 text-xs text-white/30">Tutor: {p.tutor.nombre_completo}</p>
@@ -229,8 +232,10 @@ export default function ExpedienteAlumnoPage() {
                           {meta.descripcion}
                         </p>
                         <p className="text-xs text-white/30">
-                          Fecha límite: {new Date(meta.fecha_limite + "T00:00:00").toLocaleDateString("es-MX", {
-                            day: "2-digit", month: "short", year: "numeric"
+                          {t("alumno.expediente.deadline", {
+                            date: new Date(meta.fecha_limite + "T00:00:00").toLocaleDateString("es-MX", {
+                              day: "2-digit", month: "short", year: "numeric"
+                            })
                           })}
                         </p>
                       </div>
@@ -241,6 +246,10 @@ export default function ExpedienteAlumnoPage() {
             ))}
           </div>
         )}
+
+        <div className="-mx-4 -mb-4 md:-mx-8 md:-mb-8 mt-12">
+          <SitemapFooter />
+        </div>
       </main>
     </div>
   );

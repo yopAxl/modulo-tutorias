@@ -3,6 +3,7 @@ import "./globals.css";
 import { Montserrat } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
+import { I18nProvider } from "@/app/_i18n/context";
 
 const montserrat = Montserrat({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -32,8 +33,10 @@ export default function RootLayout({
         />
       </head>
       <body>
-        {children}
-        <Toaster position="top-center" richColors theme="dark" />
+        <I18nProvider>
+          {children}
+          <Toaster position="top-center" richColors theme="dark" />
+        </I18nProvider>
       </body>
     </html>
   );
