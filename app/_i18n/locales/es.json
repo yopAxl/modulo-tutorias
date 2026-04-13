@@ -262,7 +262,32 @@
       "noGrades": "Sin calificaciones registradas.",
       "actionPlan": "Mi Plan de Acción",
       "period": "Período {period}",
-      "deadline": "Fecha límite: {date}"
+      "deadline": "Fecha límite: {date}",
+      "referrals": "Canalizaciones",
+      "incidents": "Incidencias",
+      "sessionTitle": "Sesión de Tutoría",
+      "noPlans": "Sin planes de acción registrados.",
+      "referralHeaders": {
+        "service": "Servicio",
+        "date": "Fecha",
+        "reason": "Motivo",
+        "status": "Estatus",
+        "followUp": "Seguimiento"
+      },
+      "incidentHeaders": {
+        "date": "Fecha",
+        "type": "Tipo",
+        "description": "Descripción",
+        "status": "Estatus",
+        "resolution": "Resolución"
+      },
+      "docHeaders": {
+        "file": "Archivo",
+        "type": "Tipo",
+        "privacy": "Privacidad",
+        "size": "Tamaño",
+        "date": "Fecha"
+      }
     },
     "risk": { "bajo": "Bajo", "medio": "Medio", "alto": "Alto" },
     "urgency": { "normal": "Normal", "medio": "Medio", "urgente": "Urgente", "critico": "Crítico" }

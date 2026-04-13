@@ -12,7 +12,8 @@ import { StatusBadge } from "@/app/_components/StatusBadge";
 import { 
   CalendarDays, Clock, User, Users, 
   FileText, ClipboardList, CheckCircle2, 
-  XCircle, Download, AlertCircle, Hash, GraduationCap, School
+  XCircle, Download, AlertCircle, Hash, GraduationCap, School,
+  ArrowRightLeft, AlertTriangle, Target
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatFecha } from "@/app/_lib/mock-data";
@@ -24,12 +25,22 @@ interface SessionDetailsModalProps {
   tutorName?: string;
 }
 
+function formatFechaLocal(date: string | null) {
+  if (!date) return "—";
+  return new Date(date).toLocaleDateString('es-MX');
+}
+
 export function SessionDetailsModal({ session, isOpen, onClose, tutorName }: SessionDetailsModalProps) {
   if (!session) return null;
 
   // Extraer datos del objeto relacional de Supabase si existen
   const alumnoInfo = session.alumnos || {};
   const nombreAlumno = alumnoInfo.nombre_completo || session.alumnoNombre || "Alumno";
+
+  // Datos extras para sesiones realizadas
+  const canalizaciones = session._canalizaciones || [];
+  const incidencias = session._incidencias || [];
+  const planesAccion = session._planes || [];
 
   return (
     <Dialog open={isOpen} onOpenChange={(val) => !val && onClose()}>
@@ -155,6 +166,98 @@ export function SessionDetailsModal({ session, isOpen, onClose, tutorName }: Ses
                 )) || <span className="text-xs text-white/20 italic">No especificados</span>}
               </div>
             </div>
+
+            {/* ═══ Secciones extras para sesiones realizadas ═══ */}
+            {session.estatus === "realizada" && (
+              <div className="space-y-4 border-t border-white/6 pt-6">
+                <h3 className="text-[10px] font-bold text-white/30 mb-2 uppercase tracking-[0.2em]">
+                  Seguimiento Integral
+                </h3>
+
+                {/* Canalizaciones */}
+                <div className="rounded-xl border border-cyan-500/15 bg-cyan-500/5 p-5 shadow-sm">
+                  <h4 className="text-xs font-bold text-cyan-400 mb-3 flex items-center gap-2 uppercase tracking-widest">
+                    <ArrowRightLeft className="h-4 w-4" /> Canalizaciones
+                  </h4>
+                  {canalizaciones.length > 0 ? (
+                    <div className="space-y-3">
+                      {canalizaciones.map((c: any) => (
+                        <div key={c.id} className="rounded-lg border border-white/5 bg-white/2 p-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-semibold text-white/80 capitalize">{c.tipo_servicio?.replace(/_/g, " ")}</span>
+                            <StatusBadge status={c.estatus} />
+                          </div>
+                          <p className="text-xs text-white/50 line-clamp-2">{c.motivo}</p>
+                          <p className="text-[10px] text-white/30 mt-1 font-mono">{formatFechaLocal(c.fecha_canalizacion)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-white/20 italic">Sin canalizaciones registradas para este alumno.</p>
+                  )}
+                </div>
+
+                {/* Incidencias */}
+                <div className="rounded-xl border border-amber-500/15 bg-amber-500/5 p-5 shadow-sm">
+                  <h4 className="text-xs font-bold text-amber-400 mb-3 flex items-center gap-2 uppercase tracking-widest">
+                    <AlertTriangle className="h-4 w-4" /> Incidencias
+                  </h4>
+                  {incidencias.length > 0 ? (
+                    <div className="space-y-3">
+                      {incidencias.map((i: any) => (
+                        <div key={i.id} className="rounded-lg border border-white/5 bg-white/2 p-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-semibold text-white/80">{i.tipo_incidencia}</span>
+                            <StatusBadge status={i.estatus} />
+                          </div>
+                          <p className="text-xs text-white/50 line-clamp-2">{i.descripcion}</p>
+                          <p className="text-[10px] text-white/30 mt-1 font-mono">{formatFechaLocal(i.fecha)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-white/20 italic">Sin incidencias registradas para este alumno.</p>
+                  )}
+                </div>
+
+                {/* Planes de Acción */}
+                <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/5 p-5 shadow-sm">
+                  <h4 className="text-xs font-bold text-emerald-400 mb-3 flex items-center gap-2 uppercase tracking-widest">
+                    <Target className="h-4 w-4" /> Planes de Acción
+                  </h4>
+                  {planesAccion.length > 0 ? (
+                    <div className="space-y-4">
+                      {planesAccion.map((p: any) => (
+                        <div key={p.id} className="rounded-lg border border-white/5 bg-white/2 p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-semibold text-white/80">Plan · {p.periodo}</span>
+                            <StatusBadge status={p.estatus} />
+                          </div>
+                          <p className="text-xs text-white/50 mb-2">{p.objetivo_general}</p>
+                          <div className="space-y-1.5">
+                            {(p.metas || []).map((meta: any, idx: number) => (
+                              <div key={idx} className="flex items-start gap-2">
+                                <div className={cn(
+                                  "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full",
+                                  meta.lograda ? "bg-emerald-600/20" : "bg-white/6"
+                                )}>
+                                  <CheckCircle2 className={cn("h-2.5 w-2.5", meta.lograda ? "text-emerald-400" : "text-white/20")} />
+                                </div>
+                                <span className={cn("text-xs", meta.lograda ? "text-white/40 line-through" : "text-white/70")}>
+                                  {meta.descripcion}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-white/20 italic">Sin planes de acción para este alumno.</p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Estado de Firmas */}
             <div className="grid grid-cols-2 gap-4 pt-4">

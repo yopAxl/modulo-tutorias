@@ -237,7 +237,32 @@
       "noGrades": "No grades recorded.",
       "actionPlan": "My Action Plan",
       "period": "Period {period}",
-      "deadline": "Deadline: {date}"
+      "deadline": "Deadline: {date}",
+      "referrals": "Referrals",
+      "incidents": "Incidents",
+      "sessionTitle": "Tutoring Session",
+      "noPlans": "No action plans recorded.",
+      "referralHeaders": {
+        "service": "Service",
+        "date": "Date",
+        "reason": "Reason",
+        "status": "Status",
+        "followUp": "Follow-up"
+      },
+      "incidentHeaders": {
+        "date": "Date",
+        "type": "Type",
+        "description": "Description",
+        "status": "Status",
+        "resolution": "Resolution"
+      },
+      "docHeaders": {
+        "file": "File",
+        "type": "Type",
+        "privacy": "Privacy",
+        "size": "Size",
+        "date": "Date"
+      }
     },
     "risk": { "bajo": "Low", "medio": "Medium", "alto": "High" },
     "urgency": { "normal": "Normal", "medio": "Medium", "urgente": "Urgent", "critico": "Critical" }

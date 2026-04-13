@@ -11,7 +11,7 @@ import { Plus, CalendarDays, Clock, FileText, Loader2, AlertTriangle, Eye, Penci
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { getTutorSesiones, getCatalogosTutoria } from "../actions";
+import { getTutorSesiones, getCatalogosTutoria, getExpedienteAlumno } from "../actions";
 import { toast } from "sonner";
 
 // Componentes Refactorizados
@@ -103,21 +103,57 @@ export default function SesionesTutorPage() {
     (s) => filterStatus === "todas" || s.estatus === filterStatus
   );
 
-  const handleOpenDetails = (session: any) => {
+  const handleOpenDetails = async (session: any) => {
     // Necesitamos mapear los nombres de motivos para el modal de detalle
-    const sessionWithMotivos = {
+    const sessionWithMotivos: any = {
       ...session,
       alumnoNombre: session.alumnos?.nombre_completo || "Alumno",
       motivos: session.sesion_motivos?.map((sm: any) => {
         return catalogos.motivos.find((m: any) => m.codigo === sm.motivo_codigo)?.descripcion || sm.motivo_codigo;
       }) || []
     };
+
+    // Para sesiones realizadas, cargar datos de seguimiento del alumno
+    if (session.estatus === "realizada" && session.alumno_id) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const expRes = await getExpedienteAlumno(user.id, session.alumno_id);
+          if (expRes.data) {
+            sessionWithMotivos._canalizaciones = expRes.data.canalizaciones || [];
+            sessionWithMotivos._incidencias = expRes.data.incidencias || [];
+            sessionWithMotivos._planes = expRes.data.planes || [];
+          }
+        }
+      } catch (err) {
+        // Fallo silencioso — el modal mostrará "sin datos"
+      }
+    }
+
     setSelectedSession(sessionWithMotivos);
     setIsDetailsModalOpen(true);
   };
 
-  const handleOpenEdit = (e: React.MouseEvent, session: any) => {
+  const handleOpenEdit = async (e: React.MouseEvent, session: any) => {
     e.stopPropagation();
+    
+    // Para sesiones realizadas, cargar datos de seguimiento existentes
+    if (session.estatus === "realizada" && session.alumno_id) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const expRes = await getExpedienteAlumno(user.id, session.alumno_id);
+          if (expRes.data) {
+            session._existingCanalizaciones = expRes.data.canalizaciones || [];
+            session._existingIncidencias = expRes.data.incidencias || [];
+            session._existingPlanes = expRes.data.planes || [];
+          }
+        }
+      } catch (err) {
+        // Fallo silencioso
+      }
+    }
+    
     setSessionToEdit(session);
     setIsCreateModalOpen(true);
   };

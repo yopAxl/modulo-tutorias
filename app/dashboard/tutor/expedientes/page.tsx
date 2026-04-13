@@ -8,11 +8,12 @@ import { RiskBadge } from "@/app/_components/RiskBadge";
 import { GpaCell } from "@/app/_components/GpaCell";
 import { StatusBadge } from "@/app/_components/StatusBadge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, User, BookOpen, CalendarDays, AlertTriangle, ArrowRightLeft, FileText, Target, CheckCircle2, Loader2 } from "lucide-react";
+import { Search, User, BookOpen, CalendarDays, AlertTriangle, ArrowRightLeft, FileText, Target, CheckCircle2, Loader2, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { getTutorAlumnos, getExpedienteAlumno } from "../actions";
+import { getTutorAlumnos, getExpedienteAlumno, updatePlanMetasAction } from "../actions";
+import { EditFollowUpModal } from "../_components/EditFollowUpModal";
 import { toast } from "sonner";
 import SitemapFooter from "@/app/_components/SitemapFooter";
 import { useI18n } from "@/app/_i18n/context";
@@ -50,6 +51,12 @@ export default function ExpedientesTutorPage() {
   const [tab, setTab] = useState<Tab>("datos");
 
   const [detail, setDetail] = useState<any>(null);
+
+  // Estados para edición
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editType, setEditType] = useState<"canalizacion" | "incidencia">("canalizacion");
+  const [editItem, setEditItem] = useState<any>(null);
+  const [updatingMeta, setUpdatingMeta] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadAlumnos() {
@@ -105,6 +112,40 @@ export default function ExpedientesTutorPage() {
     loadExpediente();
   }, [selectedAlumnoId, tutorId, supabase]);
 
+  const handleToggleMeta = async (planId: string, metaIdx: number) => {
+    if (!detail) return;
+    const plan = detail.planes?.find((p: any) => p.id === planId);
+    if (!plan) return;
+
+    setUpdatingMeta(`${planId}-${metaIdx}`);
+    const newMetas = [...plan.metas];
+    newMetas[metaIdx] = { ...newMetas[metaIdx], lograda: !newMetas[metaIdx].lograda };
+
+    try {
+      const res = await updatePlanMetasAction(planId, newMetas);
+      if (res.success) {
+        // Actualización local
+        const newPlanes = detail.planes?.map((p: any) => 
+          p.id === planId ? { ...p, metas: newMetas } : p
+        );
+        setDetail({ ...detail, planes: newPlanes });
+        toast.success("Meta actualizada");
+      } else {
+        toast.error(res.error);
+      }
+    } catch (err) {
+      toast.error("Error al actualizar meta");
+    } finally {
+      setUpdatingMeta(null);
+    }
+  };
+
+  const openEdit = (type: "canalizacion" | "incidencia", item: any) => {
+    setEditType(type);
+    setEditItem(item);
+    setEditModalOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#0f151c]">
@@ -156,7 +197,7 @@ export default function ExpedientesTutorPage() {
         <PageHeader title="Expedientes" subtitle="Expediente integral por alumno" />
 
         {/* Alumno selector */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
           <select
             value={selectedAlumnoId}
             onChange={(e) => { setSelectedAlumnoId(e.target.value); setTab("datos"); }}
@@ -179,7 +220,7 @@ export default function ExpedientesTutorPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 overflow-x-auto rounded-lg border border-white/6 bg-white/2 p-1">
+        <div className="flex shrink-0 gap-1 overflow-x-auto rounded-lg border border-white/6 bg-white/2 p-1">
           {TABS.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
@@ -276,7 +317,7 @@ export default function ExpedientesTutorPage() {
             <Table>
               <TableHeader>
                 <TableRow className="border-white/6 hover:bg-transparent">
-                  {["Servicio", "Fecha", "Motivo", "Estatus", "Seguimiento"].map((h) => (
+                  {["Servicio", "Fecha", "Motivo", "Estatus", "Seguimiento", ""].map((h) => (
                     <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
                   ))}
                 </TableRow>
@@ -284,11 +325,19 @@ export default function ExpedientesTutorPage() {
               <TableBody>
                 {canalizaciones.map((c: any) => (
                   <TableRow key={c.id} className="border-white/4 hover:bg-white/3">
-                    <TableCell className="text-sm text-white/80">{c.tipo_servicio}</TableCell>
+                    <TableCell className="text-sm font-medium text-white/90 capitalize">{c.tipo_servicio.replace(/_/g, " ")}</TableCell>
                     <TableCell className="text-sm text-white/50">{formatFechaReal(c.fecha_canalizacion)}</TableCell>
-                    <TableCell className="text-xs text-white/40 max-w-[200px]"><p className="truncate">{c.motivo}</p></TableCell>
+                    <TableCell className="text-xs text-white/40 max-w-[150px]"><p className="truncate">{c.motivo}</p></TableCell>
                     <TableCell><StatusBadge status={c.estatus} /></TableCell>
                     <TableCell className="text-xs text-white/40">{c.seguimiento || "—"}</TableCell>
+                    <TableCell className="text-right">
+                      <button 
+                        onClick={() => openEdit("canalizacion", c)}
+                        className="p-2 hover:bg-white/5 rounded-md text-white/20 hover:text-white transition-colors"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -304,7 +353,7 @@ export default function ExpedientesTutorPage() {
             <Table>
               <TableHeader>
                 <TableRow className="border-white/6 hover:bg-transparent">
-                  {["Fecha", "Tipo", "Descripción", "Estatus", "Resolución"].map((h) => (
+                  {["Fecha", "Tipo", "Descripción", "Estatus", "Resolución", ""].map((h) => (
                     <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-white/30">{h}</TableHead>
                   ))}
                 </TableRow>
@@ -317,6 +366,14 @@ export default function ExpedientesTutorPage() {
                     <TableCell className="text-xs text-white/40 max-w-[200px]"><p className="truncate">{i.descripcion}</p></TableCell>
                     <TableCell><StatusBadge status={i.estatus} /></TableCell>
                     <TableCell className="text-xs text-white/40">{i.resolucion || "—"}</TableCell>
+                    <TableCell className="text-right">
+                      <button 
+                        onClick={() => openEdit("incidencia", i)}
+                        className="p-2 hover:bg-white/5 rounded-md text-white/20 hover:text-white transition-colors"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -371,12 +428,20 @@ export default function ExpedientesTutorPage() {
                 <div className="flex flex-col gap-3 p-5">
                   {(p.metas || []).map((meta: any, i: number) => (
                     <div key={i} className="flex items-start gap-3">
-                      <div className={cn(
-                        "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
-                        meta.lograda ? "bg-emerald-600/20" : "bg-white/6"
-                      )}>
-                        <CheckCircle2 className={cn("h-3 w-3", meta.lograda ? "text-emerald-400" : "text-white/20")} />
-                      </div>
+                      <button
+                        disabled={updatingMeta === `${p.id}-${i}`}
+                        onClick={() => handleToggleMeta(p.id, i)}
+                        className={cn(
+                          "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-all",
+                          meta.lograda ? "bg-emerald-600/20" : "bg-white/6 hover:bg-white/10"
+                        )}
+                      >
+                        {updatingMeta === `${p.id}-${i}` ? (
+                          <Loader2 className="h-3 w-3 animate-spin text-emerald-400" />
+                        ) : (
+                          <CheckCircle2 className={cn("h-3 w-3", meta.lograda ? "text-emerald-400" : "text-white/20")} />
+                        )}
+                      </button>
                       <div>
                         <p className={cn("text-sm", meta.lograda ? "text-white/50 line-through" : "text-white/80")}>{meta.descripcion}</p>
                         <p className="text-xs text-white/30">Límite: {formatFechaReal(meta.fecha_limite)}</p>
@@ -394,6 +459,19 @@ export default function ExpedientesTutorPage() {
             )}
           </div>
         )}
+
+        <EditFollowUpModal
+          isOpen={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          type={editType}
+          item={editItem}
+          onSuccess={() => {
+            // Recargar datos locales o re-ejecutar loadExpediente
+            supabase.auth.getUser().then(({ data: { user } }) => {
+              if (user) getExpedienteAlumno(user.id, selectedAlumnoId).then(res => res.data && setDetail(res.data));
+            });
+          }}
+        />
       
         <div className="-mx-4 -mb-4 md:-mx-8 md:-mb-8 mt-12">
           <SitemapFooter />

@@ -15,10 +15,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Plus, Loader2, CheckCircle2,
   Hash, GraduationCap, School,
-  AlertCircle, Calendar, Clock, ClipboardList
+  AlertCircle, Calendar, Clock, ClipboardList,
+  ArrowRightLeft, AlertTriangle, Target, ChevronDown, Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { createSessionAction, updateSessionAction } from "../actions";
+import {
+  createSessionAction, updateSessionAction,
+  createCanalizacionAction, createIncidenciaAction, createPlanAccionAction,
+  getCatalogosCanalizacion
+} from "../actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -51,7 +56,34 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
   const [puntosRelevantes, setPuntosRelevantes] = useState("");
   const [compromisosAcuerdos, setCompromisosAcuerdos] = useState("");
 
-  // Efecto para cargar datos en modo edición
+  // ── Seguimiento opcional (canalizaciones, incidencias, plan) ──
+  const [showCanalizacion, setShowCanalizacion] = useState(false);
+  const [canTipoServicio, setCanTipoServicio] = useState("");
+  const [canMotivo, setCanMotivo] = useState("");
+  const [canSeguimiento, setCanSeguimiento] = useState("");
+
+  const [showIncidencia, setShowIncidencia] = useState(false);
+  const [incTipo, setIncTipo] = useState("");
+  const [incDescripcion, setIncDescripcion] = useState("");
+  const [incResolucion, setIncResolucion] = useState("");
+
+  const [showPlan, setShowPlan] = useState(false);
+  const [planObjetivo, setPlanObjetivo] = useState("");
+  const [planMetas, setPlanMetas] = useState<{ descripcion: string; fecha_limite: string }[]>([]);
+
+  // Catálogo dinámico de tipos de canalización
+  const [catCanalizacion, setCatCanalizacion] = useState<{ codigo: string; descripcion: string }[]>([]);
+
+  // Efecto para cargar datos en modo edición y catálogos
+  useEffect(() => {
+    if (isOpen) {
+      // Cargar catálogo de canalizaciones
+      getCatalogosCanalizacion().then(res => {
+        if (res.data && res.data.length > 0) setCatCanalizacion(res.data);
+      });
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     if (sessionToEdit && isOpen) {
       setSelectedAlumnoId(sessionToEdit.alumno_id || "");
@@ -80,6 +112,39 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
       setHoraFin(sessionToEdit.hora_fin?.slice(0, 5) || "");
       setPuntosRelevantes(sessionToEdit.puntos_relevantes || "");
       setCompromisosAcuerdos(sessionToEdit.compromisos_acuerdos || "");
+      
+      // Mapear seguimiento existente si está disponible
+      const canalizacion = sessionToEdit.canalizaciones?.[0] || null;
+      if (canalizacion) {
+        setCanTipoServicio(canalizacion.tipo_servicio || "");
+        setCanMotivo(canalizacion.motivo || "");
+        setCanSeguimiento(canalizacion.seguimiento || "");
+        setShowCanalizacion(true);
+      } else {
+        setCanTipoServicio(""); setCanMotivo(""); setCanSeguimiento("");
+        setShowCanalizacion(false);
+      }
+
+      const incidencia = sessionToEdit.incidencias?.[0] || null;
+      if (incidencia) {
+        setIncTipo(incidencia.tipo_incidencia || "");
+        setIncDescripcion(incidencia.descripcion || "");
+        setIncResolucion(incidencia.resolucion || "");
+        setShowIncidencia(true);
+      } else {
+        setIncTipo(""); setIncDescripcion(""); setIncResolucion("");
+        setShowIncidencia(false);
+      }
+
+      const plan = sessionToEdit.planes_accion?.[0] || null;
+      if (plan) {
+        setPlanObjetivo(plan.objetivo_general || "");
+        setPlanMetas(plan.metas || []);
+        setShowPlan(true);
+      } else {
+        setPlanObjetivo(""); setPlanMetas([]);
+        setShowPlan(false);
+      }
     } else if (!sessionToEdit && isOpen) {
       // Limpiar para nueva sesión
       setSelectedAlumnoId("");
@@ -91,6 +156,13 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
       setHoraFin("");
       setPuntosRelevantes("");
       setCompromisosAcuerdos("");
+      // Limpiar seguimiento
+      setShowCanalizacion(false);
+      setCanTipoServicio(""); setCanMotivo(""); setCanSeguimiento("");
+      setShowIncidencia(false);
+      setIncTipo(""); setIncDescripcion(""); setIncResolucion("");
+      setShowPlan(false);
+      setPlanObjetivo(""); setPlanMetas([]);
     }
   }, [sessionToEdit, isOpen]);
 
@@ -135,6 +207,56 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
     if (res.error) {
       toast.error("Error: " + res.error);
     } else {
+      // Obtener sesion_id para relacionar seguimiento
+      const sesionId = ('data' in res && res.data?.id) ? res.data.id : sessionToEdit?.id;
+
+      // Crear seguimiento opcionales en paralelo
+      const followups: Promise<any>[] = [];
+
+      if (showCanalizacion && canTipoServicio && canMotivo) {
+        followups.push(
+          createCanalizacionAction({
+            alumno_id: selectedAlumnoId,
+            tutor_id: tutorId,
+            sesion_id: sesionId,
+            tipo_servicio: canTipoServicio,
+            motivo: canMotivo,
+            seguimiento: canSeguimiento,
+          })
+        );
+      }
+
+      if (showIncidencia && incTipo && incDescripcion) {
+        followups.push(
+          createIncidenciaAction({
+            alumno_id: selectedAlumnoId,
+            registrado_por: tutorId,
+            tipo_incidencia: incTipo,
+            descripcion: incDescripcion,
+            resolucion: incResolucion,
+          })
+        );
+      }
+
+      if (showPlan && planObjetivo && planMetas.length > 0) {
+        followups.push(
+          createPlanAccionAction({
+            alumno_id: selectedAlumnoId,
+            tutor_id: tutorId,
+            objetivo_general: planObjetivo,
+            metas: planMetas.map(m => ({ ...m, lograda: false })),
+          })
+        );
+      }
+
+      if (followups.length > 0) {
+        const results = await Promise.all(followups);
+        const errors = results.filter(r => r.error);
+        if (errors.length > 0) {
+          toast.warning("Sesión guardada, pero hubo errores en el seguimiento.");
+        }
+      }
+
       toast.success(sessionToEdit ? "Sesión actualizada exitosamente." : "Sesión registrada exitosamente.");
       if (onSuccess) onSuccess();
       onClose();
@@ -436,7 +558,274 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
               </div>
             )}
 
-            {/* SECCIÓN 5: FIRMA DIGITAL */}
+            {/* SECCIÓN 5: SEGUIMIENTO INTEGRAL (solo para sesiones realizadas) */}
+            {estatus === "realizada" && (
+              <div className="rounded-xl border border-white/5 bg-[#151c24] p-5 md:p-8 shadow-sm">
+                <h3 className="text-xs font-bold text-emerald-400 mb-4 flex items-center gap-2 uppercase tracking-widest">
+                  <span className="flex h-5 w-5 items-center justify-center rounded bg-emerald-500/10 text-[10px]">5</span>
+                  Seguimiento Integral
+                </h3>
+
+                {/* ═══ Registros existentes (solo lectura) ═══ */}
+                {sessionToEdit && (sessionToEdit._existingCanalizaciones?.length > 0 || sessionToEdit._existingIncidencias?.length > 0 || sessionToEdit._existingPlanes?.length > 0) && (
+                  <div className="mb-6 space-y-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-white/30 mb-2">Registros guardados</p>
+
+                    {(sessionToEdit._existingCanalizaciones || []).map((c: any) => (
+                      <div key={c.id} className="flex items-center gap-3 rounded-lg border border-cyan-500/10 bg-cyan-500/[0.03] px-4 py-2.5">
+                        <ArrowRightLeft className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-semibold text-cyan-300 capitalize">{c.tipo_servicio?.replace(/_/g, " ")}</span>
+                          <span className="text-[10px] text-white/30 mx-2">·</span>
+                          <span className="text-xs text-white/50 truncate">{c.motivo}</span>
+                        </div>
+                        <span className="text-[10px] text-white/20 font-mono shrink-0">{new Date(c.fecha_canalizacion).toLocaleDateString('es-MX')}</span>
+                      </div>
+                    ))}
+
+                    {(sessionToEdit._existingIncidencias || []).map((i: any) => (
+                      <div key={i.id} className="flex items-center gap-3 rounded-lg border border-amber-500/10 bg-amber-500/[0.03] px-4 py-2.5">
+                        <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-semibold text-amber-300">{i.tipo_incidencia}</span>
+                          <span className="text-[10px] text-white/30 mx-2">·</span>
+                          <span className="text-xs text-white/50 truncate">{i.descripcion}</span>
+                        </div>
+                        <span className="text-[10px] text-white/20 font-mono shrink-0">{new Date(i.fecha).toLocaleDateString('es-MX')}</span>
+                      </div>
+                    ))}
+
+                    {(sessionToEdit._existingPlanes || []).map((p: any) => (
+                      <div key={p.id} className="rounded-lg border border-emerald-500/10 bg-emerald-500/[0.03] px-4 py-2.5">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Target className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                          <span className="text-xs font-semibold text-emerald-300">Plan · {p.periodo}</span>
+                          <span className="ml-auto text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full capitalize">{p.estatus}</span>
+                        </div>
+                        <p className="text-xs text-white/50 ml-5.5 mb-1">{p.objetivo_general}</p>
+                        <div className="ml-5.5 space-y-0.5">
+                          {(p.metas || []).map((m: any, idx: number) => (
+                            <div key={idx} className="flex items-center gap-1.5">
+                              <CheckCircle2 className={cn("h-2.5 w-2.5", m.lograda ? "text-emerald-400" : "text-white/15")} />
+                              <span className={cn("text-[11px]", m.lograda ? "text-white/40 line-through" : "text-white/60")}>{m.descripcion}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+
+                    <div className="border-t border-white/5 pt-4 mt-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-white/30">Agregar nuevo registro</p>
+                    </div>
+                  </div>
+                )}
+
+                {!sessionToEdit && (
+                  <p className="text-xs text-white/30 mb-6">Activa las secciones que necesites registrar para este alumno.</p>
+                )}
+
+                <div className="space-y-4">
+                  {/* ── Canalización ── */}
+                  <div className="rounded-lg border border-cyan-500/10 bg-cyan-500/[0.02] overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setShowCanalizacion(!showCanalizacion)}
+                      className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-cyan-500/5 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <ArrowRightLeft className="h-4 w-4 text-cyan-400" />
+                        <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">Canalización</span>
+                        {showCanalizacion && <span className="text-[10px] bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded-full">activo</span>}
+                      </div>
+                      <ChevronDown className={cn("h-4 w-4 text-white/20 transition-transform", showCanalizacion && "rotate-180")} />
+                    </button>
+                    {showCanalizacion && (
+                      <div className="px-4 pb-4 space-y-3 border-t border-cyan-500/10">
+                        <div className="pt-3 space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Tipo de Servicio *</Label>
+                          <select
+                            value={canTipoServicio}
+                            onChange={(e) => setCanTipoServicio(e.target.value)}
+                            className="w-full h-10 rounded-lg border border-white/8 bg-white/4 px-3 text-sm text-white outline-none focus:border-cyan-500/40"
+                          >
+                            <option value="">Seleccionar servicio...</option>
+                            {catCanalizacion.length > 0 ? (
+                              catCanalizacion.map((c) => (
+                                <option key={c.codigo} value={c.codigo}>{c.descripcion}</option>
+                              ))
+                            ) : (
+                              <>
+                                <option value="psicologia">Psicología</option>
+                                <option value="medico">Servicio Médico</option>
+                                <option value="trabajo_social">Trabajo Social</option>
+                                <option value="otro">Otro</option>
+                              </>
+                            )}
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Motivo de la canalización *</Label>
+                          <textarea
+                            value={canMotivo}
+                            onChange={(e) => setCanMotivo(e.target.value)}
+                            rows={2}
+                            className="w-full rounded-lg border border-white/8 bg-white/4 p-3 text-sm text-white placeholder:text-white/20 outline-none focus:border-cyan-500/40 resize-none"
+                            placeholder="Describa el motivo de la canalización..."
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Seguimiento</Label>
+                          <textarea
+                            value={canSeguimiento}
+                            onChange={(e) => setCanSeguimiento(e.target.value)}
+                            rows={2}
+                            className="w-full rounded-lg border border-white/8 bg-white/4 p-3 text-sm text-white placeholder:text-white/20 outline-none focus:border-cyan-500/40 resize-none"
+                            placeholder="Notas de seguimiento (opcional)..."
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ── Incidencia ── */}
+                  <div className="rounded-lg border border-amber-500/10 bg-amber-500/[0.02] overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setShowIncidencia(!showIncidencia)}
+                      className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-amber-500/5 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-amber-400" />
+                        <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Incidencia</span>
+                        {showIncidencia && <span className="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full">activo</span>}
+                      </div>
+                      <ChevronDown className={cn("h-4 w-4 text-white/20 transition-transform", showIncidencia && "rotate-180")} />
+                    </button>
+                    {showIncidencia && (
+                      <div className="px-4 pb-4 space-y-3 border-t border-amber-500/10">
+                        <div className="pt-3 space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Tipo de Incidencia *</Label>
+                          <select
+                            value={incTipo}
+                            onChange={(e) => setIncTipo(e.target.value)}
+                            className="w-full h-10 rounded-lg border border-white/8 bg-white/4 px-3 text-sm text-white outline-none focus:border-amber-500/40"
+                          >
+                            <option value="">Seleccionar tipo...</option>
+                            <option value="academica">Académica</option>
+                            <option value="conducta">Conducta</option>
+                            <option value="inasistencia">Inasistencia</option>
+                            <option value="salud">Salud</option>
+                            <option value="familiar">Familiar</option>
+                            <option value="economica">Económica</option>
+                            <option value="otro">Otro</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Descripción *</Label>
+                          <textarea
+                            value={incDescripcion}
+                            onChange={(e) => setIncDescripcion(e.target.value)}
+                            rows={2}
+                            className="w-full rounded-lg border border-white/8 bg-white/4 p-3 text-sm text-white placeholder:text-white/20 outline-none focus:border-amber-500/40 resize-none"
+                            placeholder="Describa la incidencia detectada..."
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Resolución</Label>
+                          <textarea
+                            value={incResolucion}
+                            onChange={(e) => setIncResolucion(e.target.value)}
+                            rows={2}
+                            className="w-full rounded-lg border border-white/8 bg-white/4 p-3 text-sm text-white placeholder:text-white/20 outline-none focus:border-amber-500/40 resize-none"
+                            placeholder="Propuesta de resolución o acciones tomadas..."
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ── Plan de Acción ── */}
+                  <div className="rounded-lg border border-emerald-500/10 bg-emerald-500/[0.02] overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setShowPlan(!showPlan)}
+                      className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-emerald-500/5 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Target className="h-4 w-4 text-emerald-400" />
+                        <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Plan de Acción</span>
+                        {showPlan && <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full">activo</span>}
+                      </div>
+                      <ChevronDown className={cn("h-4 w-4 text-white/20 transition-transform", showPlan && "rotate-180")} />
+                    </button>
+                    {showPlan && (
+                      <div className="px-4 pb-4 space-y-3 border-t border-emerald-500/10">
+                        <div className="pt-3 space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Objetivo General *</Label>
+                          <textarea
+                            value={planObjetivo}
+                            onChange={(e) => setPlanObjetivo(e.target.value)}
+                            rows={2}
+                            className="w-full rounded-lg border border-white/8 bg-white/4 p-3 text-sm text-white placeholder:text-white/20 outline-none focus:border-emerald-500/40 resize-none"
+                            placeholder="Describa el objetivo general del plan..."
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Metas</Label>
+                            <button
+                              type="button"
+                              onClick={() => setPlanMetas([...planMetas, { descripcion: "", fecha_limite: "" }])}
+                              className="flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-1 text-[10px] font-bold text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                            >
+                              <Plus className="h-3 w-3" /> Agregar meta
+                            </button>
+                          </div>
+                          {planMetas.map((meta, idx) => (
+                            <div key={idx} className="flex items-start gap-2">
+                              <div className="flex-1 space-y-1">
+                                <Input
+                                  value={meta.descripcion}
+                                  onChange={(e) => {
+                                    const updated = [...planMetas];
+                                    updated[idx].descripcion = e.target.value;
+                                    setPlanMetas(updated);
+                                  }}
+                                  placeholder={`Meta ${idx + 1}`}
+                                  className="h-9 rounded-lg border-white/8 bg-white/4 text-sm text-white"
+                                />
+                                <Input
+                                  type="date"
+                                  value={meta.fecha_limite}
+                                  onChange={(e) => {
+                                    const updated = [...planMetas];
+                                    updated[idx].fecha_limite = e.target.value;
+                                    setPlanMetas(updated);
+                                  }}
+                                  className="h-9 rounded-lg border-white/8 bg-white/4 text-sm text-white"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setPlanMetas(planMetas.filter((_, i) => i !== idx))}
+                                className="mt-1 rounded-md p-1.5 text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                          {planMetas.length === 0 && (
+                            <p className="text-xs text-white/20 italic py-2">Agrega al menos una meta para el plan.</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SECCIÓN 6: FIRMA DIGITAL */}
             <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-4 flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500">
                 <CheckCircle2 className="h-5 w-5" />

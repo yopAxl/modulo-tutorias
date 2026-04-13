@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // ─── Tipos de retorno ────────────────────────────────────────────────────────
 
@@ -35,6 +36,9 @@ export type SesionAlumno = {
   fecha_confirmacion_alumno: string | null;
   tutor: { nombre_completo: string } | null;
   motivos: { motivo_codigo: string; detalle: string | null }[];
+  canalizaciones?: CanalizacionAlumno[];
+  incidencias?: IncidenciaAlumno[];
+  planes_accion?: PlanAccionAlumno[];
 };
 
 export type CalificacionAlumno = {
@@ -68,6 +72,26 @@ export type PlanAccionAlumno = {
   fecha_inicio: string;
   fecha_revision: string | null;
   tutor: { nombre_completo: string } | null;
+};
+
+export type CanalizacionAlumno = {
+  id: string;
+  tipo_servicio: string;
+  fecha_canalizacion: string;
+  motivo: string;
+  estatus: string;
+  seguimiento: string | null;
+  created_at: string;
+};
+
+export type IncidenciaAlumno = {
+  id: string;
+  fecha: string;
+  tipo_incidencia: string;
+  descripcion: string;
+  estatus: string;
+  resolucion: string | null;
+  created_at: string;
 };
 
 // ─── Actions ─────────────────────────────────────────────────────────────────
@@ -123,31 +147,57 @@ export async function getSesionesAlumno(): Promise<
     const alumnoResult = await getAlumnoPerfil();
     if ("error" in alumnoResult) return { error: alumnoResult.error };
 
-    const { data, error } = await supabase
+    const { data: rawSesiones, error: errorSes } = await supabase
       .schema("tutorias")
       .from("sesiones_tutoria")
-      .select(
-        `
+      .select(`
         id, fecha, hora_inicio, hora_fin, duracion_minutos,
         puntos_relevantes, compromisos_acuerdos, nivel_urgencia,
         estatus, confirmado_tutor, confirmado_alumno, fecha_confirmacion_alumno,
         tutor:tutor_id ( nombre_completo ),
-        motivos:sesion_motivos ( motivo_codigo, detalle )
-      `
-      )
+        motivos:sesion_motivos ( motivo_codigo, detalle ),
+        canalizaciones:canalizaciones!sesion_id (*)
+      `)
       .eq("alumno_id", alumnoResult.data.id)
       .order("fecha", { ascending: false });
 
-    if (error) {
-      console.error("getSesionesAlumno error:", error);
+    if (errorSes) {
+      console.error("getSesionesAlumno error:", errorSes);
       return { error: "Error al cargar las sesiones." };
     }
 
-    // Supabase returns joined relations as arrays; normalize tutor to single object
-    const normalized = (data ?? []).map((s: any) => ({
-      ...s,
-      tutor: Array.isArray(s.tutor) ? (s.tutor[0] ?? null) : s.tutor,
-    })) as unknown as SesionAlumno[];
+    // Usamos createAdminClient para asegurar lectura de seguimientos (bypass RLS)
+    const admin = createAdminClient();
+    
+    // 2. Obtener incidencias y planes en paralelo
+    const [incidenciasRes, planesRes] = await Promise.all([
+      admin.schema('tutorias').from('incidencias').select('*').eq('alumno_id', alumnoResult.data.id).order('fecha', { ascending: false }),
+      admin.schema('tutorias').from('planes_accion').select('*').eq('alumno_id', alumnoResult.data.id).order('created_at', { ascending: false })
+    ]);
+
+    const incidencias = incidenciasRes.data || [];
+    const planes = planesRes.data || [];
+
+    // 3. Normalizar y asociar por fecha
+    const normalized = (rawSesiones ?? []).map((s: any) => {
+      // Heurística: asociar incidencias y planes creados en la misma fecha que la sesión
+      // (ya que no tienen sesion_id en el esquema actual)
+      const sessionDate = s.fecha; // 'YYYY-MM-DD'
+      
+      const sessionIncidencias = incidencias.filter((i: any) => i.fecha === sessionDate);
+      
+      // Para planes usamos created_at truncado a fecha
+      const sessionPlanes = planes.filter((p: any) => p.fecha_inicio === sessionDate || p.created_at?.split('T')[0] === sessionDate);
+
+      return {
+        ...s,
+        tutor: Array.isArray(s.tutor) ? (s.tutor[0] ?? null) : s.tutor,
+        // canalizaciones ya vienen por sesion_id si existen
+        incidencias: sessionIncidencias,
+        planes_accion: sessionPlanes.length > 0 ? sessionPlanes : (s.planes_accion || [])
+      };
+    }) as unknown as SesionAlumno[];
+
     return { data: normalized };
   } catch (error: any) {
     console.error("getSesionesAlumno unexpected:", error);
@@ -391,6 +441,70 @@ export async function confirmarAsistenciaAlumno(
     return { success: true };
   } catch (error: any) {
     console.error("confirmarAsistenciaAlumno unexpected:", error);
+    return { error: error.message };
+  }
+}
+
+/**
+ * Obtiene las canalizaciones del alumno autenticado.
+ * RLS garantiza que solo puede ver sus propios registros.
+ */
+export async function getCanalizacionesAlumno(): Promise<
+  { data: CanalizacionAlumno[] } | { error: string }
+> {
+  try {
+    const supabase = createAdminClient();
+
+    const alumnoResult = await getAlumnoPerfil();
+    if ("error" in alumnoResult) return { error: alumnoResult.error };
+
+    const { data, error } = await supabase
+      .schema("tutorias")
+      .from("canalizaciones")
+      .select("id, tipo_servicio, fecha_canalizacion, motivo, estatus, seguimiento, created_at")
+      .eq("alumno_id", alumnoResult.data.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("getCanalizacionesAlumno error:", error);
+      return { error: "Error al cargar canalizaciones." };
+    }
+
+    return { data: (data ?? []) as CanalizacionAlumno[] };
+  } catch (error: any) {
+    console.error("getCanalizacionesAlumno unexpected:", error);
+    return { error: error.message };
+  }
+}
+
+/**
+ * Obtiene las incidencias del alumno autenticado.
+ * RLS garantiza que solo puede ver sus propios registros.
+ */
+export async function getIncidenciasAlumno(): Promise<
+  { data: IncidenciaAlumno[] } | { error: string }
+> {
+  try {
+    const supabase = createAdminClient();
+
+    const alumnoResult = await getAlumnoPerfil();
+    if ("error" in alumnoResult) return { error: alumnoResult.error };
+
+    const { data, error } = await supabase
+      .schema("tutorias")
+      .from("incidencias")
+      .select("id, fecha, tipo_incidencia, descripcion, estatus, resolucion, created_at")
+      .eq("alumno_id", alumnoResult.data.id)
+      .order("fecha", { ascending: false });
+
+    if (error) {
+      console.error("getIncidenciasAlumno error:", error);
+      return { error: "Error al cargar incidencias." };
+    }
+
+    return { data: (data ?? []) as IncidenciaAlumno[] };
+  } catch (error: any) {
+    console.error("getIncidenciasAlumno unexpected:", error);
     return { error: error.message };
   }
 }
