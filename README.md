@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TutorTrack: Sistema de Gestión de Tutorías - UTNay
 
-## Getting Started
+## Descripción del Proyecto
+**TutorTrack** es una plataforma integral desarrollada para la **Universidad Tecnológica de Nayarit (UTN)**, diseñada para digitalizar y optimizar el proceso de seguimiento académico y gestión de tutorías. El sistema permite un monitoreo continuo del desempeño estudiantil, facilitando la comunicación entre alumnos, tutores, docentes y administradores.
 
-First, run the development server:
+## Características Principales
+- **Seguimiento Académico**: Monitoreo en tiempo real del promedio (GPA) y niveles de riesgo.
+- **Gestión de Sesiones**: Registro digital de tutorías basado en el formato oficial **R07-M01-01**.
+- **Expediente Digital**: Centralización de calificaciones, planes de acción y documentación académica.
+- **Reportes Institucionales**: Generación de estadísticas y reportes automatizados para la toma de decisiones.
+- **Multilingüe**: Soporte completo para Español e Inglés (i18n).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Tecnologías Utilizadas
+- **Core**: [Next.js 16](https://nextjs.org/) & [TypeScript](https://www.typescriptlang.org/)
+- **Backend & Autenticación**: [Supabase](https://supabase.com/)
+- **Interfaz de Usuario**: [Tailwind CSS 4](https://tailwindcss.com/) & [shadcn/ui](https://ui.shadcn.com/)
+- **Generación de Documentos**: [jsPDF](https://github.com/parallax/jsPDF) & [autoTable](https://github.com/simonbengtsson/jsPDF-AutoTable)
+- **Estado y Notificaciones**: [Sonner](https://sonner.emilkowal.ski/)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Configuración y Ejecución
+1. Instalar dependencias: `yarn install`
+2. Configurar variables de entorno (`.env.local`) con las credenciales de Supabase.
+3. Iniciar el servidor de desarrollo: `yarn dev`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Equipo del Proyecto
+### Desarrollo (Developers)
+- **Axel Velázquez**
+- **Kevin Abraham**
+- **Emiliano Estrada**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Control de Calidad (QA)
+- **Vladimir Montes**
 
-## Learn More
+### Documentación
+- **Román Bañuelos**
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+© 2026 Universidad Tecnológica de Nayarit.
