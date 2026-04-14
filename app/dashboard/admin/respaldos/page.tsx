@@ -8,7 +8,7 @@ import { StatusBadge } from "@/app/_components/StatusBadge";
 import { formatFechaHora, formatTamano } from "@/app/_lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { listBackups, getBackupDownloadUrl, triggerManualBackup } from "./actions";
+import { listBackups, getBackupDownloadUrl, triggerManualBackup, getBackupSchedule, saveBackupSchedule } from "./actions";
 import { toast } from "sonner";
 import { HardDrive, Play, Clock, CheckCircle2, XCircle, Settings, Download } from "lucide-react";
 import { StatCard } from "@/app/_components/StatCard";
@@ -35,18 +35,29 @@ export default function RespaldosPage() {
   const [backups, setBackups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [loadingConfig, setLoadingConfig] = useState(true);
 
   useEffect(() => {
-    async function loadBackups() {
-      const res = await listBackups();
-      if (!res.error && res.data) {
-        setBackups(res.data);
-      } else if (res.error) {
-        toast.error(res.error);
+    async function loadAll() {
+      // Cargar respaldos
+      const backupsRes = await listBackups();
+      if (!backupsRes.error && backupsRes.data) {
+        setBackups(backupsRes.data);
+      } else if (backupsRes.error) {
+        toast.error(backupsRes.error);
       }
       setLoading(false);
+
+      // Cargar configuración real desde backup.yml en GitHub
+      const scheduleRes = await getBackupSchedule();
+      if (!scheduleRes.error) {
+        if (scheduleRes.hora) setHora(scheduleRes.hora);
+        if (scheduleRes.frecuencia) setFrecuencia(scheduleRes.frecuencia);
+      }
+      setLoadingConfig(false);
     }
-    loadBackups();
+    loadAll();
   }, []);
 
   async function handleDescargar(nombreArchivo: string) {
@@ -72,6 +83,17 @@ export default function RespaldosPage() {
       toast.success("¡Respaldo iniciado remotamente en GitHub! Estará disponible en 1 minuto.", { duration: 5000 });
     }
     setEjecutando(false);
+  }
+
+  async function handleGuardarConfig() {
+    setSavingConfig(true);
+    const res = await saveBackupSchedule(hora, frecuencia);
+    if (res.error) {
+      toast.error(res.error);
+    } else {
+      toast.success(`✅ Configuración guardada. Próximo respaldo: ${hora} (${frecuencia}) — cron: ${(res as any).cron}`, { duration: 6000 });
+    }
+    setSavingConfig(false);
   }
 
   return (
@@ -130,7 +152,7 @@ export default function RespaldosPage() {
                 </select>
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-white/40">Hora de ejecución</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-white/40">Hora de ejecución <span className="normal-case text-white/25">(hora Mazatlán, UTC−7)</span></label>
                 <input
                   type="time"
                   value={hora}
@@ -146,8 +168,16 @@ export default function RespaldosPage() {
                   <option value="90">Últimos 90 días</option>
                 </select>
               </div>
-              <Button size="sm" className="gap-2 bg-emerald-600 text-white hover:bg-emerald-500 mt-2">
-                Guardar configuración
+              <Button
+                size="sm"
+                onClick={handleGuardarConfig}
+                disabled={savingConfig || loadingConfig}
+                className="gap-2 bg-emerald-600 text-white hover:bg-emerald-500 mt-2 disabled:opacity-50"
+              >
+                {savingConfig ? (
+                  <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                ) : null}
+                {savingConfig ? "Guardando..." : loadingConfig ? "Cargando..." : "Guardar configuración"}
               </Button>
             </div>
           </SectionCard>
