@@ -10,27 +10,33 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Instalar cliente de PostgreSQL
+      - name: Instalar cliente de PostgreSQL 17
         run: |
+          # 1. Agregar la llave del repositorio oficial de PostgreSQL
+          sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          
+          # 2. Agregar el repositorio a la lista de apt
+          sudo sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          
+          # 3. Actualizar listas e instalar la versión 17
           sudo apt-get update
-          sudo apt-get install -y postgresql-client
+          sudo apt-get install -y postgresql-client-17
 
       - name: Realizar backup (pg_dump)
         env:
-          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          pg_dump -h ${{ secrets.DB_HOST }} -p ${{ secrets.DB_PORT }} -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }} -F p > backup.sql
-
-      - name: Generar nombre de archivo con fecha
-        id: filename
-        run: echo "filename=backup_$(date +'%Y-%m-%d_%H-%M-%S').sql" >> $GITHUB_OUTPUT
+          # Usar el binario específico de la versión 17
+          FILE_NAME="backup_$(date +'%Y-%m-%d_%H-%M-%S').sql"
+          echo "FILE_NAME=$FILE_NAME" >> $GITHUB_ENV
+          /usr/lib/postgresql/17/bin/pg_dump "$DATABASE_URL" > "$FILE_NAME"
 
       - name: Subir a Supabase Storage (Bucket backups)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          curl -X POST "${{ secrets.SUPABASE_URL }}/storage/v1/object/backups/${{ steps.filename.outputs.filename }}" \
+          curl -X POST "${{ secrets.SUPABASE_URL }}/storage/v1/object/backups/${{ env.FILE_NAME }}" \
           -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
           -H "Content-Type: application/sql" \
-          --data-binary @backup.sql
+          --data-binary "@${{ env.FILE_NAME }}"
