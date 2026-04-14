@@ -67,8 +67,8 @@ export async function triggerManualBackup() {
       return { error: "GitHub Token o Repo no configurado en las variables de entorno locales." };
     }
 
-    // Cambiamos a "develop" para probar los cambios actuales en esa rama
-    const ref = "develop";
+    // La rama en GitHub debe ser "main" (producción)
+    const ref = "main";
 
     const res = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/backup.yml/dispatches`, {
       method: "POST",
