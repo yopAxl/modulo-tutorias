@@ -168,9 +168,10 @@ export async function saveBackupSchedule(hora: string, frecuencia: string) {
     const OFFSET_UTN = -7;
     const utcHour = ((hh - OFFSET_UTN) % 24 + 24) % 24;
 
-    // Construir la URL del webhook con el secreto
-    const protocol = appUrl?.includes("localhost") ? "http" : "https";
-    const webhookUrl = `${protocol}://${appUrl}/api/backup/trigger?secret=${apiSecret}`;
+    // Limpiar la URL de protocolos y barras al final para evitar errores
+    const cleanUrl = appUrl?.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    const protocol = cleanUrl?.includes("localhost") ? "http" : "https";
+    const webhookUrl = `${protocol}://${cleanUrl}/api/backup/trigger?secret=${apiSecret}`;
 
     const schedule: any = {
       timezone: "UTC",
