@@ -2,7 +2,7 @@ name: Respaldo Automático de Base de Datos
 
 on:
   schedule:
-    - cron: '3 1 * * *' # Se ejecuta automáticamente todos los días a la medianoche
+    - cron: '41 1 * * *' # Se ejecuta automáticamente todos los días a la medianoche
   workflow_dispatch: # Permite ejecutarlo manualmente con un botón en GitHub
 
 jobs:
