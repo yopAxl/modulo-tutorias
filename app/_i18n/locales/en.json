@@ -137,6 +137,9 @@
   },
 
   "alumno": {
+    "charts": {
+      "evolution": "Grade History"
+    },
     "panel": {
       "title": "My Academic Dashboard",
       "greeting": "Hello, {name}. Here you can check your academic progress.",

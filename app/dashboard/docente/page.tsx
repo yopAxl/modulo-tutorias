@@ -7,12 +7,23 @@ import { StatCard } from "@/app/_components/StatCard";
 import { createClient } from "@/lib/supabase/client";
 import { getDocenteDashboardStats } from "./actions";
 import { toast } from "sonner";
-import { BookOpen, TrendingUp, AlertTriangle, CheckCircle2, Plus, Loader2, ChevronRight, Users } from "lucide-react";
+import {
+  BookOpen, TrendingUp, AlertTriangle, CheckCircle2,
+  Plus, Loader2, ChevronRight, Users, Download,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table, TableBody, TableCell, TableHead,
+  TableHeader, TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import SitemapFooter from "@/app/_components/SitemapFooter";
 import { useI18n } from "@/app/_i18n/context";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+} from "recharts";
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
 
 function RiskBadge({ riesgo }: { riesgo: string }) {
   const map: any = {
@@ -20,11 +31,19 @@ function RiskBadge({ riesgo }: { riesgo: string }) {
     Medio: "bg-amber-500/10 text-amber-400 border-amber-500/20",
     Bajo: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   };
-  return <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", map[riesgo] || "bg-gray-500/10 text-gray-400")}>{riesgo}</span>;
+  return (
+    <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", map[riesgo] || "bg-gray-500/10 text-gray-400")}>
+      {riesgo}
+    </span>
+  );
 }
 
 function SectionCard({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("rounded-xl border border-white/6 bg-[#151c24] overflow-hidden", className)}>{children}</div>;
+  return (
+    <div className={cn("rounded-xl border border-white/6 bg-[#151c24] overflow-hidden", className)}>
+      {children}
+    </div>
+  );
 }
 
 function EmptyDataRow({ colSpan, message = "No data" }: { colSpan: number; message?: string }) {
@@ -36,6 +55,18 @@ function EmptyDataRow({ colSpan, message = "No data" }: { colSpan: number; messa
     </TableRow>
   );
 }
+
+// ─── Demo data para la gráfica ───────────────────────────────────────────────
+
+const DEMO_MATERIAS_DATA = [
+  { name: "Prog.", promedio: 8.2 },
+  { name: "Mat.", promedio: 7.5 },
+  { name: "Ing.", promedio: 8.8 },
+  { name: "BD", promedio: 7.0 },
+  { name: "Redes", promedio: 9.1 },
+];
+
+// ─── Dashboard ───────────────────────────────────────────────────────────────
 
 export default function DocenteDashboard() {
   const router = useRouter();
@@ -114,15 +145,37 @@ export default function DocenteDashboard() {
 
   const alumnos = data?.alumnos || [];
   const total = alumnos.length;
-  const promedio = total > 0 ? (alumnos.reduce((s: number, a: any) => s + (a.promedio || 0), 0) / total).toFixed(1) : "0.0";
+  const promedio = total > 0
+    ? (alumnos.reduce((s: number, a: any) => s + (a.promedio || 0), 0) / total).toFixed(1)
+    : "0.0";
   const enRiesgo = alumnos.filter((a: any) => a.riesgo !== "Bajo").length;
   const calificaciones = data?.calificacionesRecientes || [];
+
+  // Construir datos para la gráfica de promedio por materia
+  const materiaMap: Record<string, { sum: number; count: number }> = {};
+  calificaciones.forEach((c: any) => {
+    const m = c.materia?.slice(0, 8) || "S/N";
+    if (!materiaMap[m]) materiaMap[m] = { sum: 0, count: 0 };
+    materiaMap[m].sum += c.cal || 0;
+    materiaMap[m].count += 1;
+  });
+
+  const hasRealData = Object.keys(materiaMap).length >= 2;
+  const materiasChartData = hasRealData
+    ? Object.entries(materiaMap).map(([name, { sum, count }]) => ({
+        name,
+        promedio: parseFloat((sum / count).toFixed(1)),
+      }))
+    : DEMO_MATERIAS_DATA;
+
+  const GRADE_COLORS = ["#10b981", "#34d399", "#6ee7b7", "#a7f3d0", "#d1fae5"];
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#0f151c]">
       <Sidebar role="Docente" userName={docenteNombre} navItems={NAV_ITEMS} />
 
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 pt-18 md:p-8 md:pt-8">
+        {/* Header */}
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-xl font-bold text-white">{t("docente.title")}</h1>
@@ -133,11 +186,22 @@ export default function DocenteDashboard() {
               </span>
             </p>
           </div>
-          <Button size="sm" className="gap-2 bg-emerald-600 text-white shadow-lg shadow-emerald-500/10 hover:bg-emerald-700">
-            <Plus className="h-4 w-4" /> {t("docente.newGrade")}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/dashboard/docente/reportes")}
+              className="gap-2 border-white/10 bg-white/4 text-white/60 hover:bg-white/8 hover:text-white"
+            >
+              <Download className="h-3.5 w-3.5" /> Reportes
+            </Button>
+            <Button size="sm" className="gap-2 bg-emerald-600 text-white shadow-lg shadow-emerald-500/10 hover:bg-emerald-700">
+              <Plus className="h-4 w-4" /> {t("docente.newGrade")}
+            </Button>
+          </div>
         </div>
 
+        {/* KPIs */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <StatCard label={t("docente.stats.relatedStudents")} value={total} sub={t("docente.stats.relatedStudentsSub")} icon={Users} accent="green" />
           <StatCard label={t("docente.stats.groupAvg")} value={promedio} sub={t("docente.stats.groupAvgSub")} icon={TrendingUp} accent="amber" />
@@ -145,6 +209,69 @@ export default function DocenteDashboard() {
           <StatCard label={t("docente.stats.grades")} value={calificaciones.length} sub={t("docente.stats.gradesSub")} icon={CheckCircle2} accent="green" />
         </div>
 
+        {/* Gráfica: Promedio por Materia */}
+        <SectionCard>
+          <div className="flex items-center justify-between border-b border-white/6 px-5 py-4">
+            <div>
+              <p className="text-sm font-semibold text-white">Promedio por Materia</p>
+              <p className="text-xs text-white/40">Calificaciones promedio de los registros más recientes</p>
+            </div>
+            {!hasRealData && (
+              <span className="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-1 rounded italic">
+                Datos ilustrativos
+              </span>
+            )}
+          </div>
+          <div className="px-5 py-4 h-[200px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={materiasChartData} barSize={36}>
+                <XAxis
+                  dataKey="name"
+                  stroke="#ffffff20"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: "rgba(255,255,255,0.45)" }}
+                />
+                <YAxis
+                  domain={[0, 10]}
+                  stroke="#ffffff20"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: "rgba(255,255,255,0.25)" }}
+                />
+                <Tooltip
+                  cursor={{ fill: "rgba(255,255,255,0.04)" }}
+                  contentStyle={{
+                    backgroundColor: "#0f151c",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 8,
+                    fontSize: 12,
+                    color: "#fff",
+                  }}
+                  formatter={(v: any) => [`${v}`, "Promedio"]}
+                />
+                <Bar dataKey="promedio" radius={[6, 6, 0, 0]}>
+                  {materiasChartData.map((_, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={GRADE_COLORS[index % GRADE_COLORS.length]}
+                      fillOpacity={0.85}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          {!hasRealData && (
+            <p className="px-5 pb-3 text-[10px] text-amber-400/70 italic">
+              ⚠ Los datos de esta gráfica son ilustrativos y no reflejan registros reales.
+            </p>
+          )}
+        </SectionCard>
+
+        {/* Tabla alumnos + Calificaciones recientes */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <SectionCard className="lg:col-span-2">
             <div className="flex items-center justify-between border-b border-white/6 px-5 py-4">
@@ -229,7 +356,7 @@ export default function DocenteDashboard() {
             </Table>
           </SectionCard>
         </div>
-        
+
         {/* Sitemap Footer */}
         <div className="-mx-4 -mb-4 md:-mx-8 md:-mb-8 mt-12">
           <SitemapFooter />

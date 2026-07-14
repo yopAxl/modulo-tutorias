@@ -146,6 +146,9 @@
   },
 
   "alumno": {
+    "charts": {
+      "evolution": "Historial de Calificaciones"
+    },
     "panel": {
       "title": "Mi Panel Académico",
       "greeting": "Hola, {name}. Aquí puedes consultar tu seguimiento.",
