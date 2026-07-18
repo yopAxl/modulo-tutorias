@@ -36,19 +36,19 @@ export default function SesionesTutorPage() {
   const { t } = useI18n();
 
   const NAV_ITEMS = [
-  { icon: "📊", label: t("nav.tutor.dashboard"), href: "/dashboard/tutor" },
-  { icon: "👥", label: t("nav.tutor.students"), href: "/dashboard/tutor/alumnos" },
-  { icon: "📅", label: t("nav.tutor.sessions"), href: "/dashboard/tutor/sesiones" },
-  { icon: "📁", label: t("nav.tutor.records"), href: "/dashboard/tutor/expedientes" },
-  { icon: "📈", label: t("nav.tutor.reports"), href: "/dashboard/tutor/reportes" },
-];
+    { icon: "📊", label: t("nav.tutor.dashboard"), href: "/dashboard/tutor" },
+    { icon: "👥", label: t("nav.tutor.students"), href: "/dashboard/tutor/alumnos" },
+    { icon: "📅", label: t("nav.tutor.sessions"), href: "/dashboard/tutor/sesiones" },
+    { icon: "📁", label: t("nav.tutor.records"), href: "/dashboard/tutor/expedientes" },
+    { icon: "📈", label: t("nav.tutor.reports"), href: "/dashboard/tutor/reportes" },
+  ];
   const router = useRouter();
   const supabase = createClient();
-  
+
   const [tutorNombre, setTutorNombre] = useState("Cargando...");
   const [tutorId, setTutorId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   const [sesiones, setSesiones] = useState<any[]>([]);
   const [misAlumnos, setMisAlumnos] = useState<any[]>([]);
   const [catalogos, setCatalogos] = useState<any>({ motivos: [] });
@@ -58,7 +58,7 @@ export default function SesionesTutorPage() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<any | null>(null);
   const [sessionToEdit, setSessionToEdit] = useState<any | null>(null);
-  
+
   const [filterStatus, setFilterStatus] = useState<string>("todas");
 
   async function loadData() {
@@ -137,7 +137,7 @@ export default function SesionesTutorPage() {
 
   const handleOpenEdit = async (e: React.MouseEvent, session: any) => {
     e.stopPropagation();
-    
+
     // Para sesiones realizadas, cargar datos de seguimiento existentes
     if (session.estatus === "realizada" && session.alumno_id) {
       try {
@@ -154,7 +154,7 @@ export default function SesionesTutorPage() {
         // Fallo silencioso
       }
     }
-    
+
     setSessionToEdit(session);
     setIsCreateModalOpen(true);
   };
@@ -181,7 +181,7 @@ export default function SesionesTutorPage() {
             <AlertTriangle className="mx-auto h-12 w-12 text-amber-500 mb-4" />
             <h2 className="text-xl font-bold text-white mb-2">Perfil de Tutor no encontrado</h2>
             <p className="text-sm text-white/60 mb-6">
-              Tu cuenta no tiene un perfil de tutor asociado. 
+              Tu cuenta no tiene un perfil de tutor asociado.
               Contacta al administrador para habilitar tu acceso a este módulo.
             </p>
           </div>
@@ -240,8 +240,8 @@ export default function SesionesTutorPage() {
             </TableHeader>
             <TableBody>
               {filtered.map((s) => (
-                <TableRow 
-                  key={s.id} 
+                <TableRow
+                  key={s.id}
                   onClick={() => handleOpenDetails(s)}
                   className="border-white/4 hover:bg-white/3 cursor-pointer transition-colors group"
                 >
@@ -260,8 +260,8 @@ export default function SesionesTutorPage() {
                     </span>
                   </TableCell>
                   <TableCell className="text-center">
-                    <StatusBadge 
-                      status={s.nivel_urgencia} 
+                    <StatusBadge
+                      status={s.nivel_urgencia}
                       variant={s.nivel_urgencia === "alta" ? "danger" : s.nivel_urgencia === "media" ? "warning" : "success"}
                     />
                   </TableCell>
@@ -270,9 +270,9 @@ export default function SesionesTutorPage() {
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={(e) => handleOpenEdit(e, s)}
                         className="h-8 w-8 text-white/20 hover:text-emerald-400"
                       >
@@ -294,14 +294,14 @@ export default function SesionesTutorPage() {
             </div>
           )}
         </SectionCard>
-      
+
         <div className="-mx-4 -mb-4 md:-mx-8 md:-mb-8 mt-12">
           <SitemapFooter />
         </div>
       </main>
 
       {/* Modales */}
-      <CreateSessionModal 
+      <CreateSessionModal
         isOpen={isCreateModalOpen}
         onClose={handleCloseCreate}
         alumnos={misAlumnos}
@@ -311,7 +311,7 @@ export default function SesionesTutorPage() {
         onSuccess={loadData}
       />
 
-      <SessionDetailsModal 
+      <SessionDetailsModal
         isOpen={isDetailsModalOpen}
         onClose={() => setIsDetailsModalOpen(false)}
         session={selectedSession}

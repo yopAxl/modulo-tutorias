@@ -88,7 +88,7 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
   useEffect(() => {
     if (sessionToEdit && isOpen) {
       setSelectedAlumnoId(sessionToEdit.alumno_id || "");
-      
+
       // Mapeo ultra-robusto de motivos: 
       // 1. Maneja arrays de objetos [{motivo_codigo: '...'}] o strings planos
       // 2. Normaliza guiones medios y bajos para evitar fallos de coincidencia
@@ -99,11 +99,11 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
         // pero aquí simplemente aceptamos lo que venga y lo limpiamos.
         return code.trim();
       });
-      
+
       // Intentamos coincidir con los códigos del catálogo para ser más precisos
       const validCodes = catalogos.motivos.map(m => m.codigo.trim());
       const filteredCodes = motivosCodes.filter((c: string) => validCodes.includes(c));
-      
+
       setSelectedMotivos(filteredCodes);
 
       setUrgencia(sessionToEdit.nivel_urgencia || "normal");
@@ -114,7 +114,7 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
       setPuntosRelevantes(sessionToEdit.puntos_relevantes || "");
       setCompromisosAcuerdos(sessionToEdit.compromisos_acuerdos || "");
       setConfirmadoTutor(sessionToEdit.confirmado_tutor || false);
-      
+
       // Mapear seguimiento existente si está disponible
       const canalizacion = sessionToEdit.canalizaciones?.[0] || null;
       if (canalizacion) {
@@ -293,8 +293,8 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
               {sessionToEdit ? "Editar Bitácora de Tutoría" : "Nueva Bitácora de Tutoría"}
             </DialogTitle>
             <DialogDescription className="text-white/40 text-sm mt-1">
-              {sessionToEdit 
-                ? "Actualiza la información de la sesión y completa la bitácora si es necesario." 
+              {sessionToEdit
+                ? "Actualiza la información de la sesión y completa la bitácora si es necesario."
                 : "Registro dinámico de sesión. La información institucional se carga automáticamente."}
             </DialogDescription>
           </DialogHeader>
@@ -399,12 +399,12 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
                   <Label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Fecha de Encuentro</Label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
-                    <Input 
-                      type="date" 
-                      value={fecha} 
-                      onChange={(e) => setFecha(e.target.value)} 
-                      required 
-                      className="h-12 rounded-xl border-white/8 bg-white/4 text-white pl-10" 
+                    <Input
+                      type="date"
+                      value={fecha}
+                      onChange={(e) => setFecha(e.target.value)}
+                      required
+                      className="h-12 rounded-xl border-white/8 bg-white/4 text-white pl-10"
                     />
                   </div>
                 </div>
@@ -412,12 +412,12 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
                   <Label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Hora Inicio</Label>
                   <div className="relative">
                     <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
-                    <Input 
-                      type="time" 
-                      value={horaInicio} 
-                      onChange={(e) => setHoraInicio(e.target.value)} 
-                      required 
-                      className="h-12 rounded-xl border-white/8 bg-white/4 text-white pl-10" 
+                    <Input
+                      type="time"
+                      value={horaInicio}
+                      onChange={(e) => setHoraInicio(e.target.value)}
+                      required
+                      className="h-12 rounded-xl border-white/8 bg-white/4 text-white pl-10"
                     />
                   </div>
                 </div>
@@ -425,12 +425,12 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
                   <Label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Hora Fin</Label>
                   <div className="relative">
                     <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
-                    <Input 
-                      type="time" 
-                      value={horaFin} 
-                      onChange={(e) => setHoraFin(e.target.value)} 
-                      required 
-                      className="h-12 rounded-xl border-white/8 bg-white/4 text-white pl-10" 
+                    <Input
+                      type="time"
+                      value={horaFin}
+                      onChange={(e) => setHoraFin(e.target.value)}
+                      required
+                      className="h-12 rounded-xl border-white/8 bg-white/4 text-white pl-10"
                     />
                   </div>
                 </div>
@@ -517,7 +517,7 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
                     Esta sesión ha sido marcada como cancelada. No se requiere bitácora de acuerdos para este registro.
                   </p>
                 </div>
-                <Button 
+                <Button
                   type="button"
                   variant="ghost"
                   onClick={() => setEstatus("realizada")}
@@ -542,7 +542,7 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-4">
-                  <Button 
+                  <Button
                     type="button"
                     onClick={() => setEstatus("realizada")}
                     className="w-full sm:w-auto border-emerald-500/20 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/40 font-bold"
@@ -550,7 +550,7 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
                     <CheckCircle2 className="h-4 w-4 mr-2" />
                     Comenzar Tutoría
                   </Button>
-                  <Button 
+                  <Button
                     type="button"
                     variant="outline"
                     onClick={() => setEstatus("cancelada")}

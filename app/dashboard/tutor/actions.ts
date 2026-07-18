@@ -98,10 +98,10 @@ export async function getTutorAlumnos(authId: string) {
       .eq('activa', true);
 
     if (error) throw error;
-    
-    return { 
-      data: { 
-        tutor, 
+
+    return {
+      data: {
+        tutor,
         alumnos: asignaciones?.map(a => {
           const alumno = Array.isArray(a.alumnos) ? a.alumnos[0] : a.alumnos;
           return {
@@ -109,9 +109,9 @@ export async function getTutorAlumnos(authId: string) {
             nivel_riesgo: alumno?.riesgo_academico === 'alto' ? 'Alto' : (alumno?.riesgo_academico === 'medio' ? 'Medio' : 'Bajo'),
             promedio: parseFloat(alumno?.promedio_general as any) || 0
           };
-        }) || [] 
-      }, 
-      error: null 
+        }) || []
+      },
+      error: null
     };
   } catch (error: any) {
     return { data: null, error: error.message };
@@ -150,7 +150,7 @@ export async function getTutorSesiones(authId: string) {
 
     // 2.5 Obtener incidencias y planes de los alumnos de estas sesiones para asociar por fecha
     const alumnoIds = Array.from(new Set((rawSesiones || []).map(s => s.alumno_id)));
-    
+
     if (alumnoIds.length > 0) {
       const [incidenciasRes, planesRes] = await Promise.all([
         supabase.schema('tutorias').from('incidencias').select('*').in('alumno_id', alumnoIds),
@@ -178,22 +178,22 @@ export async function getTutorSesiones(authId: string) {
       .eq('tutor_id', tutor.id)
       .eq('activa', true);
 
-    return { 
-      data: { 
-        tutor, 
-        sesiones: sesiones || [], 
+    return {
+      data: {
+        tutor,
+        sesiones: sesiones || [],
         alumnosAsignados: asignaciones?.map((a: any) => {
           const alumno = Array.isArray(a.alumnos) ? a.alumnos[0] : a.alumnos;
-          return { 
-            id: alumno?.id, 
+          return {
+            id: alumno?.id,
             nombre: alumno?.nombre_completo,
             matricula: alumno?.matricula,
             carrera: alumno?.carrera,
             grupo: alumno?.grupo
           };
         }) || []
-      }, 
-      error: null 
+      },
+      error: null
     };
   } catch (error: any) {
     console.error("Error en getTutorSesiones (Admin):", error);
@@ -210,13 +210,13 @@ export async function getCatalogosTutoria() {
     ]);
 
     if (resMotivos.error) throw resMotivos.error;
-    
-    return { 
-      data: { 
+
+    return {
+      data: {
         motivos: resMotivos.data || [],
         urgencias: resUrgencia.data || []
-      }, 
-      error: null 
+      },
+      error: null
     };
   } catch (error: any) {
     return { data: { motivos: [], urgencias: [] }, error: error.message };
@@ -291,10 +291,10 @@ export async function getExpedienteAlumno(authId: string, alumnoId: string) {
 export async function createSessionAction(formData: any) {
   const supabase = createAdminClient();
   try {
-    const { 
-      alumno_id, tutor_id, fecha, hora_inicio, hora_fin, 
-      puntos_relevantes, compromisos_acuerdos, nivel_urgencia, 
-      estatus, motivos, confirmado_tutor 
+    const {
+      alumno_id, tutor_id, fecha, hora_inicio, hora_fin,
+      puntos_relevantes, compromisos_acuerdos, nivel_urgencia,
+      estatus, motivos, confirmado_tutor
     } = formData;
 
     // Sanitización para PostgreSQL
@@ -345,10 +345,10 @@ export async function createSessionAction(formData: any) {
 export async function updateSessionAction(sessionId: string, formData: any) {
   const supabase = createAdminClient();
   try {
-    const { 
-      alumno_id, tutor_id, fecha, hora_inicio, hora_fin, 
-      puntos_relevantes, compromisos_acuerdos, nivel_urgencia, 
-      estatus, motivos, confirmado_tutor 
+    const {
+      alumno_id, tutor_id, fecha, hora_inicio, hora_fin,
+      puntos_relevantes, compromisos_acuerdos, nivel_urgencia,
+      estatus, motivos, confirmado_tutor
     } = formData;
 
     // Verificar si el alumno ya firmó
@@ -361,7 +361,7 @@ export async function updateSessionAction(sessionId: string, formData: any) {
 
     const isTutorConfirmed = confirmado_tutor || false;
     const isAlumnoConfirmed = currentSession?.confirmado_alumno || false;
-    
+
     // Si ambos ya firmaron, forzar el estatus a realizada
     const finalEstatus = (isTutorConfirmed && isAlumnoConfirmed) ? 'realizada' : estatus;
 
