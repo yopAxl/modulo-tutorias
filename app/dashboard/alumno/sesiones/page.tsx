@@ -321,7 +321,7 @@ export default function SesionesAlumnoPage() {
                       </span>
                     </div>
 
-                    {!s.confirmado_alumno && s.estatus === "realizada" && (
+                    {!s.confirmado_alumno && ["programada", "pendiente", "realizada"].includes(s.estatus) && (
                       <button
                         disabled={confirmando === s.id}
                         onClick={() => handleConfirmar(s.id)}

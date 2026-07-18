@@ -294,7 +294,7 @@ export async function createSessionAction(formData: any) {
     const { 
       alumno_id, tutor_id, fecha, hora_inicio, hora_fin, 
       puntos_relevantes, compromisos_acuerdos, nivel_urgencia, 
-      estatus, motivos 
+      estatus, motivos, confirmado_tutor 
     } = formData;
 
     // Sanitización para PostgreSQL
@@ -308,8 +308,8 @@ export async function createSessionAction(formData: any) {
       compromisos_acuerdos: compromisos_acuerdos || null,
       nivel_urgencia: nivel_urgencia?.toLowerCase() || 'normal',
       estatus,
-      confirmado_tutor: true,
-      fecha_confirmacion_tutor: new Date().toISOString()
+      confirmado_tutor: confirmado_tutor || false,
+      fecha_confirmacion_tutor: confirmado_tutor ? new Date().toISOString() : null
     };
 
     const { data: sesion, error: errorSes } = await supabase
@@ -348,8 +348,22 @@ export async function updateSessionAction(sessionId: string, formData: any) {
     const { 
       alumno_id, tutor_id, fecha, hora_inicio, hora_fin, 
       puntos_relevantes, compromisos_acuerdos, nivel_urgencia, 
-      estatus, motivos 
+      estatus, motivos, confirmado_tutor 
     } = formData;
+
+    // Verificar si el alumno ya firmó
+    const { data: currentSession } = await supabase
+      .schema('tutorias')
+      .from('sesiones_tutoria')
+      .select('confirmado_alumno')
+      .eq('id', sessionId)
+      .single();
+
+    const isTutorConfirmed = confirmado_tutor || false;
+    const isAlumnoConfirmed = currentSession?.confirmado_alumno || false;
+    
+    // Si ambos ya firmaron, forzar el estatus a realizada
+    const finalEstatus = (isTutorConfirmed && isAlumnoConfirmed) ? 'realizada' : estatus;
 
     // 1. Limpieza de datos (Convertir "" a null para PG)
     const sessionData = {
@@ -361,7 +375,9 @@ export async function updateSessionAction(sessionId: string, formData: any) {
       puntos_relevantes: puntos_relevantes || null,
       compromisos_acuerdos: compromisos_acuerdos || null,
       nivel_urgencia: nivel_urgencia?.toLowerCase() || 'normal',
-      estatus,
+      estatus: finalEstatus,
+      confirmado_tutor: isTutorConfirmed,
+      fecha_confirmacion_tutor: isTutorConfirmed ? new Date().toISOString() : null,
       updated_at: new Date().toISOString()
     };
 

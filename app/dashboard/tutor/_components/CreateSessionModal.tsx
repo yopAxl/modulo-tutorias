@@ -55,6 +55,7 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
   const [horaFin, setHoraFin] = useState("");
   const [puntosRelevantes, setPuntosRelevantes] = useState("");
   const [compromisosAcuerdos, setCompromisosAcuerdos] = useState("");
+  const [confirmadoTutor, setConfirmadoTutor] = useState(false);
 
   // ── Seguimiento opcional (canalizaciones, incidencias, plan) ──
   const [showCanalizacion, setShowCanalizacion] = useState(false);
@@ -112,6 +113,7 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
       setHoraFin(sessionToEdit.hora_fin?.slice(0, 5) || "");
       setPuntosRelevantes(sessionToEdit.puntos_relevantes || "");
       setCompromisosAcuerdos(sessionToEdit.compromisos_acuerdos || "");
+      setConfirmadoTutor(sessionToEdit.confirmado_tutor || false);
       
       // Mapear seguimiento existente si está disponible
       const canalizacion = sessionToEdit.canalizaciones?.[0] || null;
@@ -156,6 +158,7 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
       setHoraFin("");
       setPuntosRelevantes("");
       setCompromisosAcuerdos("");
+      setConfirmadoTutor(false);
       // Limpiar seguimiento
       setShowCanalizacion(false);
       setCanTipoServicio(""); setCanMotivo(""); setCanSeguimiento("");
@@ -192,7 +195,8 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
       compromisos_acuerdos: compromisosAcuerdos,
       nivel_urgencia: urgencia,
       estatus,
-      motivos: selectedMotivos
+      motivos: selectedMotivos,
+      confirmado_tutor: confirmadoTutor
     };
 
     setLoading(true);
@@ -826,13 +830,19 @@ export function CreateSessionModal({ isOpen, onClose, alumnos, catalogos, tutorI
             )}
 
             {/* SECCIÓN 6: FIRMA DIGITAL */}
-            <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-4 flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500">
-                <CheckCircle2 className="h-5 w-5" />
-              </div>
+            <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-4 flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="firma-tutor"
+                checked={confirmadoTutor}
+                onChange={(e) => setConfirmadoTutor(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-white/20 bg-emerald-500/20 text-emerald-500 focus:ring-emerald-500/50 cursor-pointer"
+              />
               <div>
-                <p className="text-xs font-bold text-emerald-400">Firma del Tutor Registrada</p>
-                <p className="text-[10px] text-emerald-500/60 font-medium">Al confirmar, se estampará tu firma digital institucional automáticamente.</p>
+                <Label htmlFor="firma-tutor" className="text-xs font-bold text-emerald-400 cursor-pointer">Firmar Digitalmente (Confirmar Sesión)</Label>
+                <p className="text-[10px] text-emerald-500/60 font-medium mt-1">
+                  Marque esta casilla para estampar su firma institucional. Puede guardarla sin firmar y hacerlo después.
+                </p>
               </div>
             </div>
 

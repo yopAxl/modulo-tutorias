@@ -423,12 +423,29 @@ export async function confirmarAsistenciaAlumno(
     const alumnoResult = await getAlumnoPerfil();
     if ("error" in alumnoResult) return { error: alumnoResult.error };
 
+    // Verificar si el tutor ya firmó
+    const { data: currentSession } = await supabase
+      .schema('tutorias')
+      .from('sesiones_tutoria')
+      .select('confirmado_tutor, estatus')
+      .eq('id', sesionId)
+      .single();
+
+    const isTutorConfirmed = currentSession?.confirmado_tutor || false;
+    let newEstatus = currentSession?.estatus;
+    
+    // Si el tutor ya había firmado, al firmar el alumno se completa
+    if (isTutorConfirmed) {
+      newEstatus = 'realizada';
+    }
+
     const { error } = await supabase
       .schema("tutorias")
       .from("sesiones_tutoria")
       .update({
         confirmado_alumno: true,
         fecha_confirmacion_alumno: new Date().toISOString(),
+        ...(newEstatus ? { estatus: newEstatus } : {})
       })
       .eq("id", sesionId)
       .eq("alumno_id", alumnoResult.data.id); // Extra seguridad + RLS
