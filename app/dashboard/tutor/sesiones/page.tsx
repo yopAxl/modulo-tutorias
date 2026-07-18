@@ -26,7 +26,8 @@ function formatFechaReal(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('es-MX', {
     day: '2-digit',
     month: 'short',
-    year: 'numeric'
+    year: 'numeric',
+    timeZone: 'UTC'
   });
 }
 
